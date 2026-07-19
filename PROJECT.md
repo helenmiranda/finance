@@ -169,3 +169,4 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Aplicação preparada como PWA instalável, com manifesto, ícones, modo standalone e tela offline sem cache de dados financeiros.
 - Importação idempotente de até doze meses de transações Pluggy adicionada para contas e cartões, preservando itens pendentes.
 - Sincronização e consolidação patrimonial de investimentos Pluggy adicionadas, incluindo renda fixa, fundos, renda variável, ETFs, previdência e COE.
+- Até três atualizações bancárias por dia: primeira abertura pela manhã e à tarde, mais rotina garantida às 22h, todas com trava idempotente.

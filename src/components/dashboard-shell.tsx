@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { logout } from "@/app/auth/actions";
+import { PluggyAutoCheck } from "@/components/pluggy-auto-check";
 
 type DashboardShellProps = {
   active: "overview" | "transactions" | "categories" | "accounts" | "cards" | "investments" | "imports" | "budgets" | "assistant";
@@ -22,6 +23,7 @@ const links = [
 export function DashboardShell({ active, householdName = "Helen & Ramon", children }: DashboardShellProps) {
   return (
     <main className="shell">
+      <PluggyAutoCheck />
       <aside className="sidebar">
         <Link className="brand" href="/dashboard"><span className="brand-mark">P</span><span>Poupemos</span></Link>
         <nav aria-label="Navegação principal">
