@@ -210,3 +210,27 @@ export async function addTransfer(formData: FormData) {
   revalidatePath("/dashboard");
   redirect("/dashboard/transacoes?success=Transferência%20registrada.");
 }
+
+export async function payStatement(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const statementId = text(formData, "statement_id");
+  const accountId = text(formData, "account_id");
+  const paymentDate = text(formData, "payment_date");
+
+  if (!statementId || !accountId || !paymentDate) {
+    redirect("/dashboard/cartoes?error=Confira%20os%20dados%20do%20pagamento.");
+  }
+
+  const { error } = await supabase.rpc("pay_card_statement", {
+    target_statement_id: statementId,
+    source_account_id: accountId,
+    payment_date: paymentDate,
+  });
+
+  if (error) redirect(`/dashboard/cartoes?error=${encodeURIComponent("Não foi possível pagar a fatura. A nova migration já foi aplicada?")}`);
+  revalidatePath("/dashboard/cartoes");
+  revalidatePath("/dashboard/transacoes");
+  revalidatePath("/dashboard");
+  redirect("/dashboard/cartoes?success=Fatura%20marcada%20como%20paga.");
+}

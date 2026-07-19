@@ -48,7 +48,7 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
   const initialBalance = accountsResult.data?.reduce((sum, account) => sum + account.initial_balance_cents, 0) ?? 0;
   const availableBalance = balanceTransactionsResult.data?.reduce((sum, transaction) => {
     if (transaction.type === "income") return sum + transaction.amount_cents;
-    if (transaction.type === "expense") return sum - transaction.amount_cents;
+    if (transaction.type === "expense" || transaction.type === "card_payment") return sum - transaction.amount_cents;
     return sum + (transaction.transfer_direction === "in" ? transaction.amount_cents : -transaction.amount_cents);
   }, initialBalance) ?? initialBalance;
   const monthIncome = monthTransactionsResult.data?.filter((item) => item.type === "income").reduce((sum, item) => sum + item.amount_cents, 0) ?? 0;
@@ -83,7 +83,8 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
                 const installment = transaction.installment_count > 1 ? ` · ${transaction.installment_number}/${transaction.installment_count}` : "";
                 const categoryName = relatedName(transaction.categories);
                 const sourceName = relatedName(transaction.accounts) || relatedName(transaction.credit_cards);
-                return <div className="compact-transaction" key={transaction.id}><span className={`movement-dot ${incoming ? "in" : "out"}`} /><div><strong>{transaction.description}{installment}</strong><small>{transaction.type === "transfer" ? "Transferência" : categoryName || "Sem categoria"} · {sourceName || "—"}</small></div><time>{shortDate.format(new Date(`${transaction.occurred_on}T12:00:00`))}</time><strong className={incoming ? "positive" : "negative"}>{incoming ? "+" : "−"} {money.format(transaction.amount_cents / 100)}</strong></div>;
+                const kindLabel = transaction.type === "transfer" ? "Transferência" : transaction.type === "card_payment" ? "Pagamento de fatura" : categoryName || "Sem categoria";
+                return <div className="compact-transaction" key={transaction.id}><span className={`movement-dot ${incoming ? "in" : "out"}`} /><div><strong>{transaction.description}{installment}</strong><small>{kindLabel} · {sourceName || "—"}</small></div><time>{shortDate.format(new Date(`${transaction.occurred_on}T12:00:00`))}</time><strong className={incoming ? "positive" : "negative"}>{incoming ? "+" : "−"} {money.format(transaction.amount_cents / 100)}</strong></div>;
               })}
             </div>
           </article>

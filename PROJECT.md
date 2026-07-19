@@ -98,7 +98,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - [x] Cadastrar cartões, limites, fechamento e vencimento.
 - [x] Registrar compras à vista e parceladas.
 - [x] Gerar e acompanhar faturas.
-- [ ] Registrar pagamento de fatura sem duplicar despesas.
+- [x] Registrar pagamento de fatura sem duplicar despesas.
 
 ### Fase 4 — Importações
 
@@ -149,3 +149,4 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Transferências atômicas, compras parceladas e geração automática de faturas implementadas em uma segunda migration.
 - Callback de autenticação configurado para usar a URL pública do Vercel em vez da origem local.
 - Dashboard simplificado, com dados reais, menos elementos decorativos e hierarquia visual mais calma.
+- Pagamento integral de faturas implementado como saída de caixa, sem duplicar a despesa original.

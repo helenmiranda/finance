@@ -53,7 +53,8 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
             <article className="card transaction-table">{transactions?.map((transaction) => {
               const incoming = transaction.type === "income" || transaction.transfer_direction === "in";
               const installment = transaction.installment_count > 1 ? ` · ${transaction.installment_number}/${transaction.installment_count}` : "";
-              return <div className="transaction-row" key={transaction.id}><span className={`movement-icon ${transaction.type}`}>{transaction.type === "transfer" ? "⇄" : incoming ? "↗" : "↘"}</span><div><strong>{transaction.description}{installment}</strong><small>{transaction.type === "transfer" ? "Transferência" : transaction.categories?.name || "Sem categoria"} · {transaction.accounts?.name || transaction.credit_cards?.name}</small></div><div className="transaction-date">{date.format(new Date(`${transaction.occurred_on}T12:00:00`))}</div><strong className={incoming ? "positive" : "negative"}>{incoming ? "+ " : "− "}{money.format(transaction.amount_cents / 100)}</strong></div>;
+              const kindLabel = transaction.type === "transfer" ? "Transferência" : transaction.type === "card_payment" ? "Pagamento de fatura" : transaction.categories?.name || "Sem categoria";
+              return <div className="transaction-row" key={transaction.id}><span className={`movement-icon ${transaction.type}`}>{transaction.type === "transfer" ? "⇄" : incoming ? "↗" : "↘"}</span><div><strong>{transaction.description}{installment}</strong><small>{kindLabel} · {transaction.accounts?.name || transaction.credit_cards?.name}</small></div><div className="transaction-date">{date.format(new Date(`${transaction.occurred_on}T12:00:00`))}</div><strong className={incoming ? "positive" : "negative"}>{incoming ? "+ " : "− "}{money.format(transaction.amount_cents / 100)}</strong></div>;
             })}</article>
           </section>
         </div>

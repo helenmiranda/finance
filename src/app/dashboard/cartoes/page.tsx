@@ -1,6 +1,6 @@
 import { DashboardShell } from "@/components/dashboard-shell";
 import { getAuthenticatedContext } from "@/lib/household";
-import { addCreditCard } from "../finance-actions";
+import { addCreditCard, payStatement } from "../finance-actions";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 type PageProps = { searchParams: Promise<{ error?: string; success?: string }> };
@@ -42,7 +42,15 @@ export default async function CardsPage({ searchParams }: PageProps) {
             {!cards?.length && <article className="card empty-state"><span>＋</span><h2>Nenhum cartão ainda</h2><p className="muted">Adicione um cartão para acompanhar as faturas.</p></article>}
             {cards?.map((card) => <article className="credit-card-preview" style={{ background: card.color ?? "#163300" }} key={card.id}><div><small>{card.issuer || "Cartão de crédito"}</small><strong>{card.name}</strong></div><span>•••• {card.last_four_digits || "0000"}</span><div className="card-meta"><small>Limite<br/><strong>{card.credit_limit_cents == null ? "Não informado" : money.format(card.credit_limit_cents / 100)}</strong></small><small>Fecha dia<br/><strong>{card.closing_day}</strong></small><small>Vence dia<br/><strong>{card.due_day}</strong></small></div></article>)}
             {!!statements?.length && <div className="section-heading statements-heading"><h2>Faturas geradas</h2></div>}
-            {statements?.map((statement) => <article className="card statement-item" key={statement.id}><div><strong>{statement.credit_cards?.name}</strong><small>Vence em {new Intl.DateTimeFormat("pt-BR").format(new Date(`${statement.due_date}T12:00:00`))}</small></div><div><span className={`statement-status ${statement.status}`}>{statement.status === "open" ? "Aberta" : statement.status === "paid" ? "Paga" : statement.status === "closed" ? "Fechada" : "Atrasada"}</span><strong>{money.format(statement.total_cents / 100)}</strong></div></article>)}
+            {statements?.map((statement) => {
+              const isOverdue = statement.status !== "paid" && new Date(`${statement.due_date}T23:59:59`) < new Date();
+              const displayStatus = isOverdue ? "overdue" : statement.status;
+              return <article className="card statement-item" key={statement.id}>
+                <div className="statement-summary"><strong>{statement.credit_cards?.name}</strong><small>Vence em {new Intl.DateTimeFormat("pt-BR").format(new Date(`${statement.due_date}T12:00:00`))}</small></div>
+                <div className="statement-value"><span className={`statement-status ${displayStatus}`}>{displayStatus === "open" ? "Aberta" : displayStatus === "paid" ? "Paga" : displayStatus === "closed" ? "Fechada" : "Atrasada"}</span><strong>{money.format(statement.total_cents / 100)}</strong></div>
+                {statement.status !== "paid" && <details className="statement-payment"><summary>Pagar fatura</summary><form action={payStatement}><input type="hidden" name="statement_id" value={statement.id} /><label>Conta<select name="account_id" defaultValue="" required><option value="" disabled>Selecione</option>{accounts?.map((account) => <option value={account.id} key={account.id}>{account.name}</option>)}</select></label><label>Data<input name="payment_date" type="date" defaultValue={new Date().toISOString().slice(0, 10)} required /></label><button type="submit">Confirmar pagamento</button></form></details>}
+              </article>;
+            })}
           </section>
         </div>
       </section>
