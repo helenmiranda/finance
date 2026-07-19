@@ -20,6 +20,7 @@ type PluggyItem = {
   status?: string;
   executionStatus?: string;
   lastUpdatedAt?: string;
+  statusDetail?: unknown;
   error?: { code?: string; message?: string } | null;
 };
 
@@ -63,6 +64,8 @@ export async function POST(request: Request) {
           status: item.status ?? (payload.event === "item/error" ? "OUTDATED" : "UPDATED"),
           execution_status: item.executionStatus ?? null,
           error_code: providerError,
+          provider_updated_at: item.lastUpdatedAt ?? null,
+          status_detail: item.statusDetail ?? null,
         }).eq("id", connection.id);
         if (payload.event === "item/updated") await syncPluggyConnection(admin, connection as PluggyConnection, { includeTransactions: false });
       } else {

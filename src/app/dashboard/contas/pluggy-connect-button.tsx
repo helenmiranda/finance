@@ -34,5 +34,5 @@ export function PluggySyncButton({ connectionId }: { connectionId: string }) {
     } catch (error) { setMessage(error instanceof Error ? error.message : "Não foi possível sincronizar."); }
     finally { setLoading(false); }
   }
-  return <><button className="sync-connection" type="button" onClick={sync} disabled={loading}>{loading ? "Sincronizando…" : "Sincronizar"}</button>{message && <small>{message}</small>}</>;
+  return <><button className="sync-connection" type="button" onClick={sync} disabled={loading}>{loading ? "Importando…" : "Importar dados agora"}</button>{message && <small>{message}</small>}</>;
 }

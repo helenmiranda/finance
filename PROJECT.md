@@ -173,6 +173,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Webhooks Pluggy protegidos e idempotentes importam automaticamente contas, cartões, transações e investimentos quando uma atualização bancária termina.
 - Transações Pluggy recebem categorias pelas regras familiares e pelo enriquecimento da Pluggy, com fila de revisão e aprendizado por descrição.
 - Reconciliação incremental da Pluggy mantém lançamentos criados, alterados e removidos alinhados ao banco sem apagar o histórico familiar.
+- Central de sincronização mostra estado, horários, uso diário, falhas e último evento de cada conexão bancária.
 
 ### Configuração do Supabase Cron
 
