@@ -167,3 +167,4 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Fundação da integração Meu Pluggy adicionada com autenticação no servidor e vínculo seguro dos Item IDs existentes por membro da família.
 - Sincronização inicial de contas bancárias, cartões, saldos e limites do Meu Pluggy adicionada com mapeamento contra duplicidades.
 - Aplicação preparada como PWA instalável, com manifesto, ícones, modo standalone e tela offline sem cache de dados financeiros.
+- Importação idempotente de até doze meses de transações Pluggy adicionada para contas e cartões, preservando itens pendentes.

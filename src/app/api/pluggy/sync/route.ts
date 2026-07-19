@@ -8,9 +8,72 @@ type PluggyAccount = {
   creditData?: { creditLimit?: number | null; availableCreditLimit?: number | null; balanceCloseDate?: string | null; balanceDueDate?: string | null } | null;
 };
 
+type PluggyTransaction = {
+  id: string; description?: string | null; descriptionRaw?: string | null; amount: number; date: string;
+  type?: "CREDIT" | "DEBIT"; status?: "POSTED" | "PENDING";
+};
+
+export const maxDuration = 60;
+
 const cents = (value?: number | null) => value == null || !Number.isFinite(value) ? null : Math.round(value * 100);
 const day = (value?: string | null) => value ? new Date(`${value.slice(0, 10)}T12:00:00Z`).getUTCDate() : null;
 const accountType = (subtype?: string) => subtype === "SAVINGS_ACCOUNT" ? "savings" : subtype === "INVESTMENT_ACCOUNT" ? "investment" : "checking";
+const localDate = (value: string) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(value));
+
+async function syncTransactions(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  remote: PluggyAccount,
+  mapping: { id: string; account_id: string | null; credit_card_id: string | null },
+  householdId: string,
+  userId: string,
+) {
+  const fromDate = new Date();
+  fromDate.setUTCFullYear(fromDate.getUTCFullYear() - 1);
+  let path: string | null = `/v2/transactions?accountId=${encodeURIComponent(remote.id)}&from=${fromDate.toISOString().slice(0, 10)}`;
+  let imported = 0;
+  let page = 0;
+  while (path && page < 12) {
+    const response: { results?: PluggyTransaction[]; next?: string | null } = await pluggyRequest(path);
+    const rows = (response.results ?? []).filter((transaction) => Number.isFinite(transaction.amount) && transaction.amount !== 0 && (remote.type === "BANK" || transaction.amount > 0));
+    const ids = rows.map((transaction) => transaction.id);
+    const { data: existing } = ids.length
+      ? await supabase.from("pluggy_transactions").select("pluggy_transaction_id").in("pluggy_transaction_id", ids)
+      : { data: [] };
+    const existingIds = new Set((existing ?? []).map((item) => item.pluggy_transaction_id));
+    const pendingRows = rows.filter((transaction) => !existingIds.has(transaction.id));
+    if (pendingRows.length) {
+      const payload = pendingRows.map((transaction) => ({
+        household_id: householdId,
+        account_id: remote.type === "BANK" ? mapping.account_id : null,
+        credit_card_id: remote.type === "CREDIT" ? mapping.credit_card_id : null,
+        created_by: userId,
+        type: remote.type === "CREDIT" ? "expense" : transaction.type === "CREDIT" ? "income" : "expense",
+        description: transaction.description || transaction.descriptionRaw || "Movimentação Pluggy",
+        amount_cents: Math.abs(Math.round(transaction.amount * 100)),
+        occurred_on: localDate(transaction.date),
+        status: transaction.status === "PENDING" ? "pending" : "confirmed",
+        source: "api",
+        source_fingerprint: `pluggy:${transaction.id}`,
+      }));
+      const { data: created, error } = await supabase.from("transactions").insert(payload).select("id, source_fingerprint");
+      if (error || !created) throw error ?? new Error("Não foi possível importar as transações.");
+      const remoteByFingerprint = new Map(pendingRows.map((transaction) => [`pluggy:${transaction.id}`, transaction.id]));
+      const mappings = created.map((transaction) => ({
+        household_id: householdId,
+        pluggy_account_id: mapping.id,
+        pluggy_transaction_id: remoteByFingerprint.get(transaction.source_fingerprint) as string,
+        transaction_id: transaction.id,
+      }));
+      const { error: mappingError } = await supabase.from("pluggy_transactions").insert(mappings);
+      if (mappingError) throw mappingError;
+      imported += created.length;
+    }
+    const next = response.next;
+    path = next ? next.startsWith("http") ? next.replace("https://api.pluggy.ai", "") : next.startsWith("?") ? `/v2/transactions${next}` : next : null;
+    page += 1;
+  }
+  return imported;
+}
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -26,6 +89,7 @@ export async function POST(request: Request) {
     const remoteAccounts = response.results ?? [];
     let bankCount = 0;
     let cardCount = 0;
+    let transactionCount = 0;
 
     for (const remote of remoteAccounts) {
       const { data: mapping } = await supabase.from("pluggy_accounts").select("id, account_id, credit_card_id").eq("pluggy_account_id", remote.id).maybeSingle();
@@ -60,9 +124,12 @@ export async function POST(request: Request) {
         if (error) throw error;
         cardCount += 1;
       }
+      const { data: currentMapping, error: mappingReadError } = await supabase.from("pluggy_accounts").select("id, account_id, credit_card_id").eq("pluggy_account_id", remote.id).single();
+      if (mappingReadError || !currentMapping) throw mappingReadError ?? new Error("Mapeamento da conta não encontrado.");
+      transactionCount += await syncTransactions(supabase, remote, currentMapping, connection.household_id, user.id);
     }
     await supabase.from("pluggy_items").update({ last_synced_at: new Date().toISOString(), status: "UPDATED", error_code: null }).eq("id", connection.id);
-    return NextResponse.json({ success: true, bankCount, cardCount });
+    return NextResponse.json({ success: true, bankCount, cardCount, transactionCount });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Não foi possível sincronizar as contas." }, { status: 502 });
   }
