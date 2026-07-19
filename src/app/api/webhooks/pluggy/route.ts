@@ -36,18 +36,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ accepted: true, ignored: true });
   }
   if (payload.event.startsWith("transactions/") && !payload.accountId) return NextResponse.json({ accepted: true, ignored: true });
+  const event = payload.event;
+  const eventId = payload.eventId;
+  const itemId = payload.itemId;
 
   const admin = createAdminClient();
   const { data: connection } = await admin.from("pluggy_items")
     .select("id, household_id, pluggy_item_id, connector_name, connected_by")
-    .eq("pluggy_item_id", payload.itemId)
+    .eq("pluggy_item_id", itemId)
     .maybeSingle();
   if (!connection) return NextResponse.json({ accepted: true, ignored: true });
 
   const { error: eventError } = await admin.from("pluggy_webhook_events").insert({
-    event_id: payload.eventId.slice(0, 200),
+    event_id: eventId.slice(0, 200),
     item_id: connection.id,
-    event_type: payload.event,
+    event_type: event,
     triggered_by: payload.triggeredBy?.slice(0, 40) ?? null,
     payload,
     status: "processing",
@@ -57,25 +60,25 @@ export async function POST(request: Request) {
 
   after(async () => {
     try {
-      if (payload.event.startsWith("item/")) {
-        const item = await pluggyRequest<PluggyItem>(`/items/${encodeURIComponent(payload.itemId as string)}`);
+      if (event.startsWith("item/")) {
+        const item = await pluggyRequest<PluggyItem>(`/items/${encodeURIComponent(itemId)}`);
         const providerError = payload.error?.code || item.error?.code || null;
         await admin.from("pluggy_items").update({
-          status: item.status ?? (payload.event === "item/error" ? "OUTDATED" : "UPDATED"),
+          status: item.status ?? (event === "item/error" ? "OUTDATED" : "UPDATED"),
           execution_status: item.executionStatus ?? null,
           error_code: providerError,
           provider_updated_at: item.lastUpdatedAt ?? null,
           status_detail: item.statusDetail ?? null,
         }).eq("id", connection.id);
-        if (payload.event === "item/updated") await syncPluggyConnection(admin, connection as PluggyConnection, { includeTransactions: false });
+        if (event === "item/updated") await syncPluggyConnection(admin, connection as PluggyConnection, { includeTransactions: false });
       } else {
         await reconcilePluggyTransactions(admin, connection as PluggyConnection, payload as PluggyTransactionEvent);
       }
-      await admin.from("pluggy_webhook_events").update({ status: "completed", finished_at: new Date().toISOString() }).eq("event_id", payload.eventId);
+      await admin.from("pluggy_webhook_events").update({ status: "completed", finished_at: new Date().toISOString() }).eq("event_id", eventId);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Falha ao processar o webhook.";
       await admin.from("pluggy_items").update({ error_code: message.slice(0, 200) }).eq("id", connection.id);
-      await admin.from("pluggy_webhook_events").update({ status: "failed", error_message: message.slice(0, 500), finished_at: new Date().toISOString() }).eq("event_id", payload.eventId);
+      await admin.from("pluggy_webhook_events").update({ status: "failed", error_message: message.slice(0, 500), finished_at: new Date().toISOString() }).eq("event_id", eventId);
     }
   });
 
