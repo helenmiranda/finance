@@ -89,8 +89,8 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 ### Fase 2 — Lançamentos
 
 - [x] Implementar contas financeiras.
-- [ ] Implementar categorias e subcategorias.
-- [ ] Implementar receitas, despesas e transferências.
+- [x] Implementar categorias e subcategorias.
+- [ ] Implementar receitas, despesas e transferências. *(receitas e despesas concluídas; transferências pendentes)*
 - [ ] Adicionar busca, filtros e edição em massa.
 
 ### Fase 3 — Cartões
@@ -145,3 +145,4 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Dashboard atualizado com a identidade visual do Poupemos e efeito glass responsivo.
 - Fluxos de cadastro, login, confirmação de e-mail, logout, sessão protegida e onboarding familiar implementados.
 - Cadastro e listagem de contas e cartões conectados ao Supabase, com validação no servidor.
+- Categorias, subcategorias, receitas, despesas e compras simples no cartão conectadas ao Supabase.

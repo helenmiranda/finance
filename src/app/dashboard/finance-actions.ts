@@ -89,3 +89,82 @@ export async function addCreditCard(formData: FormData) {
   revalidatePath("/dashboard/cartoes");
   redirect("/dashboard/cartoes?success=Cartão%20adicionado.");
 }
+
+export async function addCategory(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const name = text(formData, "name");
+  const kind = text(formData, "kind");
+  const parentId = optionalText(formData, "parent_id");
+
+  if (!name || !["income", "expense"].includes(kind)) {
+    redirect("/dashboard/categorias?error=Confira%20os%20dados%20da%20categoria.");
+  }
+
+  if (parentId) {
+    const { data: parent } = await supabase.from("categories").select("id, kind")
+      .eq("id", parentId).eq("household_id", membership.household_id).maybeSingle();
+    if (!parent || parent.kind !== kind) redirect("/dashboard/categorias?error=Categoria%20principal%20inválida.");
+  }
+
+  const { error } = await supabase.from("categories").insert({
+    household_id: membership.household_id,
+    parent_id: parentId,
+    name,
+    kind,
+    color: text(formData, "color") || "#9fe870",
+    icon: optionalText(formData, "icon"),
+  });
+
+  if (error) redirect(`/dashboard/categorias?error=${encodeURIComponent("Não foi possível adicionar. Talvez a categoria já exista.")}`);
+  revalidatePath("/dashboard/categorias");
+  redirect("/dashboard/categorias?success=Categoria%20adicionada.");
+}
+
+export async function addTransaction(formData: FormData) {
+  const { supabase, membership, user } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const type = text(formData, "type");
+  const description = text(formData, "description");
+  const amount = cents(text(formData, "amount"));
+  const occurredOn = text(formData, "occurred_on");
+  const categoryId = optionalText(formData, "category_id");
+  const paymentSource = text(formData, "payment_source");
+  const [sourceType, sourceId] = paymentSource.split(":");
+
+  if (!description || !amount || !occurredOn || !["income", "expense"].includes(type) || !sourceId || !["account", "card"].includes(sourceType)) {
+    redirect("/dashboard/transacoes?error=Confira%20os%20dados%20do%20lançamento.");
+  }
+  if (type === "income" && sourceType === "card") {
+    redirect("/dashboard/transacoes?error=Receitas%20devem%20entrar%20em%20uma%20conta.");
+  }
+
+  const sourceTable = sourceType === "account" ? "accounts" : "credit_cards";
+  const { data: source } = await supabase.from(sourceTable).select("id")
+    .eq("id", sourceId).eq("household_id", membership.household_id).maybeSingle();
+  if (!source) redirect("/dashboard/transacoes?error=Conta%20ou%20cartão%20inválido.");
+
+  if (categoryId) {
+    const { data: category } = await supabase.from("categories").select("id, kind")
+      .eq("id", categoryId).eq("household_id", membership.household_id).maybeSingle();
+    if (!category || category.kind !== type) redirect("/dashboard/transacoes?error=Categoria%20incompatível%20com%20o%20lançamento.");
+  }
+
+  const { error } = await supabase.from("transactions").insert({
+    household_id: membership.household_id,
+    account_id: sourceType === "account" ? sourceId : null,
+    credit_card_id: sourceType === "card" ? sourceId : null,
+    category_id: categoryId,
+    created_by: user.id,
+    type,
+    description,
+    amount_cents: amount,
+    occurred_on: occurredOn,
+    notes: optionalText(formData, "notes"),
+  });
+
+  if (error) redirect(`/dashboard/transacoes?error=${encodeURIComponent("Não foi possível salvar o lançamento.")}`);
+  revalidatePath("/dashboard/transacoes");
+  revalidatePath("/dashboard");
+  redirect("/dashboard/transacoes?success=Lançamento%20adicionado.");
+}

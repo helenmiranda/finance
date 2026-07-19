@@ -2,14 +2,15 @@ import Link from "next/link";
 import { logout } from "@/app/auth/actions";
 
 type DashboardShellProps = {
-  active: "overview" | "accounts" | "cards";
+  active: "overview" | "transactions" | "categories" | "accounts" | "cards";
   householdName?: string;
   children: React.ReactNode;
 };
 
 const links = [
   { key: "overview", href: "/dashboard", label: "Visão geral" },
-  { key: "transactions", href: "/dashboard#transacoes", label: "Transações" },
+  { key: "transactions", href: "/dashboard/transacoes", label: "Transações" },
+  { key: "categories", href: "/dashboard/categorias", label: "Categorias" },
   { key: "accounts", href: "/dashboard/contas", label: "Contas" },
   { key: "cards", href: "/dashboard/cartoes", label: "Cartões" },
   { key: "budgets", href: "/dashboard#orcamentos", label: "Orçamentos" },

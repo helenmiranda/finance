@@ -298,7 +298,7 @@ button:hover { background: var(--primary-active); transform: scale(1.025); }
 
 label { display: grid; gap: 8px; color: var(--body); font-size: 13px; font-weight: 750; }
 
-input, select {
+input, select, textarea {
   width: 100%;
   height: 54px;
   border: 1px solid var(--hairline);
@@ -312,7 +312,8 @@ input, select {
   transition: border 150ms ease, box-shadow 150ms ease;
 }
 
-input:focus, select:focus { border-color: var(--primary-dark); box-shadow: 0 0 0 4px rgba(159, 232, 112, .28); }
+textarea { height: auto; min-height: 86px; padding-top: 14px; resize: vertical; }
+input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); box-shadow: 0 0 0 4px rgba(159, 232, 112, .28); }
 .auth-card form button, .onboarding-card form button { width: 100%; margin-top: 5px; }
 .auth-switch { margin-top: 24px; color: var(--muted); font-size: 14px; text-align: center; }
 .auth-switch a { color: var(--primary-dark); font-weight: 800; }
@@ -364,6 +365,20 @@ input:focus, select:focus { border-color: var(--primary-dark); box-shadow: 0 0 0
 .card-meta { display: grid; grid-template-columns: 1fr auto auto; gap: 24px; align-self: end; }
 .card-meta small { color: rgba(255, 255, 255, .7); line-height: 1.7; }
 .card-meta strong { color: white; }
+.category-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.category-item { display: grid; grid-template-columns: 46px 1fr; align-items: center; gap: 13px; padding: 18px; border-radius: 22px; }
+.category-icon { display: grid; place-items: center; width: 44px; height: 44px; border: 4px solid rgba(255, 255, 255, .6); border-radius: 50%; color: var(--primary-dark); font-weight: 850; }
+.category-item > div { display: grid; gap: 4px; }
+.category-item small { color: var(--muted); }
+.transaction-settings-grid { grid-template-columns: minmax(360px, .75fr) minmax(520px, 1.25fr); }
+.transaction-table { padding: 10px 22px; }
+.transaction-row { display: grid; grid-template-columns: 44px minmax(150px, 1fr) auto auto; align-items: center; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--hairline); }
+.transaction-row:last-child { border-bottom: 0; }
+.transaction-row > div:nth-child(2) { display: grid; gap: 5px; }
+.transaction-row small, .transaction-date { color: var(--muted); font-size: 12px; }
+.movement-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; font-weight: 900; }
+.movement-icon.income { background: rgba(159, 232, 112, .4); color: #054d28; }
+.movement-icon.expense { background: rgba(208, 50, 56, .09); color: var(--danger); }
 
 @media (max-width: 1000px) {
   .shell { grid-template-columns: 210px minmax(0, 1fr); }
@@ -380,6 +395,7 @@ input:focus, select:focus { border-color: var(--primary-dark); box-shadow: 0 0 0
   .content { padding: 32px 8px; }
   .main-grid { grid-template-columns: 1fr; }
   .settings-grid { grid-template-columns: 1fr; }
+  .transaction-settings-grid { grid-template-columns: 1fr; }
   .auth-shell { grid-template-columns: 1fr; }
   .auth-story { min-height: 440px; }
   .auth-story h1 { font-size: clamp(52px, 13vw, 82px); }
@@ -399,6 +415,9 @@ input:focus, select:focus { border-color: var(--primary-dark); box-shadow: 0 0 0
   .form-row { grid-template-columns: 1fr; }
   .account-item { grid-template-columns: 44px 1fr; }
   .item-value { grid-column: 2; justify-items: start; text-align: left; }
+  .category-grid { grid-template-columns: 1fr; }
+  .transaction-row { grid-template-columns: 40px 1fr auto; }
+  .transaction-date { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
