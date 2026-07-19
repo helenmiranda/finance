@@ -439,6 +439,31 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .statement-payment input, .statement-payment select { height: 44px; border-radius: 13px; }
 .statement-payment button { min-height: 44px; padding: 10px 16px; font-size: 12px; }
 .movement-icon.card_payment { background: rgba(139, 101, 0, .1); color: var(--warning); }
+.import-layout { display: grid; grid-template-columns: minmax(320px, .7fr) minmax(440px, 1.3fr); gap: 16px; align-items: start; }
+.upload-card { padding: 32px; }
+.upload-icon { display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 28px; border-radius: 50%; background: var(--primary); color: var(--primary-dark); font-size: 24px; font-weight: 900; }
+.upload-card h2 { font-size: 26px; }
+.upload-card form { display: grid; gap: 17px; margin-top: 28px; }
+.file-field input { height: auto; padding: 12px; background: rgba(255, 255, 255, .55); }
+.file-field input::file-selector-button { margin-right: 12px; border: 0; border-radius: 999px; padding: 9px 13px; background: #e8ebe6; color: var(--ink); cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; }
+.import-item { display: grid; grid-template-columns: 46px 1fr auto; align-items: center; gap: 13px; padding: 17px 19px; border-radius: 22px; color: var(--ink); text-decoration: none; }
+.file-type { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 13px; background: #e8ebe6; color: var(--primary-dark); font-size: 10px; font-weight: 900; text-transform: uppercase; }
+.import-item > div { display: grid; gap: 5px; min-width: 0; }
+.import-item strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.import-item small { color: var(--muted); }
+.import-status, .row-status { padding: 6px 9px; border-radius: 999px; background: rgba(159, 232, 112, .3); color: var(--primary-dark); font-size: 10px; font-weight: 850; text-transform: uppercase; }
+.import-status.failed, .row-status.issue { background: rgba(208, 50, 56, .09); color: var(--danger); }
+.import-review-content { width: min(1220px, 100%); }
+.import-review-content header { margin: 22px 0 28px; }
+.import-review-content h1 { max-width: 900px; overflow-wrap: anywhere; font-size: clamp(38px, 5vw, 64px); }
+.back-link { color: var(--primary-dark); font-size: 13px; font-weight: 800; text-decoration: none; }
+.review-summary { display: flex; gap: 10px; margin-bottom: 14px; }
+.review-summary > span { display: flex; align-items: baseline; gap: 6px; padding: 10px 14px; border: 1px solid var(--hairline); border-radius: 999px; background: rgba(255, 255, 255, .58); font-size: 12px; }
+.review-table-wrap { overflow-x: auto; border: 1px solid var(--hairline); border-radius: 22px; background: rgba(255, 255, 255, .66); }
+.review-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.review-table th { padding: 13px 16px; color: var(--muted); font-size: 10px; letter-spacing: .05em; text-align: left; text-transform: uppercase; }
+.review-table td { padding: 14px 16px; border-top: 1px solid var(--hairline); white-space: nowrap; }
+.review-table td:nth-child(3) { max-width: 340px; overflow: hidden; text-overflow: ellipsis; }
 
 @media (max-width: 1000px) {
   .shell { grid-template-columns: 200px minmax(0, 1fr); }
@@ -461,6 +486,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
   .insight-panel { min-height: 250px; }
   .settings-grid { grid-template-columns: 1fr; }
   .transaction-settings-grid { grid-template-columns: 1fr; }
+  .import-layout { grid-template-columns: 1fr; }
   .auth-shell { grid-template-columns: 1fr; }
   .auth-story { min-height: 440px; }
   .auth-story h1 { font-size: clamp(52px, 13vw, 82px); }
@@ -489,6 +515,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
   .compact-transaction { grid-template-columns: 9px 1fr auto; }
   .compact-transaction time { display: none; }
   .statement-payment form { grid-template-columns: 1fr; }
+  .review-summary { align-items: stretch; flex-direction: column; }
 }
 
 @media (prefers-reduced-motion: reduce) {

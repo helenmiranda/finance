@@ -102,9 +102,9 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 
 ### Fase 4 — Importações
 
-- [ ] Criar upload privado de arquivos.
-- [ ] Interpretar CSV, XLSX e OFX.
-- [ ] Criar tela de mapeamento e pré-visualização.
+- [x] Criar upload privado de arquivos.
+- [ ] Interpretar CSV, XLSX e OFX. *(CSV e OFX concluídos; XLSX pendente)*
+- [x] Criar tela inicial de pré-visualização.
 - [ ] Detectar duplicidades e aplicar regras de categorização.
 - [ ] Confirmar importação em lote.
 
@@ -150,3 +150,4 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Callback de autenticação configurado para usar a URL pública do Vercel em vez da origem local.
 - Dashboard simplificado, com dados reais, menos elementos decorativos e hierarquia visual mais calma.
 - Pagamento integral de faturas implementado como saída de caixa, sem duplicar a despesa original.
+- Upload privado, leitura de CSV/OFX e pré-visualização de extratos adicionados ao fluxo de importação.
