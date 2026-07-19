@@ -1,7 +1,7 @@
 import { after, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { pluggyRequest } from "@/lib/pluggy";
-import { syncPluggyConnection, type PluggyConnection } from "@/lib/pluggy-sync";
+import { reconcilePluggyTransactions, syncPluggyConnection, type PluggyConnection, type PluggyTransactionEvent } from "@/lib/pluggy-sync";
 
 export const maxDuration = 60;
 
@@ -10,6 +10,9 @@ type PluggyWebhookPayload = {
   eventId?: string;
   itemId?: string;
   triggeredBy?: string;
+  accountId?: string;
+  transactionIds?: string[];
+  transactionsCreatedAtFrom?: string;
   error?: { code?: string; message?: string } | null;
 };
 
@@ -27,9 +30,11 @@ export async function POST(request: Request) {
   }
 
   const payload = await request.json().catch(() => null) as PluggyWebhookPayload | null;
-  if (!payload?.eventId || !payload.itemId || !payload.event || !["item/updated", "item/error"].includes(payload.event)) {
+  const supportedEvents = ["item/updated", "item/error", "transactions/created", "transactions/updated", "transactions/deleted"];
+  if (!payload?.eventId || !payload.itemId || !payload.event || !supportedEvents.includes(payload.event)) {
     return NextResponse.json({ accepted: true, ignored: true });
   }
+  if (payload.event.startsWith("transactions/") && !payload.accountId) return NextResponse.json({ accepted: true, ignored: true });
 
   const admin = createAdminClient();
   const { data: connection } = await admin.from("pluggy_items")
@@ -51,16 +56,17 @@ export async function POST(request: Request) {
 
   after(async () => {
     try {
-      const item = await pluggyRequest<PluggyItem>(`/items/${encodeURIComponent(payload.itemId as string)}`);
-      const providerError = payload.error?.code || item.error?.code || null;
-      await admin.from("pluggy_items").update({
-        status: item.status ?? (payload.event === "item/error" ? "OUTDATED" : "UPDATED"),
-        execution_status: item.executionStatus ?? null,
-        error_code: providerError,
-      }).eq("id", connection.id);
-
-      if (payload.event === "item/updated") {
-        await syncPluggyConnection(admin, connection as PluggyConnection);
+      if (payload.event.startsWith("item/")) {
+        const item = await pluggyRequest<PluggyItem>(`/items/${encodeURIComponent(payload.itemId as string)}`);
+        const providerError = payload.error?.code || item.error?.code || null;
+        await admin.from("pluggy_items").update({
+          status: item.status ?? (payload.event === "item/error" ? "OUTDATED" : "UPDATED"),
+          execution_status: item.executionStatus ?? null,
+          error_code: providerError,
+        }).eq("id", connection.id);
+        if (payload.event === "item/updated") await syncPluggyConnection(admin, connection as PluggyConnection, { includeTransactions: false });
+      } else {
+        await reconcilePluggyTransactions(admin, connection as PluggyConnection, payload as PluggyTransactionEvent);
       }
       await admin.from("pluggy_webhook_events").update({ status: "completed", finished_at: new Date().toISOString() }).eq("event_id", payload.eventId);
     } catch (error) {

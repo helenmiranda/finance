@@ -172,6 +172,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Até três atualizações bancárias por dia: primeira abertura pela manhã e à tarde, mais rotina garantida às 22h pelo Supabase Cron, todas com trava idempotente.
 - Webhooks Pluggy protegidos e idempotentes importam automaticamente contas, cartões, transações e investimentos quando uma atualização bancária termina.
 - Transações Pluggy recebem categorias pelas regras familiares e pelo enriquecimento da Pluggy, com fila de revisão e aprendizado por descrição.
+- Reconciliação incremental da Pluggy mantém lançamentos criados, alterados e removidos alinhados ao banco sem apagar o histórico familiar.
 
 ### Configuração do Supabase Cron
 

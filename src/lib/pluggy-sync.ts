@@ -17,6 +17,13 @@ type LocalCategory = { id: string; name: string; kind: "income" | "expense"; par
 type CategorizationRule = { category_id: string; pattern: string; match_type: "contains" | "starts_with" | "exact"; priority: number };
 type CategorizationContext = { categories: LocalCategory[]; rules: CategorizationRule[] };
 
+export type PluggyTransactionEvent = {
+  event: "transactions/created" | "transactions/updated" | "transactions/deleted";
+  accountId: string;
+  transactionIds?: string[];
+  transactionsCreatedAtFrom?: string;
+};
+
 type PluggyInvestment = {
   id: string; name: string; code?: string | null; isin?: string | null; owner?: string | null; currencyCode?: string | null;
   type: string; subtype?: string | null; date?: string | null; value?: number | null; quantity?: number | null; amount: number;
@@ -94,10 +101,11 @@ async function syncTransactions(
   householdId: string,
   userId: string,
   categorization: CategorizationContext,
+  initialPath?: string,
 ) {
   const fromDate = new Date();
   fromDate.setUTCFullYear(fromDate.getUTCFullYear() - 1);
-  let path: string | null = `/v2/transactions?accountId=${encodeURIComponent(remote.id)}&dateFrom=${fromDate.toISOString().slice(0, 10)}`;
+  let path: string | null = initialPath ?? `/v2/transactions?accountId=${encodeURIComponent(remote.id)}&dateFrom=${fromDate.toISOString().slice(0, 10)}`;
   let imported = 0;
   let page = 0;
   while (path && page < 12) {
@@ -141,10 +149,89 @@ async function syncTransactions(
       imported += created.length;
     }
     const next = response.next;
-    path = next ? next.startsWith("http") ? next.replace("https://api.pluggy.ai", "") : next.startsWith("?") ? `/v2/transactions${next}` : next : null;
+    path = next
+      ? next.startsWith("http")
+        ? next.replace("https://api.pluggy.ai", "")
+        : next.startsWith("?")
+          ? `/v2/transactions${next}`
+          : next.startsWith("/")
+            ? next
+            : `/v2/transactions?accountId=${encodeURIComponent(remote.id)}&after=${encodeURIComponent(next)}`
+      : null;
     page += 1;
   }
   return imported;
+}
+
+async function loadCategorization(supabase: SupabaseClient, householdId: string): Promise<CategorizationContext> {
+  const [{ data: categories }, { data: rules }] = await Promise.all([
+    supabase.from("categories").select("id, name, kind, parent_id").eq("household_id", householdId).eq("is_active", true),
+    supabase.from("categorization_rules").select("category_id, pattern, match_type, priority").eq("household_id", householdId).eq("is_active", true).order("priority", { ascending: false }).order("created_at"),
+  ]);
+  return { categories: (categories ?? []) as LocalCategory[], rules: (rules ?? []) as CategorizationRule[] };
+}
+
+export async function reconcilePluggyTransactions(supabase: SupabaseClient, connection: PluggyConnection, event: PluggyTransactionEvent) {
+  const { data: mapping } = await supabase.from("pluggy_accounts")
+    .select("id, account_id, credit_card_id, type")
+    .eq("item_id", connection.id)
+    .eq("pluggy_account_id", event.accountId)
+    .maybeSingle();
+  if (!mapping) throw new Error("A conta da transação não está vinculada ao Poupemos.");
+
+  const transactionIds = [...new Set((event.transactionIds ?? []).filter(Boolean))].slice(0, 500);
+  if (event.event === "transactions/deleted") {
+    if (!transactionIds.length) return { created: 0, updated: 0, cancelled: 0 };
+    const { data: localMappings, error: mappingError } = await supabase.from("pluggy_transactions")
+      .select("transaction_id").eq("household_id", connection.household_id).in("pluggy_transaction_id", transactionIds);
+    if (mappingError) throw mappingError;
+    const localIds = (localMappings ?? []).map((item) => item.transaction_id);
+    if (localIds.length) {
+      const { error } = await supabase.from("transactions").update({ status: "cancelled" })
+        .eq("household_id", connection.household_id).in("id", localIds);
+      if (error) throw error;
+    }
+    return { created: 0, updated: 0, cancelled: localIds.length };
+  }
+
+  const categorization = await loadCategorization(supabase, connection.household_id);
+  if (event.event === "transactions/created") {
+    const query = new URLSearchParams({ accountId: event.accountId });
+    if (event.transactionsCreatedAtFrom) query.set("createdAtFrom", event.transactionsCreatedAtFrom);
+    const created = await syncTransactions(
+      supabase,
+      { id: event.accountId, type: mapping.type as "BANK" | "CREDIT", name: "Conta Pluggy" },
+      mapping,
+      connection.household_id,
+      connection.connected_by,
+      categorization,
+      `/v2/transactions?${query.toString()}`,
+    );
+    return { created, updated: 0, cancelled: 0 };
+  }
+
+  if (!transactionIds.length) return { created: 0, updated: 0, cancelled: 0 };
+  const query = new URLSearchParams({ accountId: event.accountId, ids: transactionIds.join(",") });
+  const response = await pluggyRequest<{ results?: PluggyTransaction[] }>(`/v2/transactions?${query.toString()}`);
+  const rows = (response.results ?? []).filter((transaction) => Number.isFinite(transaction.amount) && transaction.amount !== 0);
+  const updates = rows.map((transaction) => {
+    const type = mapping.type === "CREDIT" ? "expense" : transaction.type === "CREDIT" ? "income" : "expense";
+    return {
+      remote_id: transaction.id,
+      type,
+      description: transaction.description || transaction.descriptionRaw || "Movimentação Pluggy",
+      amount_cents: Math.abs(Math.round(transaction.amount * 100)),
+      occurred_on: localDate(transaction.date),
+      status: transaction.status === "PENDING" ? "pending" : "confirmed",
+      category_id: categoryFor(transaction, type, categorization),
+    };
+  });
+  const { data: updated, error } = await supabase.rpc("reconcile_pluggy_transaction_updates", {
+    target_household_id: connection.household_id,
+    target_updates: updates,
+  });
+  if (error) throw error;
+  return { created: 0, updated: Number(updated ?? 0), cancelled: 0 };
 }
 
 async function syncInvestments(supabase: SupabaseClient, itemId: string, connectionId: string, householdId: string) {
@@ -179,12 +266,9 @@ async function syncInvestments(supabase: SupabaseClient, itemId: string, connect
   return synced;
 }
 
-export async function syncPluggyConnection(supabase: SupabaseClient, connection: PluggyConnection) {
-  const [{ data: categories }, { data: rules }] = await Promise.all([
-    supabase.from("categories").select("id, name, kind, parent_id").eq("household_id", connection.household_id).eq("is_active", true),
-    supabase.from("categorization_rules").select("category_id, pattern, match_type, priority").eq("household_id", connection.household_id).eq("is_active", true).order("priority", { ascending: false }).order("created_at"),
-  ]);
-  const categorization = { categories: (categories ?? []) as LocalCategory[], rules: (rules ?? []) as CategorizationRule[] };
+export async function syncPluggyConnection(supabase: SupabaseClient, connection: PluggyConnection, options: { includeTransactions?: boolean } = {}) {
+  const includeTransactions = options.includeTransactions ?? true;
+  const categorization = await loadCategorization(supabase, connection.household_id);
   const response = await pluggyRequest<{ results?: PluggyAccount[] }>(`/accounts?itemId=${encodeURIComponent(connection.pluggy_item_id)}`);
   const remoteAccounts = response.results ?? [];
   let bankCount = 0;
@@ -226,7 +310,9 @@ export async function syncPluggyConnection(supabase: SupabaseClient, connection:
     }
     const { data: currentMapping, error: mappingReadError } = await supabase.from("pluggy_accounts").select("id, account_id, credit_card_id").eq("pluggy_account_id", remote.id).single();
     if (mappingReadError || !currentMapping) throw mappingReadError ?? new Error("Mapeamento da conta não encontrado.");
-    transactionCount += await syncTransactions(supabase, remote, currentMapping, connection.household_id, connection.connected_by, categorization);
+    if (includeTransactions) {
+      transactionCount += await syncTransactions(supabase, remote, currentMapping, connection.household_id, connection.connected_by, categorization);
+    }
   }
   const investmentCount = await syncInvestments(supabase, connection.pluggy_item_id, connection.id, connection.household_id);
   await supabase.from("pluggy_items").update({ last_synced_at: new Date().toISOString(), status: "UPDATED", error_code: null }).eq("id", connection.id);

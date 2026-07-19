@@ -40,7 +40,7 @@ export async function ensurePluggyWebhooks() {
     const url = `${siteUrl}/api/webhooks/pluggy`;
     const response = await pluggyRequest<PluggyWebhook[] | { results?: PluggyWebhook[] } | undefined>("/webhooks");
     const existing = Array.isArray(response) ? response : response?.results ?? [];
-    for (const event of ["item/updated", "item/error"]) {
+    for (const event of ["item/updated", "item/error", "transactions/created", "transactions/updated", "transactions/deleted"]) {
       const webhook = existing.find((item) => item.event === event && item.url === url);
       const body = JSON.stringify({ url, event, headers: { Authorization: `Bearer ${secret}` }, enabled: true });
       if (webhook) await pluggyRequest(`/webhooks/${webhook.id}`, { method: "PATCH", body });
