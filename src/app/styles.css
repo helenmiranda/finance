@@ -373,6 +373,15 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .onboarding-card h1 { margin: 12px 0 18px; font-size: clamp(46px, 7vw, 76px); }
 
 .settings-content header { margin-bottom: 34px; }
+.bank-connections { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 18px; margin-bottom: 16px; }
+.bank-connections h2 { margin: 5px 0 7px; font-size: 23px; }
+.bank-connections p { max-width: 660px; margin: 0; }
+.pluggy-connect-action { display: grid; gap: 7px; justify-items: end; }
+.pluggy-connect-action small { max-width: 300px; font-size: 10px; text-align: right; }
+.connected-institutions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; padding-top: 14px; border-top: 1px solid var(--hairline); }
+.connected-institutions > span { display: grid; gap: 2px; padding: 9px 12px; border-radius: 14px; background: rgba(159, 232, 112, .18); }
+.connected-institutions strong { font-size: 11px; }
+.connected-institutions small { color: var(--muted); font-size: 9px; }
 .settings-grid { display: grid; grid-template-columns: minmax(340px, .8fr) minmax(420px, 1.2fr); gap: 16px; align-items: start; }
 .form-card { padding: 30px; }
 .form-card > h2 { font-size: 26px; }
@@ -688,6 +697,9 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
   .dashboard-lower-grid { grid-template-columns: 1fr; }
   .insight-panel { min-height: 250px; }
   .settings-grid { grid-template-columns: 1fr; }
+  .bank-connections { grid-template-columns: 1fr; }
+  .pluggy-connect-action { justify-items: stretch; }
+  .pluggy-connect-action small { max-width: none; text-align: left; }
   .transaction-settings-grid { grid-template-columns: 1fr; }
   .import-layout { grid-template-columns: 1fr; }
   .auth-shell { grid-template-columns: 1fr; }
