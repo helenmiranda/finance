@@ -19,7 +19,7 @@ export default async function GoalsPage({ searchParams }: PageProps) {
   return (
     <DashboardShell active="budgets">
       <section className="content settings-content goal-content">
-        <header><div><p className="eyebrow">PLANEJAMENTO</p><h1>Metas</h1><p className="muted">Transforme os planos da família em progresso visível.</p></div><Link className="secondary-link" href="/dashboard/orcamentos">← Orçamentos</Link></header>
+        <header><div><p className="eyebrow">PLANEJAMENTO</p><h1>Metas</h1><p className="muted">Transforme os planos da família em progresso visível.</p></div><div className="planning-actions"><Link className="secondary-link" href="/dashboard/orcamentos">Orçamentos</Link><Link className="secondary-link" href="/dashboard/projecoes">Projeção →</Link></div></header>
         {params.error && <p className="form-message error">{params.error}</p>}{params.success && <p className="form-message success">{params.success}</p>}
         <section className="goal-hero"><div><span>Total guardado</span><strong>{money.format(totalSaved / 100)}</strong></div><div><span>Objetivos somados</span><strong>{money.format(totalTarget / 100)}</strong></div><div><span>Progresso geral</span><strong>{totalTarget ? Math.round((totalSaved / totalTarget) * 100) : 0}%</strong></div></section>
         <div className="settings-grid goal-grid">

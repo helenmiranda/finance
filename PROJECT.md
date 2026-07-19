@@ -110,9 +110,9 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 
 ### Fase 5 — Planejamento e análises
 
-- [ ] Criar dashboard e gráficos.
+- [x] Criar dashboard e gráficos.
 - [x] Criar orçamentos por categoria.
-- [ ] Criar metas e projeções. *(metas concluídas; projeções pendentes)*
+- [x] Criar metas e projeções.
 - [ ] Detectar assinaturas e gastos recorrentes.
 
 ### Fase 6 — Assistente de IA
@@ -155,3 +155,4 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Regras personalizadas de categorização automática aplicadas durante novos uploads.
 - Orçamentos mensais por categoria com progresso, saldo disponível e alertas de limite.
 - Metas financeiras compartilhadas com prazo, progresso e histórico de aportes.
+- Projeção financeira de seis meses com médias históricas, faturas pendentes e ritmo necessário para metas.
