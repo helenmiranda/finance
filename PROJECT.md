@@ -82,7 +82,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - [x] Confirmar suporte a família, cartões e faturas.
 - [x] Criar documentação inicial do projeto.
 - [x] Criar aplicação Next.js e layout base.
-- [ ] Criar projeto Supabase e configurar variáveis de ambiente.
+- [x] Criar projeto Supabase e configurar variáveis de ambiente.
 - [x] Definir a migration inicial e políticas RLS.
 - [x] Implementar autenticação e criação do espaço familiar.
 
@@ -158,3 +158,4 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Projeção financeira de seis meses com médias históricas, faturas pendentes e ritmo necessário para metas.
 - Detecção de gastos recorrentes com cadência, impacto mensal/anual e indicador de confiança.
 - Assistente com IA conectado à Responses API, contexto financeiro minimizado e conversas persistentes.
+- Gestão do espaço familiar com inclusão imediata ou entrada automática após cadastro pelo e-mail convidado.

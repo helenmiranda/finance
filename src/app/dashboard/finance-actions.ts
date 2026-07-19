@@ -372,3 +372,23 @@ export async function deleteGoal(formData: FormData) {
   revalidatePath("/dashboard/metas");
   redirect("/dashboard/metas?success=Meta%20removida.");
 }
+
+export async function inviteFamilyMember(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const email = text(formData, "email").toLowerCase();
+  const role = text(formData, "role") || "member";
+  if (!email || !["member", "admin"].includes(role)) redirect("/dashboard/familia?error=Confira%20os%20dados%20do%20membro.");
+
+  const { data, error } = await supabase.rpc("invite_household_member", {
+    target_household_id: membership.household_id,
+    member_email: email,
+    member_role: role,
+  });
+  if (error) redirect(`/dashboard/familia?error=${encodeURIComponent(error.message)}`);
+  revalidatePath("/dashboard/familia");
+  const message = data === "added"
+    ? "Membro adicionado ao espaço familiar."
+    : "Convite registrado. O membro entrará ao criar a conta com esse e-mail.";
+  redirect(`/dashboard/familia?success=${encodeURIComponent(message)}`);
+}

@@ -30,7 +30,7 @@ export function DashboardShell({ active, householdName = "Helen & Ramon", childr
             </Link>
           ))}
         </nav>
-        <div className="family"><small>Espaço familiar</small><strong>{householdName}</strong></div>
+        <Link className="family" href="/dashboard/familia"><small>Espaço familiar</small><strong>{householdName}</strong></Link>
         <form action={logout} className="logout-form"><button type="submit">Sair</button></form>
       </aside>
       {children}
