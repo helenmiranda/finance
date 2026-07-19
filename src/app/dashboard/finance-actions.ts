@@ -234,3 +234,46 @@ export async function payStatement(formData: FormData) {
   revalidatePath("/dashboard");
   redirect("/dashboard/cartoes?success=Fatura%20marcada%20como%20paga.");
 }
+
+export async function addCategorizationRule(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const name = text(formData, "name");
+  const pattern = text(formData, "pattern");
+  const matchType = text(formData, "match_type");
+  const categoryId = text(formData, "category_id");
+  const priority = Number(text(formData, "priority") || "100");
+
+  if (!name || !pattern || !categoryId || !["contains", "starts_with", "exact"].includes(matchType)
+    || !Number.isInteger(priority) || priority < 1 || priority > 1000) {
+    redirect("/dashboard/regras?error=Confira%20os%20dados%20da%20regra.");
+  }
+
+  const { data: category } = await supabase.from("categories").select("id")
+    .eq("id", categoryId).eq("household_id", membership.household_id).maybeSingle();
+  if (!category) redirect("/dashboard/regras?error=Categoria%20inválida.");
+
+  const { error } = await supabase.from("categorization_rules").insert({
+    household_id: membership.household_id,
+    category_id: categoryId,
+    name,
+    pattern,
+    match_type: matchType,
+    priority,
+  });
+
+  if (error) redirect(`/dashboard/regras?error=${encodeURIComponent("Não foi possível criar a regra. A nova migration foi aplicada?")}`);
+  revalidatePath("/dashboard/regras");
+  redirect("/dashboard/regras?success=Regra%20adicionada.");
+}
+
+export async function deleteCategorizationRule(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const ruleId = text(formData, "rule_id");
+  const { error } = await supabase.from("categorization_rules").delete()
+    .eq("id", ruleId).eq("household_id", membership.household_id);
+  if (error) redirect("/dashboard/regras?error=Não%20foi%20possível%20remover%20a%20regra.");
+  revalidatePath("/dashboard/regras");
+  redirect("/dashboard/regras?success=Regra%20removida.");
+}

@@ -1,6 +1,7 @@
 import { DashboardShell } from "@/components/dashboard-shell";
 import { getAuthenticatedContext } from "@/lib/household";
 import { addCategory } from "../finance-actions";
+import Link from "next/link";
 
 type PageProps = { searchParams: Promise<{ error?: string; success?: string }> };
 
@@ -15,7 +16,7 @@ export default async function CategoriesPage({ searchParams }: PageProps) {
   return (
     <DashboardShell active="categories">
       <section className="content settings-content">
-        <header><div><p className="eyebrow">ORGANIZAÇÃO</p><h1>Categorias</h1><p className="muted">Organize receitas e despesas do jeito da família.</p></div></header>
+        <header><div><p className="eyebrow">ORGANIZAÇÃO</p><h1>Categorias</h1><p className="muted">Organize receitas e despesas do jeito da família.</p></div><Link className="secondary-link" href="/dashboard/regras">Regras automáticas →</Link></header>
         {params.error && <p className="form-message error">{params.error}</p>}
         {params.success && <p className="form-message success">{params.success}</p>}
         <div className="settings-grid">

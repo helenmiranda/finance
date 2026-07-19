@@ -139,6 +139,7 @@ nav a.active { border-color: transparent; background: rgba(159, 232, 112, 0.11);
 .dashboard-header { align-items: flex-end; }
 .dashboard-header h1 { margin: 5px 0 8px; font-size: clamp(38px, 4vw, 56px); line-height: .95; }
 .primary-link { display: inline-flex; align-items: center; min-height: 46px; padding: 0 19px; border-radius: 999px; background: var(--primary); color: var(--primary-dark); font-size: 14px; font-weight: 800; text-decoration: none; }
+.secondary-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 17px; border: 1px solid var(--hairline); border-radius: 999px; background: rgba(255, 255, 255, .6); color: var(--primary-dark); font-size: 13px; font-weight: 800; text-decoration: none; }
 
 .overview-grid { display: grid; grid-template-columns: minmax(360px, 1.35fr) repeat(2, minmax(190px, .65fr)); gap: 12px; margin: 34px 0 12px; }
 .balance-card, .compact-metric, .clean-panel { border: 1px solid var(--hairline); background: rgba(255, 255, 255, .68); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
@@ -482,6 +483,12 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .finished-summary { display: flex; align-items: baseline; gap: 10px; margin-top: 16px; padding: 18px 22px; border-radius: 18px; background: var(--primary-dark); color: white; }
 .finished-summary strong { color: var(--primary); font-size: 24px; }
 .finished-summary span { color: #c7d8c0; font-size: 12px; }
+.rule-item { display: grid; grid-template-columns: 48px 1fr auto; align-items: center; gap: 14px; padding: 18px; border-radius: 22px; }
+.rule-item > div { display: grid; gap: 5px; }
+.rule-item small { color: var(--body); }
+.rule-item > div > span { color: var(--muted); font-size: 11px; }
+.quiet-danger { min-height: 38px; padding: 8px 12px; border: 1px solid rgba(208, 50, 56, .14); background: transparent; color: var(--danger); font-size: 11px; }
+.quiet-danger:hover { background: rgba(208, 50, 56, .07); }
 
 @media (max-width: 1000px) {
   .shell { grid-template-columns: 200px minmax(0, 1fr); }
@@ -539,6 +546,8 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
   .description-field { grid-column: 2 / -1; }
   .row-action { grid-column: 2 / -1; }
   .row-error { grid-column: 2 / -1; }
+  .rule-item { grid-template-columns: 44px 1fr; }
+  .rule-item form { grid-column: 2; }
 }
 
 @media (max-width: 1180px) and (min-width: 761px) {

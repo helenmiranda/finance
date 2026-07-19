@@ -75,6 +75,9 @@ export async function uploadImport(formData: FormData) {
     const { error: rowsError } = await supabase.from("import_rows").insert(payload);
     if (rowsError) throw rowsError;
 
+    const { error: rulesError } = await supabase.rpc("apply_categorization_rules", { target_import_id: importRecord.id });
+    if (rulesError) throw rulesError;
+
     await supabase.from("imports").update({ status: "review", row_count: rows.length }).eq("id", importRecord.id);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Não foi possível interpretar o arquivo.";

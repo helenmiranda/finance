@@ -105,7 +105,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - [x] Criar upload privado de arquivos.
 - [ ] Interpretar CSV, XLSX e OFX. *(CSV e OFX concluídos; XLSX pendente)*
 - [x] Criar tela inicial de pré-visualização.
-- [ ] Detectar duplicidades e aplicar regras de categorização. *(deduplicação concluída; regras automáticas pendentes)*
+- [x] Detectar duplicidades e aplicar regras de categorização.
 - [x] Confirmar importação em lote.
 
 ### Fase 5 — Planejamento e análises
@@ -152,3 +152,4 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Pagamento integral de faturas implementado como saída de caixa, sem duplicar a despesa original.
 - Upload privado, leitura de CSV/OFX e pré-visualização de extratos adicionados ao fluxo de importação.
 - Edição de linhas, categorias, itens ignorados, deduplicação e confirmação atômica adicionadas às importações.
+- Regras personalizadas de categorização automática aplicadas durante novos uploads.
