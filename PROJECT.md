@@ -175,6 +175,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Reconciliação incremental da Pluggy mantém lançamentos criados, alterados e removidos alinhados ao banco sem apagar o histórico familiar.
 - Central de sincronização mostra estado, horários, uso diário, falhas e último evento de cada conexão bancária.
 - Alertas familiares idempotentes avisam em 70%, 90%, 100% e quando o ritmo mensal projeta estouro do orçamento, com leitura individual por membro.
+- Detecção de anomalias compara cada despesa relevante à média de 90 dias da categoria e alerta sem repetir a mesma transação.
 
 ### Configuração do Supabase Cron
 
