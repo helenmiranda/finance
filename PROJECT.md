@@ -118,8 +118,8 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 ### Fase 6 — Assistente de IA
 
 - [x] Permitir perguntas sobre os dados financeiros.
-- [ ] Gerar resumos semanais e mensais.
-- [ ] Identificar desvios, excessos e oportunidades de economia.
+- [ ] Gerar resumos semanais e mensais. *(resumo mensal concluído; semanal pendente)*
+- [x] Identificar desvios, excessos e oportunidades de economia.
 - [ ] Criar simulações e planos de redução de gastos.
 - [ ] Registrar recomendações aceitas ou descartadas.
 
@@ -161,3 +161,4 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Gestão do espaço familiar com inclusão imediata ou entrada automática após cadastro pelo e-mail convidado.
 - Busca e filtros de transações, além de recategorização segura de até 100 lançamentos por vez.
 - Importação de planilhas XLSX pela primeira aba, com detecção automática de data, descrição e valor.
+- Resumo mensal automático no assistente com comparação histórica, maior categoria de gasto e alertas de orçamento.
