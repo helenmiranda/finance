@@ -384,6 +384,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .connected-institutions > span { display: grid; gap: 2px; padding: 9px 12px; border-radius: 14px; background: rgba(159, 232, 112, .18); }
 .connected-institutions strong { font-size: 11px; }
 .connected-institutions small { color: var(--muted); font-size: 9px; }
+.sync-connection { margin-top: 5px; padding: 7px 10px; font-size: 9px; }
 .settings-grid { display: grid; grid-template-columns: minmax(340px, .8fr) minmax(420px, 1.2fr); gap: 16px; align-items: start; }
 .form-card { padding: 30px; }
 .form-card > h2 { font-size: 26px; }

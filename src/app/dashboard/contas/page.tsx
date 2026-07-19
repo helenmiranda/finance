@@ -1,7 +1,7 @@
 import { DashboardShell } from "@/components/dashboard-shell";
 import { getAuthenticatedContext } from "@/lib/household";
 import { addAccount } from "../finance-actions";
-import { PluggyConnectButton } from "./pluggy-connect-button";
+import { PluggyConnectButton, PluggySyncButton } from "./pluggy-connect-button";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const accountTypes: Record<string, string> = {
@@ -11,11 +11,11 @@ const accountTypes: Record<string, string> = {
 type PageProps = { searchParams: Promise<{ error?: string; success?: string }> };
 
 export default async function AccountsPage({ searchParams }: PageProps) {
-  const { supabase, membership } = await getAuthenticatedContext();
+  const { supabase, membership, user } = await getAuthenticatedContext();
   const params = await searchParams;
   const [{ data: accounts }, { data: pluggyItems }] = membership ? await Promise.all([
     supabase.from("accounts").select("*").eq("household_id", membership.household_id).order("created_at"),
-    supabase.from("pluggy_items").select("id, connector_name, status, execution_status").eq("household_id", membership.household_id).order("updated_at", { ascending: false }),
+    supabase.from("pluggy_items").select("id, connector_name, status, execution_status, connected_by").eq("household_id", membership.household_id).order("updated_at", { ascending: false }),
   ]) : [{ data: [] }, { data: [] }];
 
   return (
@@ -24,7 +24,7 @@ export default async function AccountsPage({ searchParams }: PageProps) {
         <header><div><p className="eyebrow">CONFIGURAÇÕES</p><h1>Suas contas</h1><p className="muted">Cadastre onde o dinheiro da família fica guardado.</p></div></header>
         {params.error && <p className="form-message error">{params.error}</p>}
         {params.success && <p className="form-message success">{params.success}</p>}
-        <article className="card bank-connections"><div><p className="eyebrow">MEU PLUGGY</p><h2>Contas conectadas</h2><p className="muted">Conecte a instituição no Meu Pluggy, abra os detalhes da conexão e copie o Item ID. Cada membro deve vincular seus próprios IDs.</p></div><PluggyConnectButton />{Boolean(pluggyItems?.length) && <div className="connected-institutions">{pluggyItems?.map((item) => <span key={item.id}><strong>{item.connector_name}</strong><small>{item.status === "UPDATED" || item.execution_status === "SUCCESS" ? "Conectada" : "Atualizando"}</small></span>)}</div>}</article>
+        <article className="card bank-connections"><div><p className="eyebrow">MEU PLUGGY</p><h2>Contas conectadas</h2><p className="muted">Conecte a instituição no Meu Pluggy, abra os detalhes da conexão e copie o Item ID. Cada membro deve vincular seus próprios IDs.</p></div><PluggyConnectButton />{Boolean(pluggyItems?.length) && <div className="connected-institutions">{pluggyItems?.map((item) => <span key={item.id}><strong>{item.connector_name}</strong><small>{item.status === "UPDATED" || item.execution_status === "SUCCESS" ? "Conectada" : "Aguardando sincronização"}</small>{item.connected_by === user.id && <PluggySyncButton connectionId={item.id} />}</span>)}</div>}</article>
         <div className="settings-grid">
           <article className="card form-card">
             <h2>Adicionar conta</h2>
@@ -41,7 +41,7 @@ export default async function AccountsPage({ searchParams }: PageProps) {
           <section className="items-column">
             <div className="section-heading"><h2>Contas cadastradas</h2><span className="count-badge">{accounts?.length ?? 0}</span></div>
             {!accounts?.length && <article className="card empty-state"><span>＋</span><h2>Nenhuma conta ainda</h2><p className="muted">Adicione a primeira conta para começar.</p></article>}
-            {accounts?.map((account) => <article className="card account-item" key={account.id}><span className="item-color" style={{ background: account.color ?? "#9fe870" }} /><div><strong>{account.name}</strong><small>{account.institution_name || accountTypes[account.type]}</small></div><div className="item-value"><small>Saldo inicial</small><strong>{money.format(account.initial_balance_cents / 100)}</strong></div></article>)}
+            {accounts?.map((account) => <article className="card account-item" key={account.id}><span className="item-color" style={{ background: account.color ?? "#9fe870" }} /><div><strong>{account.name}</strong><small>{account.institution_name || accountTypes[account.type]}</small></div><div className="item-value"><small>{account.current_balance_cents == null ? "Saldo inicial" : "Saldo atual"}</small><strong>{money.format((account.current_balance_cents ?? account.initial_balance_cents) / 100)}</strong></div></article>)}
           </section>
         </div>
       </section>
