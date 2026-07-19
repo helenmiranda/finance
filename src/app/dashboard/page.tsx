@@ -93,7 +93,7 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
             <div className="insight-title"><span className="assistant-icon">✦</span><small>Assistente financeiro</small></div>
             <h2>{monthExpense > monthIncome && monthIncome > 0 ? "Os gastos passaram das entradas." : "Seu mês está organizado."}</h2>
             <p className="muted">{monthExpense > 0 ? `Até agora, a família gastou ${money.format(monthExpense / 100)} neste mês.` : "Adicione movimentações para receber análises personalizadas."}</p>
-            <Link href="/dashboard/recorrencias">Analisar recorrências →</Link>
+            <Link href="/dashboard/assistente">Conversar com o assistente →</Link>
           </aside>
         </section>
       </section>

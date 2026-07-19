@@ -2,7 +2,7 @@ import Link from "next/link";
 import { logout } from "@/app/auth/actions";
 
 type DashboardShellProps = {
-  active: "overview" | "transactions" | "categories" | "accounts" | "cards" | "imports" | "budgets";
+  active: "overview" | "transactions" | "categories" | "accounts" | "cards" | "imports" | "budgets" | "assistant";
   householdName?: string;
   children: React.ReactNode;
 };
@@ -15,7 +15,7 @@ const links = [
   { key: "cards", href: "/dashboard/cartoes", label: "Cartões" },
   { key: "imports", href: "/dashboard/importacoes", label: "Importações" },
   { key: "budgets", href: "/dashboard/orcamentos", label: "Orçamentos" },
-  { key: "assistant", href: "/dashboard#assistente", label: "Assistente IA" },
+  { key: "assistant", href: "/dashboard/assistente", label: "Assistente IA" },
 ];
 
 export function DashboardShell({ active, householdName = "Helen & Ramon", children }: DashboardShellProps) {

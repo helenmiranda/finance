@@ -117,7 +117,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 
 ### Fase 6 — Assistente de IA
 
-- [ ] Permitir perguntas sobre os dados financeiros.
+- [x] Permitir perguntas sobre os dados financeiros.
 - [ ] Gerar resumos semanais e mensais.
 - [ ] Identificar desvios, excessos e oportunidades de economia.
 - [ ] Criar simulações e planos de redução de gastos.
@@ -157,3 +157,4 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Metas financeiras compartilhadas com prazo, progresso e histórico de aportes.
 - Projeção financeira de seis meses com médias históricas, faturas pendentes e ritmo necessário para metas.
 - Detecção de gastos recorrentes com cadência, impacto mensal/anual e indicador de confiança.
+- Assistente com IA conectado à Responses API, contexto financeiro minimizado e conversas persistentes.
