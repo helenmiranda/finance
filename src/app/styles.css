@@ -587,7 +587,11 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .monthly-briefing { overflow: hidden; margin-bottom: 14px; border: 1px solid var(--hairline); border-radius: 24px; background: rgba(255, 255, 255, .62); backdrop-filter: blur(18px); }
 .briefing-heading { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px 14px; }
 .briefing-heading h2 { margin: 3px 0 0; font-size: 20px; text-transform: capitalize; }
-.briefing-heading > span { padding: 7px 11px; border-radius: 999px; background: rgba(159, 232, 112, .25); color: var(--primary-dark); font-size: 11px; font-weight: 800; }
+.briefing-controls { display: flex; align-items: center; gap: 10px; }
+.briefing-controls nav { display: flex; padding: 3px; border: 1px solid var(--hairline); border-radius: 999px; background: rgba(255, 255, 255, .65); }
+.briefing-controls a { padding: 5px 9px; border-radius: 999px; color: var(--muted); font-size: 10px; font-weight: 800; text-decoration: none; }
+.briefing-controls a.active { background: var(--primary-dark); color: var(--primary); }
+.briefing-controls > span { padding: 7px 11px; border-radius: 999px; background: rgba(159, 232, 112, .25); color: var(--primary-dark); font-size: 11px; font-weight: 800; }
 .briefing-metrics { display: grid; grid-template-columns: repeat(3, 1fr); border-block: 1px solid var(--hairline); }
 .briefing-metrics article { display: grid; gap: 5px; padding: 15px 22px; }
 .briefing-metrics article + article { border-left: 1px solid var(--hairline); }
@@ -716,6 +720,8 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
   .recurring-summary { grid-template-columns: 1fr; }
   .recurring-list { grid-template-columns: 1fr; }
   .assistant-page-content { height: auto; min-height: calc(100vh - 20px); }
+  .briefing-heading { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .briefing-controls { width: 100%; justify-content: space-between; }
   .briefing-metrics { grid-template-columns: 1fr; }
   .briefing-metrics article + article { border-top: 1px solid var(--hairline); border-left: 0; }
   .assistant-chat { min-height: 680px; }
