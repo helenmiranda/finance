@@ -19,6 +19,10 @@ export async function getPluggyApiKey() {
 export async function pluggyRequest<T>(path: string, init?: RequestInit): Promise<T> {
   const apiKey = await getPluggyApiKey();
   const response = await fetch(`${PLUGGY_API_URL}${path}`, { ...init, headers: { "Content-Type": "application/json", "X-API-KEY": apiKey, ...init?.headers }, cache: "no-store" });
-  if (!response.ok) throw new Error(`A Pluggy respondeu com o código ${response.status}.`);
+  if (!response.ok) {
+    const body = await response.json().catch(() => null) as { message?: string; codeDescription?: string } | null;
+    const detail = body?.message || body?.codeDescription;
+    throw new Error(detail ? `Pluggy: ${detail}` : `A Pluggy respondeu com o código ${response.status}.`);
+  }
   return response.json() as Promise<T>;
 }

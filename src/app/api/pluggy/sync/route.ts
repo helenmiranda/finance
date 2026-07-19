@@ -37,7 +37,7 @@ async function syncTransactions(
 ) {
   const fromDate = new Date();
   fromDate.setUTCFullYear(fromDate.getUTCFullYear() - 1);
-  let path: string | null = `/v2/transactions?accountId=${encodeURIComponent(remote.id)}&from=${fromDate.toISOString().slice(0, 10)}`;
+  let path: string | null = `/v2/transactions?accountId=${encodeURIComponent(remote.id)}&dateFrom=${fromDate.toISOString().slice(0, 10)}`;
   let imported = 0;
   let page = 0;
   while (path && page < 12) {
