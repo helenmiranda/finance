@@ -169,4 +169,13 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Aplicação preparada como PWA instalável, com manifesto, ícones, modo standalone e tela offline sem cache de dados financeiros.
 - Importação idempotente de até doze meses de transações Pluggy adicionada para contas e cartões, preservando itens pendentes.
 - Sincronização e consolidação patrimonial de investimentos Pluggy adicionadas, incluindo renda fixa, fundos, renda variável, ETFs, previdência e COE.
-- Até três atualizações bancárias por dia: primeira abertura pela manhã e à tarde, mais rotina garantida às 22h, todas com trava idempotente.
+- Até três atualizações bancárias por dia: primeira abertura pela manhã e à tarde, mais rotina garantida às 22h pelo Supabase Cron, todas com trava idempotente.
+
+### Configuração do Supabase Cron
+
+Depois de aplicar a migration `202607190016_supabase_pluggy_cron.sql`, cadastre no **Supabase > Vault**:
+
+- `poupemos_app_url`: URL pública do Poupemos, sem caminho (ex.: `https://seu-app.vercel.app`).
+- `poupemos_cron_secret`: o mesmo valor de `CRON_SECRET` configurado no ambiente de produção da Vercel.
+
+O job `poupemos-pluggy-night-refresh` roda diariamente às `01:00 UTC` (22h em Brasília) e chama o endpoint protegido `/api/cron/pluggy-refresh`. O histórico pode ser acompanhado em **Supabase > Integrations > Cron > Jobs**.
