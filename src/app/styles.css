@@ -215,6 +215,7 @@ button {
 }
 
 button:hover { background: var(--primary-active); transform: scale(1.025); }
+button:disabled { background: #e2f6d5; color: var(--muted); cursor: not-allowed; transform: none; }
 
 .icon-button {
   display: grid;
@@ -464,6 +465,23 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .review-table th { padding: 13px 16px; color: var(--muted); font-size: 10px; letter-spacing: .05em; text-align: left; text-transform: uppercase; }
 .review-table td { padding: 14px 16px; border-top: 1px solid var(--hairline); white-space: nowrap; }
 .review-table td:nth-child(3) { max-width: 340px; overflow: hidden; text-overflow: ellipsis; }
+.review-header { align-items: flex-end; }
+.review-header form { flex: 0 0 auto; }
+.editable-rows { display: grid; gap: 8px; }
+.editable-row { display: grid; grid-template-columns: 34px 138px minmax(220px, 1.4fr) 120px 130px minmax(170px, 1fr) 110px 72px; align-items: end; gap: 9px; padding: 14px; border: 1px solid var(--hairline); border-radius: 18px; background: rgba(255, 255, 255, .65); }
+.editable-row label { gap: 5px; font-size: 10px; }
+.editable-row input, .editable-row select { height: 42px; border-radius: 12px; padding: 0 10px; font-size: 12px; }
+.editable-row input:disabled, .editable-row select:disabled { opacity: .7; cursor: default; }
+.row-number { align-self: center; color: var(--muted); font-size: 11px; text-align: center; }
+.row-action { display: grid; align-items: center; min-height: 42px; }
+.row-action button { min-height: 42px; padding: 8px 11px; font-size: 11px; }
+.row-error { grid-column: 2 / -1; color: var(--danger); font-size: 11px; }
+.editable-row.locked { background: rgba(232, 235, 230, .45); }
+.row-status.duplicate { background: rgba(255, 209, 26, .18); color: #765a00; }
+.row-status.confirmed { background: rgba(159, 232, 112, .3); color: var(--primary-dark); }
+.finished-summary { display: flex; align-items: baseline; gap: 10px; margin-top: 16px; padding: 18px 22px; border-radius: 18px; background: var(--primary-dark); color: white; }
+.finished-summary strong { color: var(--primary); font-size: 24px; }
+.finished-summary span { color: #c7d8c0; font-size: 12px; }
 
 @media (max-width: 1000px) {
   .shell { grid-template-columns: 200px minmax(0, 1fr); }
@@ -516,6 +534,18 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
   .compact-transaction time { display: none; }
   .statement-payment form { grid-template-columns: 1fr; }
   .review-summary { align-items: stretch; flex-direction: column; }
+  .review-header { align-items: flex-start; }
+  .editable-row { grid-template-columns: 32px 1fr 1fr; }
+  .description-field { grid-column: 2 / -1; }
+  .row-action { grid-column: 2 / -1; }
+  .row-error { grid-column: 2 / -1; }
+}
+
+@media (max-width: 1180px) and (min-width: 761px) {
+  .editable-row { grid-template-columns: 34px 130px minmax(190px, 1fr) 110px 120px; }
+  .editable-row label:nth-of-type(5) { grid-column: 2 / 4; }
+  .editable-row label:nth-of-type(6) { grid-column: 4; }
+  .row-action { grid-column: 5; }
 }
 
 @media (prefers-reduced-motion: reduce) {

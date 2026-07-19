@@ -1,10 +1,21 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { getAuthenticatedContext } from "@/lib/household";
 import { parseCsv, parseOfx } from "@/lib/imports/parser";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+function text(formData: FormData, key: string) {
+  return String(formData.get(key) ?? "").trim();
+}
+
+function amountInCents(value: string) {
+  const normalized = value.replace(/\s/g, "").replace(/\./g, "").replace(",", ".");
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed * 100) : null;
+}
 
 export async function uploadImport(formData: FormData) {
   const { supabase, membership, user } = await getAuthenticatedContext();
@@ -71,4 +82,69 @@ export async function uploadImport(formData: FormData) {
   }
 
   redirect(`/dashboard/importacoes/${importRecord.id}`);
+}
+
+export async function updateImportRow(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const rowId = text(formData, "row_id");
+  const importId = text(formData, "import_id");
+  const reviewStatus = text(formData, "review_status");
+
+  if (reviewStatus === "ignored") {
+    const { error } = await supabase.from("import_rows").update({ review_status: "ignored" })
+      .eq("id", rowId).eq("import_id", importId).eq("household_id", membership.household_id);
+    if (error) redirect(`/dashboard/importacoes/${importId}?error=${encodeURIComponent("Não foi possível ignorar a linha.")}`);
+    revalidatePath(`/dashboard/importacoes/${importId}`);
+    redirect(`/dashboard/importacoes/${importId}?success=Linha%20ignorada.`);
+  }
+
+  const occurredOn = text(formData, "occurred_on");
+  const description = text(formData, "description");
+  const amount = amountInCents(text(formData, "amount"));
+  const suggestedType = text(formData, "suggested_type");
+  const categoryId = text(formData, "category_id") || null;
+  if (!occurredOn || !description || !amount || !["income", "expense"].includes(suggestedType)) {
+    redirect(`/dashboard/importacoes/${importId}?error=${encodeURIComponent("Confira os dados da linha.")}`);
+  }
+
+  if (categoryId) {
+    const { data: category } = await supabase.from("categories").select("id, kind")
+      .eq("id", categoryId).eq("household_id", membership.household_id).maybeSingle();
+    if (!category || category.kind !== suggestedType) {
+      redirect(`/dashboard/importacoes/${importId}?error=${encodeURIComponent("A categoria não corresponde ao tipo da movimentação.")}`);
+    }
+  }
+
+  const { error } = await supabase.from("import_rows").update({
+    occurred_on: occurredOn,
+    description,
+    amount_cents: amount,
+    suggested_type: suggestedType,
+    category_id: categoryId,
+    parse_error: null,
+    review_status: "ready",
+  }).eq("id", rowId).eq("import_id", importId).eq("household_id", membership.household_id);
+
+  if (error) redirect(`/dashboard/importacoes/${importId}?error=${encodeURIComponent("Não foi possível salvar a linha.")}`);
+  revalidatePath(`/dashboard/importacoes/${importId}`);
+  redirect(`/dashboard/importacoes/${importId}?success=Linha%20atualizada.`);
+}
+
+export async function confirmImport(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const importId = text(formData, "import_id");
+  if (!importId) redirect("/dashboard/importacoes");
+
+  const { data, error } = await supabase.rpc("confirm_import", { target_import_id: importId });
+  if (error) redirect(`/dashboard/importacoes/${importId}?error=${encodeURIComponent(error.message)}`);
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/transacoes");
+  revalidatePath("/dashboard/cartoes");
+  revalidatePath("/dashboard/importacoes");
+  revalidatePath(`/dashboard/importacoes/${importId}`);
+  const result = data as { confirmed?: number; duplicates?: number } | null;
+  redirect(`/dashboard/importacoes/${importId}?success=${encodeURIComponent(`${result?.confirmed ?? 0} movimentações importadas; ${result?.duplicates ?? 0} duplicadas ignoradas.`)}`);
 }
