@@ -164,4 +164,4 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Resumo mensal automático no assistente com comparação histórica, maior categoria de gasto e alertas de orçamento.
 - Visão semanal adicionada ao resumo automático, com comparação direta à semana anterior.
 - Simulador de economia mensal criado com plano proporcional baseado na média das principais categorias dos últimos três meses.
-- Fundação da integração Pluggy adicionada com autenticação no servidor, Connect Token individual, widget oficial e registro seguro das conexões por membro.
+- Fundação da integração Meu Pluggy adicionada com autenticação no servidor e vínculo seguro dos Item IDs existentes por membro da família.

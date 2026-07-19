@@ -24,7 +24,7 @@ export default async function AccountsPage({ searchParams }: PageProps) {
         <header><div><p className="eyebrow">CONFIGURAÇÕES</p><h1>Suas contas</h1><p className="muted">Cadastre onde o dinheiro da família fica guardado.</p></div></header>
         {params.error && <p className="form-message error">{params.error}</p>}
         {params.success && <p className="form-message success">{params.success}</p>}
-        <article className="card bank-connections"><div><p className="eyebrow">OPEN FINANCE</p><h2>Contas conectadas</h2><p className="muted">Conecte bancos e cartões com segurança pela Pluggy. As credenciais bancárias não passam pelo Poupemos.</p></div><PluggyConnectButton />{Boolean(pluggyItems?.length) && <div className="connected-institutions">{pluggyItems?.map((item) => <span key={item.id}><strong>{item.connector_name}</strong><small>{item.status === "UPDATED" || item.execution_status === "SUCCESS" ? "Conectada" : "Atualizando"}</small></span>)}</div>}</article>
+        <article className="card bank-connections"><div><p className="eyebrow">MEU PLUGGY</p><h2>Contas conectadas</h2><p className="muted">Conecte a instituição no Meu Pluggy, abra os detalhes da conexão e copie o Item ID. Cada membro deve vincular seus próprios IDs.</p></div><PluggyConnectButton />{Boolean(pluggyItems?.length) && <div className="connected-institutions">{pluggyItems?.map((item) => <span key={item.id}><strong>{item.connector_name}</strong><small>{item.status === "UPDATED" || item.execution_status === "SUCCESS" ? "Conectada" : "Atualizando"}</small></span>)}</div>}</article>
         <div className="settings-grid">
           <article className="card form-card">
             <h2>Adicionar conta</h2>

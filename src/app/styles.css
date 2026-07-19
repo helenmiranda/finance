@@ -376,7 +376,9 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .bank-connections { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 18px; margin-bottom: 16px; }
 .bank-connections h2 { margin: 5px 0 7px; font-size: 23px; }
 .bank-connections p { max-width: 660px; margin: 0; }
-.pluggy-connect-action { display: grid; gap: 7px; justify-items: end; }
+.pluggy-connect-action { display: grid; grid-template-columns: minmax(250px, 1fr) auto; align-items: end; gap: 7px; }
+.pluggy-connect-action label { grid-column: 1 / -1; }
+.pluggy-connect-action input { margin-top: 6px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
 .pluggy-connect-action small { max-width: 300px; font-size: 10px; text-align: right; }
 .connected-institutions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; padding-top: 14px; border-top: 1px solid var(--hairline); }
 .connected-institutions > span { display: grid; gap: 2px; padding: 9px 12px; border-radius: 14px; background: rgba(159, 232, 112, .18); }
@@ -698,7 +700,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
   .insight-panel { min-height: 250px; }
   .settings-grid { grid-template-columns: 1fr; }
   .bank-connections { grid-template-columns: 1fr; }
-  .pluggy-connect-action { justify-items: stretch; }
+  .pluggy-connect-action { grid-template-columns: 1fr; }
   .pluggy-connect-action small { max-width: none; text-align: left; }
   .transaction-settings-grid { grid-template-columns: 1fr; }
   .import-layout { grid-template-columns: 1fr; }
