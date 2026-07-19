@@ -5,19 +5,20 @@ import { addTransaction, addTransfer, bulkCategorizeTransactions } from "../fina
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const date = new Intl.DateTimeFormat("pt-BR");
-type PageProps = { searchParams: Promise<{ error?: string; success?: string; q?: string; type?: string; category?: string; source?: string; from?: string; to?: string }> };
+type PageProps = { searchParams: Promise<{ error?: string; success?: string; q?: string; type?: string; category?: string; source?: string; from?: string; to?: string; review?: string }> };
 
 export default async function TransactionsPage({ searchParams }: PageProps) {
   const { supabase, membership } = await getAuthenticatedContext();
   const params = await searchParams;
   const householdId = membership?.household_id;
-  const [{ data: categories }, { data: accounts }, { data: cards }] = householdId
+  const [{ data: categories }, { data: accounts }, { data: cards }, { count: uncategorizedCount }] = householdId
     ? await Promise.all([
         supabase.from("categories").select("id, name, kind").eq("household_id", householdId).eq("is_active", true).order("name"),
         supabase.from("accounts").select("id, name").eq("household_id", householdId).eq("is_active", true).order("name"),
         supabase.from("credit_cards").select("id, name").eq("household_id", householdId).eq("is_active", true).order("name"),
+        supabase.from("transactions").select("id", { count: "exact", head: true }).eq("household_id", householdId).in("type", ["income", "expense"]).is("category_id", null),
       ])
-    : [{ data: [] }, { data: [] }, { data: [] }];
+    : [{ data: [] }, { data: [] }, { data: [] }, { count: 0 }];
 
   let transactionQuery = supabase.from("transactions")
     .select("*, categories(name), accounts(name), credit_cards(name)")
@@ -26,6 +27,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
   if (params.q?.trim()) transactionQuery = transactionQuery.ilike("description", `%${params.q.trim()}%`);
   if (params.type && ["income", "expense", "transfer", "card_payment"].includes(params.type)) transactionQuery = transactionQuery.eq("type", params.type);
   if (params.category) transactionQuery = transactionQuery.eq("category_id", params.category);
+  if (params.review === "uncategorized") transactionQuery = transactionQuery.in("type", ["income", "expense"]).is("category_id", null);
   if (params.from) transactionQuery = transactionQuery.gte("occurred_on", params.from);
   if (params.to) transactionQuery = transactionQuery.lte("occurred_on", params.to);
   if (params.source) {
@@ -34,12 +36,12 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
     if (kind === "card" && id) transactionQuery = transactionQuery.eq("credit_card_id", id);
   }
   const { data: transactions } = await transactionQuery;
-  const hasFilters = Boolean(params.q || params.type || params.category || params.source || params.from || params.to);
+  const hasFilters = Boolean(params.q || params.type || params.category || params.source || params.from || params.to || params.review);
 
   return (
     <DashboardShell active="transactions">
       <section className="content settings-content">
-        <header><div><p className="eyebrow">MOVIMENTAÇÕES</p><h1>Transações</h1><p className="muted">Registre, encontre e organize os lançamentos.</p></div></header>
+        <header><div><p className="eyebrow">MOVIMENTAÇÕES</p><h1>Transações</h1><p className="muted">Registre, encontre e organize os lançamentos.</p></div>{Boolean(uncategorizedCount) && <Link className="secondary-link" href="/dashboard/transacoes?review=uncategorized">Revisar sem categoria · {uncategorizedCount}</Link>}</header>
         {params.error && <p className="form-message error">{params.error}</p>}{params.success && <p className="form-message success">{params.success}</p>}
 
         <details className="transaction-create card"><summary>+ Novo lançamento ou transferência</summary><div className="transaction-create-grid">
@@ -50,7 +52,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
         <form className="transaction-filters" method="get"><label className="search-field">Buscar<input name="q" defaultValue={params.q} placeholder="Descrição do lançamento" /></label><label>Tipo<select name="type" defaultValue={params.type ?? ""}><option value="">Todos</option><option value="expense">Despesas</option><option value="income">Receitas</option><option value="transfer">Transferências</option><option value="card_payment">Pagamentos de fatura</option></select></label><label>Categoria<select name="category" defaultValue={params.category ?? ""}><option value="">Todas</option>{categories?.map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}</select></label><label>Conta ou cartão<select name="source" defaultValue={params.source ?? ""}><option value="">Todos</option>{accounts?.map((account) => <option value={`account:${account.id}`} key={account.id}>Conta · {account.name}</option>)}{cards?.map((card) => <option value={`card:${card.id}`} key={card.id}>Cartão · {card.name}</option>)}</select></label><label>De<input name="from" type="date" defaultValue={params.from} /></label><label>Até<input name="to" type="date" defaultValue={params.to} /></label><button type="submit">Filtrar</button>{hasFilters && <Link href="/dashboard/transacoes">Limpar</Link>}</form>
 
         <form action={bulkCategorizeTransactions} className="bulk-form">
-          <div className="bulk-toolbar"><div><strong>{transactions?.length ?? 0}</strong><span> resultados</span></div><label>Alterar categoria dos selecionados<select name="category_id" defaultValue="" required><option value="" disabled>Selecione</option>{categories?.map((category) => <option value={category.id} key={category.id}>{category.name} · {category.kind === "income" ? "Receita" : "Despesa"}</option>)}</select></label><button type="submit">Aplicar</button></div>
+          <div className="bulk-toolbar"><div><strong>{transactions?.length ?? 0}</strong><span> resultados</span></div><label>Alterar categoria dos selecionados<select name="category_id" defaultValue="" required><option value="" disabled>Selecione</option>{categories?.map((category) => <option value={category.id} key={category.id}>{category.name} · {category.kind === "income" ? "Receita" : "Despesa"}</option>)}</select></label><label className="checkbox-label"><input name="remember_rule" type="checkbox" defaultChecked /> Lembrar descrições</label><button type="submit">Aplicar</button></div>
           {!transactions?.length && <article className="card empty-state"><span>⌕</span><h2>Nenhum lançamento encontrado</h2><p className="muted">Tente remover alguns filtros.</p></article>}
           {!!transactions?.length && <article className="card transaction-table filtered-table">{transactions.map((transaction) => {
             const incoming = transaction.type === "income" || transaction.transfer_direction === "in";

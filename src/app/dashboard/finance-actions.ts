@@ -405,7 +405,7 @@ export async function bulkCategorizeTransactions(formData: FormData) {
     .eq("id", categoryId).eq("household_id", membership.household_id).eq("is_active", true).maybeSingle();
   if (!category) redirect("/dashboard/transacoes?error=Categoria%20inválida.");
 
-  const { data: selected } = await supabase.from("transactions").select("id, type")
+  const { data: selected } = await supabase.from("transactions").select("id, type, description")
     .eq("household_id", membership.household_id).in("id", transactionIds);
   if (!selected || selected.length !== transactionIds.length || selected.some((item) => item.type !== category.kind)) {
     redirect("/dashboard/transacoes?error=A%20categoria%20deve%20ter%20o%20mesmo%20tipo%20de%20todos%20os%20lançamentos.");
@@ -414,6 +414,30 @@ export async function bulkCategorizeTransactions(formData: FormData) {
   const { error } = await supabase.from("transactions").update({ category_id: categoryId })
     .eq("household_id", membership.household_id).in("id", transactionIds);
   if (error) redirect("/dashboard/transacoes?error=Não%20foi%20possível%20alterar%20as%20categorias.");
+  if (formData.get("remember_rule") === "on") {
+    const { data: existingRules } = await supabase.from("categorization_rules").select("id, pattern")
+      .eq("household_id", membership.household_id).eq("match_type", "exact");
+    const normalize = (value: string) => value.trim().toLocaleLowerCase("pt-BR");
+    const patterns = [...new Set(selected.map((item) => item.description.trim()).filter(Boolean))];
+    const selectedPatterns = new Set(patterns.map(normalize));
+    const matchingRules = (existingRules ?? []).filter((rule) => selectedPatterns.has(normalize(rule.pattern)));
+    if (matchingRules.length) {
+      await supabase.from("categorization_rules").update({ category_id: categoryId, priority: 200, is_active: true })
+        .eq("household_id", membership.household_id).in("id", matchingRules.map((rule) => rule.id));
+    }
+    const existing = new Set((existingRules ?? []).map((rule) => normalize(rule.pattern)));
+    const newPatterns = patterns.filter((pattern) => !existing.has(normalize(pattern)));
+    if (newPatterns.length) {
+      await supabase.from("categorization_rules").insert(newPatterns.map((pattern) => ({
+        household_id: membership.household_id,
+        category_id: categoryId,
+        name: `Aprendido: ${pattern}`.slice(0, 120),
+        pattern,
+        match_type: "exact",
+        priority: 200,
+      })));
+    }
+  }
   revalidatePath("/dashboard/transacoes");
   revalidatePath("/dashboard");
   redirect(`/dashboard/transacoes?success=${encodeURIComponent(`${transactionIds.length} lançamentos atualizados.`)}`);

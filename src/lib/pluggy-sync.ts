@@ -10,8 +10,12 @@ type PluggyAccount = {
 
 type PluggyTransaction = {
   id: string; description?: string | null; descriptionRaw?: string | null; amount: number; date: string;
-  type?: "CREDIT" | "DEBIT"; status?: "POSTED" | "PENDING";
+  type?: "CREDIT" | "DEBIT"; status?: "POSTED" | "PENDING"; category?: string | null; categoryId?: string | null;
 };
+
+type LocalCategory = { id: string; name: string; kind: "income" | "expense"; parent_id: string | null };
+type CategorizationRule = { category_id: string; pattern: string; match_type: "contains" | "starts_with" | "exact"; priority: number };
+type CategorizationContext = { categories: LocalCategory[]; rules: CategorizationRule[] };
 
 type PluggyInvestment = {
   id: string; name: string; code?: string | null; isin?: string | null; owner?: string | null; currencyCode?: string | null;
@@ -33,6 +37,55 @@ const cents = (value?: number | null) => value == null || !Number.isFinite(value
 const day = (value?: string | null) => value ? new Date(`${value.slice(0, 10)}T12:00:00Z`).getUTCDate() : null;
 const accountType = (subtype?: string) => subtype === "SAVINGS_ACCOUNT" ? "savings" : subtype === "INVESTMENT_ACCOUNT" ? "investment" : "checking";
 const localDate = (value: string) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(value));
+const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR").replace(/[^a-z0-9]+/g, " ").trim();
+
+const pluggyAliases: Record<string, string[]> = {
+  groceries: ["supermercado", "mercado", "alimentacao"],
+  "food and drinks": ["alimentacao", "restaurantes"],
+  "eating out": ["restaurantes", "alimentacao"],
+  "food delivery": ["delivery", "alimentacao"],
+  housing: ["moradia", "casa"],
+  utilities: ["contas", "moradia"],
+  healthcare: ["saude"],
+  pharmacy: ["farmacia", "saude"],
+  transportation: ["transporte"],
+  automotive: ["automovel", "carro", "transporte"],
+  shopping: ["compras"],
+  leisure: ["lazer"],
+  travel: ["viagens", "viagem"],
+  education: ["educacao"],
+  services: ["servicos"],
+  insurance: ["seguros", "seguro"],
+  "bank fees": ["tarifas bancarias", "tarifas"],
+  salary: ["salario", "receitas"],
+  income: ["receitas", "salario"],
+};
+
+function categoryFor(transaction: PluggyTransaction, type: "income" | "expense", context: CategorizationContext) {
+  const description = normalize(transaction.description || transaction.descriptionRaw || "");
+  const categoryIds = new Set(context.categories.filter((category) => category.kind === type).map((category) => category.id));
+  const rule = context.rules.find((item) => {
+    const pattern = normalize(item.pattern);
+    return pattern && categoryIds.has(item.category_id) && (
+      (item.match_type === "exact" && description === pattern)
+      || (item.match_type === "starts_with" && description.startsWith(pattern))
+      || (item.match_type === "contains" && description.includes(pattern))
+    );
+  });
+  if (rule) return rule.category_id;
+
+  const remoteName = normalize(transaction.category ?? "");
+  if (!remoteName) return null;
+  const candidates = context.categories.filter((category) => category.kind === type);
+  const exact = candidates.find((category) => normalize(category.name) === remoteName);
+  if (exact) return exact.id;
+  const aliases = pluggyAliases[remoteName] ?? [];
+  for (const alias of aliases) {
+    const match = candidates.find((category) => normalize(category.name) === alias);
+    if (match) return match.id;
+  }
+  return null;
+}
 
 async function syncTransactions(
   supabase: SupabaseClient,
@@ -40,6 +93,7 @@ async function syncTransactions(
   mapping: { id: string; account_id: string | null; credit_card_id: string | null },
   householdId: string,
   userId: string,
+  categorization: CategorizationContext,
 ) {
   const fromDate = new Date();
   fromDate.setUTCFullYear(fromDate.getUTCFullYear() - 1);
@@ -56,19 +110,23 @@ async function syncTransactions(
     const existingIds = new Set((existing ?? []).map((item) => item.pluggy_transaction_id));
     const pendingRows = rows.filter((transaction) => !existingIds.has(transaction.id));
     if (pendingRows.length) {
-      const payload = pendingRows.map((transaction) => ({
-        household_id: householdId,
-        account_id: remote.type === "BANK" ? mapping.account_id : null,
-        credit_card_id: remote.type === "CREDIT" ? mapping.credit_card_id : null,
-        created_by: userId,
-        type: remote.type === "CREDIT" ? "expense" : transaction.type === "CREDIT" ? "income" : "expense",
-        description: transaction.description || transaction.descriptionRaw || "Movimentação Pluggy",
-        amount_cents: Math.abs(Math.round(transaction.amount * 100)),
-        occurred_on: localDate(transaction.date),
-        status: transaction.status === "PENDING" ? "pending" : "confirmed",
-        source: "api",
-        source_fingerprint: `pluggy:${transaction.id}`,
-      }));
+      const payload = pendingRows.map((transaction) => {
+        const type = remote.type === "CREDIT" ? "expense" : transaction.type === "CREDIT" ? "income" : "expense";
+        return {
+          household_id: householdId,
+          account_id: remote.type === "BANK" ? mapping.account_id : null,
+          credit_card_id: remote.type === "CREDIT" ? mapping.credit_card_id : null,
+          created_by: userId,
+          type,
+          category_id: categoryFor(transaction, type, categorization),
+          description: transaction.description || transaction.descriptionRaw || "Movimentação Pluggy",
+          amount_cents: Math.abs(Math.round(transaction.amount * 100)),
+          occurred_on: localDate(transaction.date),
+          status: transaction.status === "PENDING" ? "pending" : "confirmed",
+          source: "api",
+          source_fingerprint: `pluggy:${transaction.id}`,
+        };
+      });
       const { data: created, error } = await supabase.from("transactions").insert(payload).select("id, source_fingerprint");
       if (error || !created) throw error ?? new Error("Não foi possível importar as transações.");
       const remoteByFingerprint = new Map(pendingRows.map((transaction) => [`pluggy:${transaction.id}`, transaction.id]));
@@ -122,6 +180,11 @@ async function syncInvestments(supabase: SupabaseClient, itemId: string, connect
 }
 
 export async function syncPluggyConnection(supabase: SupabaseClient, connection: PluggyConnection) {
+  const [{ data: categories }, { data: rules }] = await Promise.all([
+    supabase.from("categories").select("id, name, kind, parent_id").eq("household_id", connection.household_id).eq("is_active", true),
+    supabase.from("categorization_rules").select("category_id, pattern, match_type, priority").eq("household_id", connection.household_id).eq("is_active", true).order("priority", { ascending: false }).order("created_at"),
+  ]);
+  const categorization = { categories: (categories ?? []) as LocalCategory[], rules: (rules ?? []) as CategorizationRule[] };
   const response = await pluggyRequest<{ results?: PluggyAccount[] }>(`/accounts?itemId=${encodeURIComponent(connection.pluggy_item_id)}`);
   const remoteAccounts = response.results ?? [];
   let bankCount = 0;
@@ -163,7 +226,7 @@ export async function syncPluggyConnection(supabase: SupabaseClient, connection:
     }
     const { data: currentMapping, error: mappingReadError } = await supabase.from("pluggy_accounts").select("id, account_id, credit_card_id").eq("pluggy_account_id", remote.id).single();
     if (mappingReadError || !currentMapping) throw mappingReadError ?? new Error("Mapeamento da conta não encontrado.");
-    transactionCount += await syncTransactions(supabase, remote, currentMapping, connection.household_id, connection.connected_by);
+    transactionCount += await syncTransactions(supabase, remote, currentMapping, connection.household_id, connection.connected_by, categorization);
   }
   const investmentCount = await syncInvestments(supabase, connection.pluggy_item_id, connection.id, connection.household_id);
   await supabase.from("pluggy_items").update({ last_synced_at: new Date().toISOString(), status: "UPDATED", error_code: null }).eq("id", connection.id);
