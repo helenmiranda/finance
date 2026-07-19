@@ -111,7 +111,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 ### Fase 5 — Planejamento e análises
 
 - [ ] Criar dashboard e gráficos.
-- [ ] Criar orçamentos por categoria.
+- [x] Criar orçamentos por categoria.
 - [ ] Criar metas e projeções.
 - [ ] Detectar assinaturas e gastos recorrentes.
 
@@ -153,3 +153,4 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Upload privado, leitura de CSV/OFX e pré-visualização de extratos adicionados ao fluxo de importação.
 - Edição de linhas, categorias, itens ignorados, deduplicação e confirmação atômica adicionadas às importações.
 - Regras personalizadas de categorização automática aplicadas durante novos uploads.
+- Orçamentos mensais por categoria com progresso, saldo disponível e alertas de limite.

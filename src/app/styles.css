@@ -489,6 +489,25 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .rule-item > div > span { color: var(--muted); font-size: 11px; }
 .quiet-danger { min-height: 38px; padding: 8px 12px; border: 1px solid rgba(208, 50, 56, .14); background: transparent; color: var(--danger); font-size: 11px; }
 .quiet-danger:hover { background: rgba(208, 50, 56, .07); }
+.month-switcher { display: flex; align-items: center; gap: 12px; padding: 6px; border: 1px solid var(--hairline); border-radius: 999px; background: rgba(255, 255, 255, .58); }
+.month-switcher a { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: var(--primary-dark); text-decoration: none; }
+.month-switcher a:hover { background: var(--primary); }
+.month-switcher strong { min-width: 130px; font-size: 12px; text-align: center; text-transform: capitalize; }
+.budget-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; overflow: hidden; margin-bottom: 16px; border: 1px solid var(--hairline); border-radius: 22px; background: var(--hairline); }
+.budget-summary > div { display: grid; gap: 8px; padding: 20px 24px; background: rgba(255, 255, 255, .72); }
+.budget-summary span { color: var(--muted); font-size: 11px; }
+.budget-summary strong { font-size: 23px; letter-spacing: -.035em; }
+.budget-grid { grid-template-columns: minmax(300px, .6fr) minmax(480px, 1.4fr); }
+.budget-item { display: grid; gap: 16px; padding: 20px; border-radius: 22px; }
+.budget-title { display: grid; grid-template-columns: 46px 1fr auto; align-items: center; gap: 12px; }
+.budget-title > div { display: grid; gap: 4px; }
+.budget-title small { color: var(--muted); }
+.progress-track { height: 7px; overflow: hidden; border-radius: 999px; background: #e8ebe6; }
+.progress-track span { display: block; height: 100%; border-radius: inherit; background: #67b87e; }
+.progress-track span.warning { background: #e6b63e; }
+.progress-track span.over { background: var(--danger); }
+.budget-values { display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; }
+.budget-values strong { color: var(--ink); }
 
 @media (max-width: 1000px) {
   .shell { grid-template-columns: 200px minmax(0, 1fr); }
@@ -548,6 +567,9 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
   .row-error { grid-column: 2 / -1; }
   .rule-item { grid-template-columns: 44px 1fr; }
   .rule-item form { grid-column: 2; }
+  .budget-summary { grid-template-columns: 1fr; }
+  .budget-grid { grid-template-columns: 1fr; }
+  .month-switcher { width: 100%; justify-content: space-between; }
 }
 
 @media (max-width: 1180px) and (min-width: 761px) {

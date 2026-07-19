@@ -277,3 +277,45 @@ export async function deleteCategorizationRule(formData: FormData) {
   revalidatePath("/dashboard/regras");
   redirect("/dashboard/regras?success=Regra%20removida.");
 }
+
+export async function saveBudget(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const categoryId = text(formData, "category_id");
+  const referenceMonth = text(formData, "reference_month");
+  const limit = cents(text(formData, "limit"));
+
+  if (!categoryId || !/^\d{4}-\d{2}-01$/.test(referenceMonth) || !limit) {
+    redirect(`/dashboard/orcamentos?month=${referenceMonth.slice(0, 7)}&error=${encodeURIComponent("Confira os dados do orçamento.")}`);
+  }
+
+  const { data: category } = await supabase.from("categories").select("id, kind")
+    .eq("id", categoryId).eq("household_id", membership.household_id).eq("is_active", true).maybeSingle();
+  if (!category || category.kind !== "expense") {
+    redirect(`/dashboard/orcamentos?month=${referenceMonth.slice(0, 7)}&error=${encodeURIComponent("Escolha uma categoria de despesa.")}`);
+  }
+
+  const { error } = await supabase.from("budgets").upsert({
+    household_id: membership.household_id,
+    category_id: categoryId,
+    reference_month: referenceMonth,
+    limit_cents: limit,
+  }, { onConflict: "household_id,category_id,reference_month" });
+
+  if (error) redirect(`/dashboard/orcamentos?month=${referenceMonth.slice(0, 7)}&error=${encodeURIComponent("Não foi possível salvar o orçamento.")}`);
+  revalidatePath("/dashboard/orcamentos");
+  revalidatePath("/dashboard");
+  redirect(`/dashboard/orcamentos?month=${referenceMonth.slice(0, 7)}&success=${encodeURIComponent("Orçamento salvo.")}`);
+}
+
+export async function deleteBudget(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const budgetId = text(formData, "budget_id");
+  const month = text(formData, "month");
+  const { error } = await supabase.from("budgets").delete()
+    .eq("id", budgetId).eq("household_id", membership.household_id);
+  if (error) redirect(`/dashboard/orcamentos?month=${month}&error=${encodeURIComponent("Não foi possível remover o orçamento.")}`);
+  revalidatePath("/dashboard/orcamentos");
+  redirect(`/dashboard/orcamentos?month=${month}&success=${encodeURIComponent("Orçamento removido.")}`);
+}
