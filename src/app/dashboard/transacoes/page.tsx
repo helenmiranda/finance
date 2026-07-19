@@ -1,6 +1,6 @@
 import { DashboardShell } from "@/components/dashboard-shell";
 import { getAuthenticatedContext } from "@/lib/household";
-import { addTransaction } from "../finance-actions";
+import { addTransaction, addTransfer } from "../finance-actions";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const date = new Intl.DateTimeFormat("pt-BR");
@@ -32,13 +32,29 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
               <label>Data<input name="occurred_on" type="date" defaultValue={new Date().toISOString().slice(0, 10)} required /></label>
               <label>Conta ou cartão<select name="payment_source" defaultValue="" required><option value="" disabled>Selecione</option>{accounts?.map((account) => <option value={`account:${account.id}`} key={account.id}>Conta · {account.name}</option>)}{cards?.map((card) => <option value={`card:${card.id}`} key={card.id}>Cartão · {card.name}</option>)}</select></label>
               <label>Categoria<select name="category_id" defaultValue=""><option value="">Sem categoria</option>{categories?.map((category) => <option value={category.id} key={category.id}>{category.name} · {category.kind === "income" ? "Receita" : "Despesa"}</option>)}</select></label>
+              <label>Parcelas no cartão<input name="installment_count" type="number" min="1" max="60" defaultValue="1" /><small>Para contas bancárias, o lançamento será sempre à vista.</small></label>
               <label>Observação<textarea name="notes" placeholder="Opcional" rows={3} /></label>
               <button type="submit">Salvar lançamento</button>
             </form>
+            <div className="form-divider"><span>ou</span></div>
+            <details className="transfer-form">
+              <summary>Transferir entre contas</summary>
+              <form action={addTransfer}>
+                <label>Descrição<input name="description" defaultValue="Transferência" required /></label>
+                <label>Conta de origem<select name="source_account_id" defaultValue="" required><option value="" disabled>Selecione</option>{accounts?.map((account) => <option value={account.id} key={account.id}>{account.name}</option>)}</select></label>
+                <label>Conta de destino<select name="destination_account_id" defaultValue="" required><option value="" disabled>Selecione</option>{accounts?.map((account) => <option value={account.id} key={account.id}>{account.name}</option>)}</select></label>
+                <div className="form-row"><label>Valor<input name="amount" inputMode="decimal" placeholder="0,00" required /></label><label>Data<input name="occurred_on" type="date" defaultValue={new Date().toISOString().slice(0, 10)} required /></label></div>
+                <button type="submit">Registrar transferência</button>
+              </form>
+            </details>
           </article>
           <section className="items-column"><div className="section-heading"><h2>Movimentações recentes</h2><span className="count-badge">{transactions?.length ?? 0}</span></div>
             {!transactions?.length && <article className="card empty-state"><span>＋</span><h2>Nenhum lançamento</h2><p className="muted">Adicione a primeira movimentação da família.</p></article>}
-            <article className="card transaction-table">{transactions?.map((transaction) => <div className="transaction-row" key={transaction.id}><span className={`movement-icon ${transaction.type}`}>{transaction.type === "income" ? "↗" : "↘"}</span><div><strong>{transaction.description}</strong><small>{transaction.categories?.name || "Sem categoria"} · {transaction.accounts?.name || transaction.credit_cards?.name}</small></div><div className="transaction-date">{date.format(new Date(`${transaction.occurred_on}T12:00:00`))}</div><strong className={transaction.type === "income" ? "positive" : "negative"}>{transaction.type === "income" ? "+ " : "− "}{money.format(transaction.amount_cents / 100)}</strong></div>)}</article>
+            <article className="card transaction-table">{transactions?.map((transaction) => {
+              const incoming = transaction.type === "income" || transaction.transfer_direction === "in";
+              const installment = transaction.installment_count > 1 ? ` · ${transaction.installment_number}/${transaction.installment_count}` : "";
+              return <div className="transaction-row" key={transaction.id}><span className={`movement-icon ${transaction.type}`}>{transaction.type === "transfer" ? "⇄" : incoming ? "↗" : "↘"}</span><div><strong>{transaction.description}{installment}</strong><small>{transaction.type === "transfer" ? "Transferência" : transaction.categories?.name || "Sem categoria"} · {transaction.accounts?.name || transaction.credit_cards?.name}</small></div><div className="transaction-date">{date.format(new Date(`${transaction.occurred_on}T12:00:00`))}</div><strong className={incoming ? "positive" : "negative"}>{incoming ? "+ " : "− "}{money.format(transaction.amount_cents / 100)}</strong></div>;
+            })}</article>
           </section>
         </div>
       </section>

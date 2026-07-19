@@ -131,12 +131,16 @@ export async function addTransaction(formData: FormData) {
   const categoryId = optionalText(formData, "category_id");
   const paymentSource = text(formData, "payment_source");
   const [sourceType, sourceId] = paymentSource.split(":");
+  const installmentCount = Number(text(formData, "installment_count") || "1");
 
   if (!description || !amount || !occurredOn || !["income", "expense"].includes(type) || !sourceId || !["account", "card"].includes(sourceType)) {
     redirect("/dashboard/transacoes?error=Confira%20os%20dados%20do%20lançamento.");
   }
   if (type === "income" && sourceType === "card") {
     redirect("/dashboard/transacoes?error=Receitas%20devem%20entrar%20em%20uma%20conta.");
+  }
+  if (!Number.isInteger(installmentCount) || installmentCount < 1 || installmentCount > 60) {
+    redirect("/dashboard/transacoes?error=Número%20de%20parcelas%20inválido.");
   }
 
   const sourceTable = sourceType === "account" ? "accounts" : "credit_cards";
@@ -150,21 +154,59 @@ export async function addTransaction(formData: FormData) {
     if (!category || category.kind !== type) redirect("/dashboard/transacoes?error=Categoria%20incompatível%20com%20o%20lançamento.");
   }
 
-  const { error } = await supabase.from("transactions").insert({
-    household_id: membership.household_id,
-    account_id: sourceType === "account" ? sourceId : null,
-    credit_card_id: sourceType === "card" ? sourceId : null,
-    category_id: categoryId,
-    created_by: user.id,
-    type,
-    description,
-    amount_cents: amount,
-    occurred_on: occurredOn,
-    notes: optionalText(formData, "notes"),
-  });
+  const notes = optionalText(formData, "notes");
+  const { error } = sourceType === "card"
+    ? await supabase.rpc("create_card_purchase", {
+        target_card_id: sourceId,
+        target_category_id: categoryId,
+        purchase_description: description,
+        purchase_amount_cents: amount,
+        purchase_date: occurredOn,
+        installment_total: installmentCount,
+        purchase_notes: notes,
+      })
+    : await supabase.from("transactions").insert({
+        household_id: membership.household_id,
+        account_id: sourceId,
+        credit_card_id: null,
+        category_id: categoryId,
+        created_by: user.id,
+        type,
+        description,
+        amount_cents: amount,
+        occurred_on: occurredOn,
+        notes,
+      });
 
   if (error) redirect(`/dashboard/transacoes?error=${encodeURIComponent("Não foi possível salvar o lançamento.")}`);
   revalidatePath("/dashboard/transacoes");
   revalidatePath("/dashboard");
   redirect("/dashboard/transacoes?success=Lançamento%20adicionado.");
+}
+
+export async function addTransfer(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const sourceAccountId = text(formData, "source_account_id");
+  const destinationAccountId = text(formData, "destination_account_id");
+  const amount = cents(text(formData, "amount"));
+  const transferDate = text(formData, "occurred_on");
+  const description = text(formData, "description") || "Transferência";
+
+  if (!sourceAccountId || !destinationAccountId || sourceAccountId === destinationAccountId || !amount || !transferDate) {
+    redirect("/dashboard/transacoes?error=Confira%20os%20dados%20da%20transferência.");
+  }
+
+  const { error } = await supabase.rpc("create_transfer", {
+    source_account_id: sourceAccountId,
+    destination_account_id: destinationAccountId,
+    transfer_amount_cents: amount,
+    transfer_date: transferDate,
+    transfer_description: description,
+  });
+
+  if (error) redirect(`/dashboard/transacoes?error=${encodeURIComponent("Não foi possível transferir. A nova migration já foi aplicada?")}`);
+  revalidatePath("/dashboard/transacoes");
+  revalidatePath("/dashboard");
+  redirect("/dashboard/transacoes?success=Transferência%20registrada.");
 }

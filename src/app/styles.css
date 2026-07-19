@@ -297,6 +297,7 @@ button:hover { background: var(--primary-active); transform: scale(1.025); }
 .auth-card form, .onboarding-card form { display: grid; gap: 17px; margin-top: 30px; }
 
 label { display: grid; gap: 8px; color: var(--body); font-size: 13px; font-weight: 750; }
+label > small { color: var(--muted); font-weight: 500; }
 
 input, select, textarea {
   width: 100%;
@@ -379,6 +380,19 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .movement-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; font-weight: 900; }
 .movement-icon.income { background: rgba(159, 232, 112, .4); color: #054d28; }
 .movement-icon.expense { background: rgba(208, 50, 56, .09); color: var(--danger); }
+.movement-icon.transfer { background: rgba(56, 200, 255, .14); color: #12627e; }
+.form-divider { display: flex; align-items: center; gap: 12px; margin: 26px 0 18px; color: var(--muted); font-size: 12px; }
+.form-divider::before, .form-divider::after { flex: 1; height: 1px; background: var(--hairline); content: ""; }
+.transfer-form { border: 1px solid var(--hairline); border-radius: 18px; background: rgba(255, 255, 255, .42); }
+.transfer-form summary { padding: 17px; color: var(--primary-dark); cursor: pointer; font-size: 14px; font-weight: 800; }
+.transfer-form form { margin: 0; padding: 4px 17px 17px; }
+.statements-heading { margin-top: 18px; }
+.statement-item { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 18px 22px; border-radius: 22px; }
+.statement-item > div { display: grid; gap: 6px; }
+.statement-item > div:last-child { justify-items: end; }
+.statement-item small { color: var(--muted); }
+.statement-status { padding: 5px 9px; border-radius: 999px; background: rgba(159, 232, 112, .35); color: var(--primary-dark); font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.statement-status.overdue { background: rgba(208, 50, 56, .1); color: var(--danger); }
 
 @media (max-width: 1000px) {
   .shell { grid-template-columns: 210px minmax(0, 1fr); }

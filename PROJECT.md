@@ -90,14 +90,14 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 
 - [x] Implementar contas financeiras.
 - [x] Implementar categorias e subcategorias.
-- [ ] Implementar receitas, despesas e transferências. *(receitas e despesas concluídas; transferências pendentes)*
+- [x] Implementar receitas, despesas e transferências.
 - [ ] Adicionar busca, filtros e edição em massa.
 
 ### Fase 3 — Cartões
 
 - [x] Cadastrar cartões, limites, fechamento e vencimento.
-- [ ] Registrar compras à vista e parceladas.
-- [ ] Gerar e acompanhar faturas.
+- [x] Registrar compras à vista e parceladas.
+- [x] Gerar e acompanhar faturas.
 - [ ] Registrar pagamento de fatura sem duplicar despesas.
 
 ### Fase 4 — Importações
@@ -146,3 +146,4 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Fluxos de cadastro, login, confirmação de e-mail, logout, sessão protegida e onboarding familiar implementados.
 - Cadastro e listagem de contas e cartões conectados ao Supabase, com validação no servidor.
 - Categorias, subcategorias, receitas, despesas e compras simples no cartão conectadas ao Supabase.
+- Transferências atômicas, compras parceladas e geração automática de faturas implementadas em uma segunda migration.
