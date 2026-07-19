@@ -13,6 +13,14 @@ type PluggyTransaction = {
   type?: "CREDIT" | "DEBIT"; status?: "POSTED" | "PENDING";
 };
 
+type PluggyInvestment = {
+  id: string; name: string; code?: string | null; isin?: string | null; owner?: string | null; currencyCode?: string | null;
+  type: string; subtype?: string | null; date?: string | null; value?: number | null; quantity?: number | null; amount: number;
+  balance: number; amountOriginal?: number | null; amountProfit?: number | null; amountWithdrawal?: number | null;
+  taxes?: number | null; taxes2?: number | null; dueDate?: string | null; rate?: number | null; rateType?: string | null;
+  fixedAnnualRate?: number | null; issuer?: string | null; status?: string | null; institution?: { name?: string | null } | null;
+};
+
 export const maxDuration = 60;
 
 const cents = (value?: number | null) => value == null || !Number.isFinite(value) ? null : Math.round(value * 100);
@@ -75,6 +83,58 @@ async function syncTransactions(
   return imported;
 }
 
+async function syncInvestments(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  itemId: string,
+  connectionId: string,
+  householdId: string,
+) {
+  let page = 1;
+  let synced = 0;
+  while (page <= 10) {
+    const response: { results?: PluggyInvestment[] } = await pluggyRequest(`/investments?itemId=${encodeURIComponent(itemId)}&pageSize=500&page=${page}`);
+    const rows = response.results ?? [];
+    if (rows.length) {
+      const payload = rows.map((investment) => ({
+        household_id: householdId,
+        item_id: connectionId,
+        pluggy_investment_id: investment.id,
+        name: investment.name,
+        code: investment.code ?? null,
+        isin: investment.isin ?? null,
+        owner_name: investment.owner ?? null,
+        currency_code: investment.currencyCode ?? "BRL",
+        type: investment.type,
+        subtype: investment.subtype ?? null,
+        reference_date: investment.date?.slice(0, 10) ?? null,
+        unit_value_cents: cents(investment.value),
+        quantity: investment.quantity ?? null,
+        gross_amount_cents: cents(investment.amount) ?? 0,
+        net_balance_cents: cents(investment.balance) ?? 0,
+        original_amount_cents: cents(investment.amountOriginal),
+        profit_cents: cents(investment.amountProfit),
+        withdrawable_cents: cents(investment.amountWithdrawal),
+        income_tax_cents: cents(investment.taxes),
+        financial_tax_cents: cents(investment.taxes2),
+        due_date: investment.dueDate?.slice(0, 10) ?? null,
+        rate: investment.rate ?? null,
+        rate_type: investment.rateType ?? null,
+        fixed_annual_rate: investment.fixedAnnualRate ?? null,
+        issuer: investment.issuer ?? null,
+        institution_name: investment.institution?.name ?? null,
+        status: investment.status ?? "ACTIVE",
+        updated_at: new Date().toISOString(),
+      }));
+      const { error } = await supabase.from("investments").upsert(payload, { onConflict: "pluggy_investment_id" });
+      if (error) throw error;
+      synced += rows.length;
+    }
+    if (rows.length < 500) break;
+    page += 1;
+  }
+  return synced;
+}
+
 export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -128,8 +188,9 @@ export async function POST(request: Request) {
       if (mappingReadError || !currentMapping) throw mappingReadError ?? new Error("Mapeamento da conta não encontrado.");
       transactionCount += await syncTransactions(supabase, remote, currentMapping, connection.household_id, user.id);
     }
+    const investmentCount = await syncInvestments(supabase, connection.pluggy_item_id, connection.id, connection.household_id);
     await supabase.from("pluggy_items").update({ last_synced_at: new Date().toISOString(), status: "UPDATED", error_code: null }).eq("id", connection.id);
-    return NextResponse.json({ success: true, bankCount, cardCount, transactionCount });
+    return NextResponse.json({ success: true, bankCount, cardCount, transactionCount, investmentCount });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Não foi possível sincronizar as contas." }, { status: 502 });
   }

@@ -28,9 +28,9 @@ export function PluggySyncButton({ connectionId }: { connectionId: string }) {
     setLoading(true); setMessage("");
     try {
       const response = await fetch("/api/pluggy/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ connectionId }) });
-      const data = await response.json() as { bankCount?: number; cardCount?: number; transactionCount?: number; error?: string };
+      const data = await response.json() as { bankCount?: number; cardCount?: number; transactionCount?: number; investmentCount?: number; error?: string };
       if (!response.ok) throw new Error(data.error || "Não foi possível sincronizar.");
-      setMessage(`${data.bankCount ?? 0} contas, ${data.cardCount ?? 0} cartões e ${data.transactionCount ?? 0} novas transações.`); router.refresh();
+      setMessage(`${data.bankCount ?? 0} contas, ${data.cardCount ?? 0} cartões, ${data.transactionCount ?? 0} novas transações e ${data.investmentCount ?? 0} ativos.`); router.refresh();
     } catch (error) { setMessage(error instanceof Error ? error.message : "Não foi possível sincronizar."); }
     finally { setLoading(false); }
   }
