@@ -147,3 +147,4 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Cadastro e listagem de contas e cartões conectados ao Supabase, com validação no servidor.
 - Categorias, subcategorias, receitas, despesas e compras simples no cartão conectadas ao Supabase.
 - Transferências atômicas, compras parceladas e geração automática de faturas implementadas em uma segunda migration.
+- Callback de autenticação configurado para usar a URL pública do Vercel em vez da origem local.

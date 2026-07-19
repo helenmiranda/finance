@@ -1,8 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { getSiteUrl } from "@/lib/site-url";
 
 function value(formData: FormData, field: string) {
   return String(formData.get(field) ?? "").trim();
@@ -21,8 +21,6 @@ export async function login(formData: FormData) {
 
 export async function signup(formData: FormData) {
   const supabase = await createClient();
-  const headerStore = await headers();
-  const origin = headerStore.get("origin") ?? "http://localhost:3000";
   const email = value(formData, "email").toLowerCase();
   const password = value(formData, "password");
   const displayName = value(formData, "display_name");
@@ -36,7 +34,7 @@ export async function signup(formData: FormData) {
     password,
     options: {
       data: { display_name: displayName },
-      emailRedirectTo: `${origin}/auth/callback`,
+      emailRedirectTo: `${getSiteUrl()}/auth/callback`,
     },
   });
 
