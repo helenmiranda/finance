@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { pluggyRequest } from "@/lib/pluggy";
+import { ensurePluggyWebhooks, pluggyRequest } from "@/lib/pluggy";
 
 function currentWindow() {
   const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23" }).formatToParts(new Date());
@@ -19,6 +19,7 @@ export async function POST() {
   if (!window.slot) return NextResponse.json({ triggered: 0, reason: "outside_window" });
   const { data: connections } = await userClient.from("pluggy_items").select("id, pluggy_item_id").eq("connected_by", user.id);
   const admin = createAdminClient();
+  await ensurePluggyWebhooks().catch(() => undefined);
   let triggered = 0;
   for (const connection of connections ?? []) {
     const { data: run } = await admin.from("pluggy_refresh_runs").insert({ pluggy_item_id: connection.id, reference_date: window.date, slot: window.slot, status: "processing" }).select("id").maybeSingle();

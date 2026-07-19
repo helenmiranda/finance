@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { pluggyRequest } from "@/lib/pluggy";
+import { ensurePluggyWebhooks, pluggyRequest } from "@/lib/pluggy";
 
 export const maxDuration = 60;
 
@@ -17,6 +17,7 @@ export async function GET(request: Request) {
   const supabase = createAdminClient();
   const { data: connections, error } = await supabase.from("pluggy_items").select("id, pluggy_item_id");
   if (error) return NextResponse.json({ error: "Não foi possível carregar as conexões." }, { status: 500 });
+  await ensurePluggyWebhooks().catch(() => undefined);
   const window = brazilTime();
   let triggered = 0;
   let skipped = 0;

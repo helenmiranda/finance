@@ -24,5 +24,31 @@ export async function pluggyRequest<T>(path: string, init?: RequestInit): Promis
     const detail = body?.message || body?.codeDescription;
     throw new Error(detail ? `Pluggy: ${detail}` : `A Pluggy respondeu com o código ${response.status}.`);
   }
+  if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
+}
+
+type PluggyWebhook = { id: string; event: string; url: string; enabled?: boolean };
+let webhookSetup: Promise<void> | null = null;
+
+export async function ensurePluggyWebhooks() {
+  if (webhookSetup) return webhookSetup;
+  webhookSetup = (async () => {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+    const secret = process.env.CRON_SECRET;
+    if (!siteUrl?.startsWith("https://") || !secret) throw new Error("A URL pública ou o segredo do webhook não estão configurados.");
+    const url = `${siteUrl}/api/webhooks/pluggy`;
+    const response = await pluggyRequest<PluggyWebhook[] | { results?: PluggyWebhook[] } | undefined>("/webhooks");
+    const existing = Array.isArray(response) ? response : response?.results ?? [];
+    for (const event of ["item/updated", "item/error"]) {
+      const webhook = existing.find((item) => item.event === event && item.url === url);
+      const body = JSON.stringify({ url, event, headers: { Authorization: `Bearer ${secret}` }, enabled: true });
+      if (webhook) await pluggyRequest(`/webhooks/${webhook.id}`, { method: "PATCH", body });
+      else await pluggyRequest("/webhooks", { method: "POST", body });
+    }
+  })().catch((error) => {
+    webhookSetup = null;
+    throw error;
+  });
+  return webhookSetup;
 }
