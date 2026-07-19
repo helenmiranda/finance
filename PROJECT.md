@@ -103,7 +103,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 ### Fase 4 — Importações
 
 - [x] Criar upload privado de arquivos.
-- [ ] Interpretar CSV, XLSX e OFX. *(CSV e OFX concluídos; XLSX pendente)*
+- [x] Interpretar CSV, XLSX e OFX.
 - [x] Criar tela inicial de pré-visualização.
 - [x] Detectar duplicidades e aplicar regras de categorização.
 - [x] Confirmar importação em lote.
@@ -160,3 +160,4 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Assistente com IA conectado à Responses API, contexto financeiro minimizado e conversas persistentes.
 - Gestão do espaço familiar com inclusão imediata ou entrada automática após cadastro pelo e-mail convidado.
 - Busca e filtros de transações, além de recategorização segura de até 100 lançamentos por vez.
+- Importação de planilhas XLSX pela primeira aba, com detecção automática de data, descrição e valor.

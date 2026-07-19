@@ -1,3 +1,5 @@
+import ExcelJS from "exceljs";
+
 export type ParsedImportRow = {
   row_number: number;
   occurred_on: string | null;
@@ -86,6 +88,69 @@ export function parseCsv(content: string): ParsedImportRow[] {
       review_status: valid ? "ready" : "pending",
     };
   });
+}
+
+function excelCellText(value: ExcelJS.CellValue): string {
+  if (value === null || value === undefined) return "";
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  if (typeof value !== "object") return String(value);
+  if ("result" in value && value.result !== undefined && value.result !== null) return String(value.result);
+  if ("richText" in value) return value.richText.map((part) => part.text).join("");
+  if ("text" in value) return String(value.text);
+  if ("hyperlink" in value) return String(value.hyperlink);
+  return "";
+}
+
+export async function parseXlsx(content: ArrayBuffer): Promise<ParsedImportRow[]> {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(content);
+  const worksheet = workbook.worksheets[0];
+  if (!worksheet || worksheet.actualRowCount < 2) {
+    throw new Error("A primeira planilha não possui linhas suficientes.");
+  }
+
+  const headerRow = worksheet.getRow(1);
+  const headers = Array.from({ length: worksheet.actualColumnCount }, (_, index) =>
+    excelCellText(headerRow.getCell(index + 1).value).trim(),
+  );
+  const dateIndex = findColumn(headers, DATE_NAMES);
+  const descriptionIndex = findColumn(headers, DESCRIPTION_NAMES);
+  const amountIndex = findColumn(headers, AMOUNT_NAMES);
+  if (dateIndex < 0 || descriptionIndex < 0 || amountIndex < 0) {
+    throw new Error("Não encontramos automaticamente as colunas de data, descrição e valor.");
+  }
+
+  const rows: ParsedImportRow[] = [];
+  for (let rowNumber = 2; rowNumber <= worksheet.actualRowCount; rowNumber += 1) {
+    const row = worksheet.getRow(rowNumber);
+    const values = headers.map((_, index) => excelCellText(row.getCell(index + 1).value).trim());
+    if (values.every((value) => !value)) continue;
+
+    const dateValue = row.getCell(dateIndex + 1).value;
+    const amountValue = row.getCell(amountIndex + 1).value;
+    const occurredOn = dateValue instanceof Date
+      ? dateValue.toISOString().slice(0, 10)
+      : parseDate(values[dateIndex] ?? "");
+    const description = values[descriptionIndex] || null;
+    const signedAmount = typeof amountValue === "number"
+      ? (amountValue === 0 ? null : Math.round(amountValue * 100))
+      : parseAmount(values[amountIndex] ?? "");
+    const valid = Boolean(occurredOn && description && signedAmount);
+
+    rows.push({
+      row_number: rowNumber,
+      occurred_on: occurredOn,
+      description,
+      amount_cents: signedAmount === null ? null : Math.abs(signedAmount),
+      suggested_type: signedAmount === null ? null : signedAmount < 0 ? "expense" : "income",
+      raw_data: Object.fromEntries(headers.map((header, index) => [header || `Coluna ${index + 1}`, values[index]])),
+      parse_error: valid ? null : "Confira data, descrição e valor.",
+      review_status: valid ? "ready" : "pending",
+    });
+  }
+
+  if (!rows.length) throw new Error("Nenhuma movimentação foi encontrada na primeira planilha.");
+  return rows;
 }
 
 function ofxValue(block: string, tag: string) {

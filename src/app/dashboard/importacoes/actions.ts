@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getAuthenticatedContext } from "@/lib/household";
-import { parseCsv, parseOfx } from "@/lib/imports/parser";
+import { parseCsv, parseOfx, parseXlsx } from "@/lib/imports/parser";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
@@ -30,8 +30,8 @@ export async function uploadImport(formData: FormData) {
   }
 
   const extension = file.name.split(".").pop()?.toLowerCase();
-  if (!extension || !["csv", "ofx"].includes(extension)) {
-    redirect("/dashboard/importacoes?error=Formato%20não%20suportado.%20Use%20CSV%20ou%20OFX.");
+  if (!extension || !["csv", "ofx", "xlsx"].includes(extension)) {
+    redirect("/dashboard/importacoes?error=Formato%20não%20suportado.%20Use%20CSV,%20OFX%20ou%20XLSX.");
   }
   if (!targetId || !["account", "card"].includes(targetType)) {
     redirect("/dashboard/importacoes?error=Selecione%20uma%20conta%20ou%20cartão.");
@@ -67,8 +67,11 @@ export async function uploadImport(formData: FormData) {
   }
 
   try {
-    const content = await file.text();
-    const rows = extension === "csv" ? parseCsv(content) : parseOfx(content);
+    const rows = extension === "xlsx"
+      ? await parseXlsx(await file.arrayBuffer())
+      : extension === "csv"
+        ? parseCsv(await file.text())
+        : parseOfx(await file.text());
     if (rows.length > 5000) throw new Error("O arquivo possui mais de 5.000 movimentações.");
 
     const payload = rows.map((row) => ({ ...row, import_id: importRecord.id, household_id: membership.household_id }));

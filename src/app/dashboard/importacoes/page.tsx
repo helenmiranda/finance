@@ -27,10 +27,10 @@ export default async function ImportsPage({ searchParams }: PageProps) {
         <header><div><p className="eyebrow">EXTRATOS E FATURAS</p><h1>Importações</h1><p className="muted">Envie um arquivo e revise tudo antes de lançar.</p></div></header>
         {params.error && <p className="form-message error">{params.error}</p>}
         <div className="import-layout">
-          <article className="card upload-card"><div className="upload-icon">↑</div><h2>Novo arquivo</h2><p className="muted">CSV ou OFX, com até 5 MB.</p>
+          <article className="card upload-card"><div className="upload-icon">↑</div><h2>Novo arquivo</h2><p className="muted">CSV, OFX ou XLSX, com até 5 MB.</p>
             <form action={uploadImport}>
               <label>Conta ou cartão<select name="target" defaultValue="" required><option value="" disabled>Selecione o destino</option>{accounts?.map((account) => <option value={`account:${account.id}`} key={account.id}>Conta · {account.name}</option>)}{cards?.map((card) => <option value={`card:${card.id}`} key={card.id}>Cartão · {card.name}</option>)}</select></label>
-              <label className="file-field">Arquivo<input name="file" type="file" accept=".csv,.ofx,text/csv,application/x-ofx" required /></label>
+              <label className="file-field">Arquivo<input name="file" type="file" accept=".csv,.ofx,.xlsx,text/csv,application/x-ofx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required /></label>
               <button type="submit">Enviar e revisar</button>
             </form>
           </article>
