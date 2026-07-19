@@ -44,7 +44,7 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
   return (
     <DashboardShell active="budgets">
       <section className="content settings-content budget-content">
-        <header><div><p className="eyebrow">PLANEJAMENTO</p><h1>Orçamentos</h1><p className="muted">Defina limites realistas para cada categoria.</p></div><div className="month-switcher"><Link href={`/dashboard/orcamentos?month=${shiftMonth(month, -1)}`}>←</Link><strong>{monthLabel}</strong><Link href={`/dashboard/orcamentos?month=${nextMonth}`}>→</Link></div></header>
+        <header><div><p className="eyebrow">PLANEJAMENTO</p><h1>Orçamentos</h1><p className="muted">Defina limites realistas para cada categoria.</p></div><div className="planning-actions"><Link className="secondary-link" href="/dashboard/metas">Metas →</Link><div className="month-switcher"><Link href={`/dashboard/orcamentos?month=${shiftMonth(month, -1)}`}>←</Link><strong>{monthLabel}</strong><Link href={`/dashboard/orcamentos?month=${nextMonth}`}>→</Link></div></div></header>
         {params.error && <p className="form-message error">{params.error}</p>}{params.success && <p className="form-message success">{params.success}</p>}
 
         <section className="budget-summary">

@@ -319,3 +319,56 @@ export async function deleteBudget(formData: FormData) {
   revalidatePath("/dashboard/orcamentos");
   redirect(`/dashboard/orcamentos?month=${month}&success=${encodeURIComponent("Orçamento removido.")}`);
 }
+
+export async function createGoal(formData: FormData) {
+  const { supabase, membership, user } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const name = text(formData, "name");
+  const target = cents(text(formData, "target"));
+  const targetDate = optionalText(formData, "target_date");
+
+  if (!name || !target) redirect("/dashboard/metas?error=Confira%20os%20dados%20da%20meta.");
+  const { error } = await supabase.from("goals").insert({
+    household_id: membership.household_id,
+    name,
+    description: optionalText(formData, "description"),
+    target_cents: target,
+    target_date: targetDate,
+    color: text(formData, "color") || "#9fe870",
+    created_by: user.id,
+  });
+
+  if (error) redirect(`/dashboard/metas?error=${encodeURIComponent("Não foi possível criar a meta. A nova migration foi aplicada?")}`);
+  revalidatePath("/dashboard/metas");
+  redirect("/dashboard/metas?success=Meta%20criada.");
+}
+
+export async function addGoalContribution(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const goalId = text(formData, "goal_id");
+  const amount = cents(text(formData, "amount"));
+  const contributionDate = text(formData, "contributed_on");
+  if (!goalId || !amount || !contributionDate) redirect("/dashboard/metas?error=Confira%20os%20dados%20do%20aporte.");
+
+  const { error } = await supabase.rpc("add_goal_contribution", {
+    target_goal_id: goalId,
+    contribution_cents: amount,
+    contribution_date: contributionDate,
+    contribution_notes: optionalText(formData, "notes"),
+  });
+  if (error) redirect(`/dashboard/metas?error=${encodeURIComponent("Não foi possível registrar o aporte.")}`);
+  revalidatePath("/dashboard/metas");
+  redirect("/dashboard/metas?success=Aporte%20registrado.");
+}
+
+export async function deleteGoal(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const goalId = text(formData, "goal_id");
+  const { error } = await supabase.from("goals").delete()
+    .eq("id", goalId).eq("household_id", membership.household_id);
+  if (error) redirect("/dashboard/metas?error=Não%20foi%20possível%20remover%20a%20meta.");
+  revalidatePath("/dashboard/metas");
+  redirect("/dashboard/metas?success=Meta%20removida.");
+}

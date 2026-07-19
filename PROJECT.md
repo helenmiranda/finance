@@ -112,7 +112,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 
 - [ ] Criar dashboard e gráficos.
 - [x] Criar orçamentos por categoria.
-- [ ] Criar metas e projeções.
+- [ ] Criar metas e projeções. *(metas concluídas; projeções pendentes)*
 - [ ] Detectar assinaturas e gastos recorrentes.
 
 ### Fase 6 — Assistente de IA
@@ -154,3 +154,4 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Edição de linhas, categorias, itens ignorados, deduplicação e confirmação atômica adicionadas às importações.
 - Regras personalizadas de categorização automática aplicadas durante novos uploads.
 - Orçamentos mensais por categoria com progresso, saldo disponível e alertas de limite.
+- Metas financeiras compartilhadas com prazo, progresso e histórico de aportes.
