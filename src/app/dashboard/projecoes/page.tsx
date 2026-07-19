@@ -76,7 +76,7 @@ export default async function ProjectionsPage() {
   return (
     <DashboardShell active="budgets">
       <section className="content settings-content projection-content">
-        <header><div><p className="eyebrow">PLANEJAMENTO</p><h1>Projeção</h1><p className="muted">Um cenário estimado a partir do comportamento recente.</p></div><div className="planning-actions"><Link className="secondary-link" href="/dashboard/orcamentos">Orçamentos</Link><Link className="secondary-link" href="/dashboard/metas">Metas</Link></div></header>
+        <header><div><p className="eyebrow">PLANEJAMENTO</p><h1>Projeção</h1><p className="muted">Um cenário estimado a partir do comportamento recente.</p></div><div className="planning-actions"><Link className="secondary-link" href="/dashboard/orcamentos">Orçamentos</Link><Link className="secondary-link" href="/dashboard/metas">Metas</Link><Link className="secondary-link" href="/dashboard/recorrencias">Recorrências</Link></div></header>
 
         <section className="projection-summary">
           <article><span>Saldo em contas</span><strong>{money.format(cashBalance / 100)}</strong></article>
