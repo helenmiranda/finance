@@ -392,3 +392,29 @@ export async function inviteFamilyMember(formData: FormData) {
     : "Convite registrado. O membro entrará ao criar a conta com esse e-mail.";
   redirect(`/dashboard/familia?success=${encodeURIComponent(message)}`);
 }
+
+export async function bulkCategorizeTransactions(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const transactionIds = formData.getAll("transaction_ids").map(String).filter(Boolean);
+  const categoryId = text(formData, "category_id");
+  if (!transactionIds.length || !categoryId) redirect("/dashboard/transacoes?error=Selecione%20lançamentos%20e%20uma%20categoria.");
+  if (transactionIds.length > 100) redirect("/dashboard/transacoes?error=Atualize%20no%20máximo%20100%20lançamentos%20por%20vez.");
+
+  const { data: category } = await supabase.from("categories").select("id, kind")
+    .eq("id", categoryId).eq("household_id", membership.household_id).eq("is_active", true).maybeSingle();
+  if (!category) redirect("/dashboard/transacoes?error=Categoria%20inválida.");
+
+  const { data: selected } = await supabase.from("transactions").select("id, type")
+    .eq("household_id", membership.household_id).in("id", transactionIds);
+  if (!selected || selected.length !== transactionIds.length || selected.some((item) => item.type !== category.kind)) {
+    redirect("/dashboard/transacoes?error=A%20categoria%20deve%20ter%20o%20mesmo%20tipo%20de%20todos%20os%20lançamentos.");
+  }
+
+  const { error } = await supabase.from("transactions").update({ category_id: categoryId })
+    .eq("household_id", membership.household_id).in("id", transactionIds);
+  if (error) redirect("/dashboard/transacoes?error=Não%20foi%20possível%20alterar%20as%20categorias.");
+  revalidatePath("/dashboard/transacoes");
+  revalidatePath("/dashboard");
+  redirect(`/dashboard/transacoes?success=${encodeURIComponent(`${transactionIds.length} lançamentos atualizados.`)}`);
+}

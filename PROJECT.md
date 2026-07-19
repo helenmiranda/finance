@@ -91,7 +91,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - [x] Implementar contas financeiras.
 - [x] Implementar categorias e subcategorias.
 - [x] Implementar receitas, despesas e transferências.
-- [ ] Adicionar busca, filtros e edição em massa.
+- [x] Adicionar busca, filtros e edição em massa.
 
 ### Fase 3 — Cartões
 
@@ -159,3 +159,4 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Detecção de gastos recorrentes com cadência, impacto mensal/anual e indicador de confiança.
 - Assistente com IA conectado à Responses API, contexto financeiro minimizado e conversas persistentes.
 - Gestão do espaço familiar com inclusão imediata ou entrada automática após cadastro pelo e-mail convidado.
+- Busca e filtros de transações, além de recategorização segura de até 100 lançamentos por vez.
