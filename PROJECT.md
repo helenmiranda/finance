@@ -120,7 +120,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - [x] Permitir perguntas sobre os dados financeiros.
 - [x] Gerar resumos semanais e mensais.
 - [x] Identificar desvios, excessos e oportunidades de economia.
-- [ ] Criar simulações e planos de redução de gastos.
+- [x] Criar simulações e planos de redução de gastos.
 - [ ] Registrar recomendações aceitas ou descartadas.
 
 ## Próximas decisões
@@ -163,3 +163,4 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Importação de planilhas XLSX pela primeira aba, com detecção automática de data, descrição e valor.
 - Resumo mensal automático no assistente com comparação histórica, maior categoria de gasto e alertas de orçamento.
 - Visão semanal adicionada ao resumo automático, com comparação direta à semana anterior.
+- Simulador de economia mensal criado com plano proporcional baseado na média das principais categorias dos últimos três meses.
