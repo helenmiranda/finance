@@ -3,7 +3,7 @@ import { logout } from "@/app/auth/actions";
 import { PluggyAutoCheck } from "@/components/pluggy-auto-check";
 
 type DashboardShellProps = {
-  active: "overview" | "transactions" | "categories" | "accounts" | "cards" | "investments" | "imports" | "budgets" | "assistant";
+  active: "overview" | "transactions" | "categories" | "accounts" | "cards" | "investments" | "imports" | "budgets" | "alerts" | "assistant";
   householdName?: string;
   children: React.ReactNode;
 };
@@ -17,6 +17,7 @@ const links = [
   { key: "investments", href: "/dashboard/patrimonio", label: "Patrimônio" },
   { key: "imports", href: "/dashboard/importacoes", label: "Importações" },
   { key: "budgets", href: "/dashboard/orcamentos", label: "Orçamentos" },
+  { key: "alerts", href: "/dashboard/alertas", label: "Alertas" },
   { key: "assistant", href: "/dashboard/assistente", label: "Assistente IA" },
 ];
 

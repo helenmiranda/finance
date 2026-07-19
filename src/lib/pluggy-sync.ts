@@ -316,5 +316,6 @@ export async function syncPluggyConnection(supabase: SupabaseClient, connection:
   }
   const investmentCount = await syncInvestments(supabase, connection.pluggy_item_id, connection.id, connection.household_id);
   await supabase.from("pluggy_items").update({ last_synced_at: new Date().toISOString(), status: "UPDATED", error_code: null }).eq("id", connection.id);
+  await supabase.rpc("evaluate_budget_alerts", { target_household_id: connection.household_id });
   return { success: true, bankCount, cardCount, transactionCount, investmentCount };
 }
