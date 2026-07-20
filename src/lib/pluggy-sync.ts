@@ -6,6 +6,7 @@ import { evaluateAndDispatchFinancialAlerts } from "@/lib/financial-alerts";
 type PluggyAccount = {
   id: string; type: "BANK" | "CREDIT"; subtype?: string; name: string; marketingName?: string | null;
   number?: string | null; balance?: number | null; owner?: string | null;
+  bankData?: { closingBalance?: number | null; automaticallyInvestedBalance?: number | null } | null;
   creditData?: { creditLimit?: number | null; availableCreditLimit?: number | null; balanceCloseDate?: string | null; balanceDueDate?: string | null } | null;
 };
 
@@ -42,6 +43,7 @@ export type PluggyConnection = {
 };
 
 const cents = (value?: number | null) => value == null || !Number.isFinite(value) ? null : Math.round(value * 100);
+const bankBalance = (account: PluggyAccount) => account.balance ?? account.bankData?.closingBalance ?? null;
 const day = (value?: string | null) => value ? new Date(`${value.slice(0, 10)}T12:00:00Z`).getUTCDate() : null;
 const accountType = (subtype?: string) => subtype === "SAVINGS_ACCOUNT" ? "savings" : subtype === "INVESTMENT_ACCOUNT" ? "investment" : "checking";
 const localDate = (value: string) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(value));
@@ -272,6 +274,7 @@ export async function syncPluggyConnection(supabase: SupabaseClient, connection:
   const categorization = await loadCategorization(supabase, connection.household_id);
   const response = await pluggyRequest<{ results?: PluggyAccount[] }>(`/accounts?itemId=${encodeURIComponent(connection.pluggy_item_id)}`);
   const remoteAccounts = response.results ?? [];
+  if (!remoteAccounts.length) throw new Error("A instituição ainda não disponibilizou contas para esta conexão. Aguarde a atualização bancária terminar e tente novamente.");
   let bankCount = 0;
   let cardCount = 0;
   let transactionCount = 0;
@@ -281,16 +284,17 @@ export async function syncPluggyConnection(supabase: SupabaseClient, connection:
     const displayName = remote.marketingName || remote.name;
     if (remote.type === "BANK") {
       let localId = mapping?.account_id ?? null;
-      const values = { name: displayName, institution_name: connection.connector_name, type: accountType(remote.subtype), current_balance_cents: cents(remote.balance), is_active: true };
+      const currentBalance = bankBalance(remote);
+      const values = { name: displayName, institution_name: connection.connector_name, type: accountType(remote.subtype), current_balance_cents: cents(currentBalance), is_active: true };
       if (localId) {
         const { error } = await supabase.from("accounts").update(values).eq("id", localId).eq("household_id", connection.household_id);
         if (error) throw error;
       } else {
-        const { data, error } = await supabase.from("accounts").insert({ ...values, household_id: connection.household_id, initial_balance_cents: cents(remote.balance) ?? 0, color: "#9fe870" }).select("id").single();
+        const { data, error } = await supabase.from("accounts").insert({ ...values, household_id: connection.household_id, initial_balance_cents: cents(currentBalance) ?? 0, color: "#9fe870" }).select("id").single();
         if (error || !data) throw error ?? new Error("Não foi possível criar a conta.");
         localId = data.id;
       }
-      const { error } = await supabase.from("pluggy_accounts").upsert({ household_id: connection.household_id, item_id: connection.id, pluggy_account_id: remote.id, account_id: localId, credit_card_id: null, type: remote.type, subtype: remote.subtype ?? null, name: displayName, number_masked: remote.number ?? null, balance_cents: cents(remote.balance), updated_at: new Date().toISOString() }, { onConflict: "pluggy_account_id" });
+      const { error } = await supabase.from("pluggy_accounts").upsert({ household_id: connection.household_id, item_id: connection.id, pluggy_account_id: remote.id, account_id: localId, credit_card_id: null, type: remote.type, subtype: remote.subtype ?? null, name: displayName, number_masked: remote.number ?? null, balance_cents: cents(currentBalance), updated_at: new Date().toISOString() }, { onConflict: "pluggy_account_id" });
       if (error) throw error;
       bankCount += 1;
     } else if (remote.type === "CREDIT") {

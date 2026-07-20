@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { syncPluggyConnection, type PluggyConnection } from "@/lib/pluggy-sync";
+import { pluggyRequest } from "@/lib/pluggy";
 
 export const maxDuration = 60;
 
@@ -14,6 +15,11 @@ export async function POST(request: Request) {
   if (!connection) return NextResponse.json({ error: "Conexão não encontrada para este usuário." }, { status: 404 });
 
   try {
+    const item = await pluggyRequest<{ status?: string; executionStatus?: string; error?: { code?: string } | null }>(`/items/${connection.pluggy_item_id}`);
+    if (item.status === "UPDATING") return NextResponse.json({ pending: true, error: `${connection.connector_name} ainda está enviando os dados. A importação começará assim que a atualização bancária terminar.` }, { status: 409 });
+    if (item.error?.code || ["LOGIN_ERROR", "OUTDATED"].includes(item.status ?? "")) {
+      return NextResponse.json({ error: `A conexão bancária requer atenção${item.error?.code ? `: ${item.error.code}` : "."}` }, { status: 422 });
+    }
     return NextResponse.json(await syncPluggyConnection(supabase, connection as PluggyConnection));
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Não foi possível sincronizar as contas." }, { status: 502 });

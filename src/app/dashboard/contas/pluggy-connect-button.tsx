@@ -20,9 +20,17 @@ export function PluggyConnectButton() {
       if (!response.ok) throw new Error(data.error || "Não foi possível vincular a conexão.");
       if (!data.connectionId) throw new Error("A conexão foi vinculada, mas não pôde iniciar a importação.");
       setMessage("Conexão vinculada. Importando os dados…");
-      const syncResponse = await fetch("/api/pluggy/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ connectionId: data.connectionId }) });
-      const syncBody = await syncResponse.text();
-      const syncData = (() => { try { return JSON.parse(syncBody) as { bankCount?: number; cardCount?: number; transactionCount?: number; investmentCount?: number; error?: string }; } catch { return {}; } })();
+      let syncResponse: Response | null = null;
+      let syncData: { bankCount?: number; cardCount?: number; transactionCount?: number; investmentCount?: number; pending?: boolean; error?: string } = {};
+      for (let attempt = 0; attempt < 12; attempt += 1) {
+        syncResponse = await fetch("/api/pluggy/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ connectionId: data.connectionId }) });
+        const syncBody = await syncResponse.text();
+        syncData = (() => { try { return JSON.parse(syncBody) as typeof syncData; } catch { return {}; } })();
+        if (syncResponse.status !== 409 || !syncData.pending) break;
+        setMessage("Conexão vinculada. Aguardando a instituição concluir a atualização…");
+        await new Promise((resolve) => window.setTimeout(resolve, 5_000));
+      }
+      if (!syncResponse) throw new Error("Não foi possível iniciar a importação.");
       if (!syncResponse.ok) throw new Error(`Conexão vinculada, mas a primeira importação falhou: ${syncData.error || "tente importar novamente."}`);
       setStatus("success"); setMessage(`${syncData.bankCount ?? 0} contas, ${syncData.cardCount ?? 0} cartões, ${syncData.transactionCount ?? 0} transações e ${syncData.investmentCount ?? 0} ativos importados.`); router.refresh();
     } catch (error) { setStatus("error"); setMessage(error instanceof Error ? error.message : "Não foi possível vincular a conexão."); }
