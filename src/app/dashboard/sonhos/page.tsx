@@ -1,6 +1,6 @@
 import { DashboardShell } from "@/components/dashboard-shell";
 import { getAuthenticatedContext } from "@/lib/household";
-import { addDreamContribution, createDream, deleteDream, removeDreamCover, toggleDreamStatus, updateDream, uploadDreamCover } from "../finance-actions";
+import { addDreamContribution, createDream, createDreamMission, deleteDream, deleteDreamMission, removeDreamCover, toggleDreamStatus, updateDream, uploadDreamCover } from "../finance-actions";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const date = new Intl.DateTimeFormat("pt-BR");
@@ -33,14 +33,16 @@ function contributionStreak(contributions: { contributed_on: string }[]) {
 export default async function DreamsPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const { supabase, membership } = await getAuthenticatedContext();
-  const [dreamsResult, contributionsResult] = membership
+  const [dreamsResult, contributionsResult, missionsResult] = membership
     ? await Promise.all([
       supabase.from("dreams").select("*").eq("household_id", membership.household_id).order("status").order("created_at", { ascending: false }),
       supabase.from("dream_contributions").select("id, dream_id, amount_cents, contributed_on, note").eq("household_id", membership.household_id).order("contributed_on", { ascending: false }),
+      supabase.from("dream_missions").select("*").eq("household_id", membership.household_id).order("status").order("ends_on"),
     ])
-    : [{ data: [] }, { data: [] }];
+    : [{ data: [] }, { data: [] }, { data: [] }];
   const dreams = dreamsResult.data;
   const contributions = contributionsResult.data;
+  const missions = missionsResult.data;
   const coverEntries = await Promise.all((dreams ?? []).filter((dream) => dream.cover_path).map(async (dream) => {
     const { data } = await supabase.storage.from("dream-covers").createSignedUrl(dream.cover_path, 3600);
     return [dream.id, data?.signedUrl ?? null] as const;
@@ -60,6 +62,7 @@ export default async function DreamsPage({ searchParams }: PageProps) {
       <div className="dream-form-row"><label>Quanto precisamos?<input name="target" inputMode="decimal" placeholder="20.000,00" required /></label><label>Quando queremos realizar?<input name="target_date" type="date" /></label></div>
       <button type="submit">Começar este sonho</button>
     </form></details>
+    {(dreams?.some((dream) => dream.status === "active") || missions?.length) && <section className="dream-missions-section"><div className="section-heading"><div><p className="eyebrow">PEQUENOS PASSOS</p><h2>Missões da família</h2></div><span className="count-badge">{missions?.length ?? 0}</span></div><div className="dream-missions-grid"><details className="card mission-create"><summary>+ Nova missão</summary><form action={createDreamMission}><label>Para qual sonho?<select name="dream_id" required><option value="">Selecione</option>{dreams?.filter((dream) => dream.status === "active").map((dream) => <option value={dream.id} key={dream.id}>{dream.emoji} {dream.title}</option>)}</select></label><label>Desafio<input name="title" maxLength={100} placeholder="Ex.: Um mês sem delivery" required /></label><div className="dream-form-row"><label>Quanto guardar?<input name="target" inputMode="decimal" placeholder="500,00" required /></label><label>Até quando?<input name="ends_on" type="date" required /></label></div><label>Como vamos celebrar?<input name="reward_text" maxLength={120} placeholder="Ex.: Noite de cinema em casa" /></label><button type="submit">Começar missão</button></form></details>{missions?.map((mission) => { const progress = Math.min(Math.round((mission.current_cents / mission.target_cents) * 100), 100); const dream = dreams?.find((item) => item.id === mission.dream_id); const daysLeft = Math.max(0, Math.ceil((new Date(`${mission.ends_on}T23:59:59`).getTime() - renderedAt) / 86400000)); const expired = mission.status !== "completed" && daysLeft === 0; return <article className={`card mission-card ${expired ? "expired" : mission.status}`} key={mission.id}><div className="mission-top"><span>{mission.status === "completed" ? "🏆" : expired ? "⌛" : "⚡"}</span><div><small>{dream?.emoji} {dream?.title}</small><h3>{mission.title}</h3></div><strong>{progress}%</strong></div><div className="dream-progress"><span style={{ width: `${progress}%` }} /></div><div className="mission-meta"><span>{money.format(mission.current_cents / 100)} de {money.format(mission.target_cents / 100)}</span><span>{mission.status === "completed" ? "Concluída" : expired ? "Prazo encerrado" : `${daysLeft} ${daysLeft === 1 ? "dia" : "dias"} restantes`}</span></div>{mission.reward_text && <p>🎉 {mission.reward_text}</p>}<form action={deleteDreamMission}><input type="hidden" name="mission_id" value={mission.id} /><button className="quiet-danger" type="submit">Remover missão</button></form></article>; })}</div></section>}
     {!dreams?.length && <article className="card empty-state dream-empty"><span>☁️</span><h2>O que faz vocês sonharem?</h2><p className="muted">Pode ser uma viagem, uma casa, um curso ou uma experiência juntos.</p></article>}
     <section className="dream-gallery">
       {dreams?.map((dream) => {

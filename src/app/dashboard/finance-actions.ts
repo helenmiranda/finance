@@ -602,6 +602,46 @@ export async function removeDreamCover(formData: FormData) {
   redirect("/dashboard/sonhos?success=Capa%20removida.");
 }
 
+export async function createDreamMission(formData: FormData) {
+  const { supabase, membership, user } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const dreamId = text(formData, "dream_id");
+  const title = text(formData, "title");
+  const target = cents(text(formData, "target"));
+  const endsOn = text(formData, "ends_on");
+  const today = new Date().toISOString().slice(0, 10);
+  if (!dreamId || !title || title.length > 100 || !target || !endsOn || endsOn < today) {
+    redirect("/dashboard/sonhos?error=Confira%20os%20dados%20e%20o%20prazo%20da%20missão.");
+  }
+  const { data: dream } = await supabase.from("dreams").select("id")
+    .eq("id", dreamId).eq("household_id", membership.household_id).eq("status", "active").maybeSingle();
+  if (!dream) redirect("/dashboard/sonhos?error=Escolha%20um%20sonho%20ativo.");
+  const { error } = await supabase.from("dream_missions").insert({
+    dream_id: dreamId,
+    household_id: membership.household_id,
+    title,
+    target_cents: target,
+    starts_on: today,
+    ends_on: endsOn,
+    reward_text: optionalText(formData, "reward_text"),
+    created_by: user.id,
+  });
+  if (error) redirect("/dashboard/sonhos?error=Não%20foi%20possível%20criar%20a%20missão.%20A%20migration%20033%20foi%20aplicada?");
+  revalidatePath("/dashboard/sonhos");
+  redirect("/dashboard/sonhos?success=Missão%20familiar%20iniciada!");
+}
+
+export async function deleteDreamMission(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const missionId = text(formData, "mission_id");
+  const { error } = await supabase.from("dream_missions").delete()
+    .eq("id", missionId).eq("household_id", membership.household_id);
+  if (error) redirect("/dashboard/sonhos?error=Não%20foi%20possível%20remover%20a%20missão.");
+  revalidatePath("/dashboard/sonhos");
+  redirect("/dashboard/sonhos?success=Missão%20removida.");
+}
+
 export async function deleteDream(formData: FormData) {
   const { supabase, membership } = await getAuthenticatedContext();
   if (!membership) redirect("/dashboard");

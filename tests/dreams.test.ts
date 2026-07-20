@@ -5,6 +5,7 @@ import { join } from "node:path";
 const root = process.cwd();
 const migration = readFileSync(join(root, "supabase/migrations/202607200031_family_dreams.sql"), "utf8");
 const coverMigration = readFileSync(join(root, "supabase/migrations/202607200032_dream_covers.sql"), "utf8");
+const missionMigration = readFileSync(join(root, "supabase/migrations/202607200033_dream_missions.sql"), "utf8");
 const page = readFileSync(join(root, "src/app/dashboard/sonhos/page.tsx"), "utf8");
 
 describe("sonhos familiares", () => {
@@ -39,5 +40,12 @@ describe("sonhos familiares", () => {
     expect(coverMigration).toContain("public = excluded.public");
     expect(coverMigration).toContain("public.is_household_member");
     expect(page).toContain("createSignedUrl");
+  });
+
+  it("atualiza missões automaticamente com cada aporte válido", () => {
+    expect(missionMigration).toContain("dream_missions_member_access");
+    expect(missionMigration).toContain("current_cents = current_cents + contribution_cents");
+    expect(missionMigration).toContain("contribution_date between starts_on and ends_on");
+    expect(page).toContain("Missões da família");
   });
 });
