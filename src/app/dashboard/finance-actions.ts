@@ -25,6 +25,26 @@ function day(value: string) {
   return Number.isInteger(parsed) && parsed >= 1 && parsed <= 31 ? parsed : null;
 }
 
+const knownMerchants = [
+  "uber", "99app", "ifood", "rappi", "amazon", "mercado livre", "mercadolivre", "shopee",
+  "netflix", "spotify", "youtube", "google", "apple", "disney plus", "globoplay",
+  "carrefour", "assai", "atacadao", "pao de acucar", "droga raia", "drogasil", "shell",
+];
+const merchantNoise = new Set(["compra", "pagamento", "pag", "pgto", "pix", "debito", "credito", "cartao", "visa", "mastercard", "elo", "br", "sa", "ltda", "me"]);
+
+function normalizedMerchantText(value: string) {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR").replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function merchantCandidate(value: string) {
+  const normalized = normalizedMerchantText(value);
+  const known = knownMerchants.find((merchant) => normalized.includes(merchant));
+  if (known) return { pattern: known, trusted: true };
+  const words = normalized.split(" ").filter((word) => word.length >= 3 && !/^\d+$/.test(word) && !merchantNoise.has(word));
+  const pattern = [...new Set(words)].slice(0, 2).join(" ");
+  return pattern.length >= 5 ? { pattern, trusted: false } : null;
+}
+
 export async function addAccount(formData: FormData) {
   const { supabase, membership } = await getAuthenticatedContext();
   if (!membership) redirect("/dashboard");
@@ -476,17 +496,18 @@ export async function bulkCategorizeTransactions(formData: FormData) {
     .eq("household_id", membership.household_id).in("id", transactionIds);
   if (error) redirect("/dashboard/transacoes?error=Não%20foi%20possível%20alterar%20as%20categorias.");
   if (formData.get("remember_rule") === "on") {
-    const { data: existingRules } = await supabase.from("categorization_rules").select("id, pattern")
-      .eq("household_id", membership.household_id).eq("match_type", "exact");
+    const { data: existingRules } = await supabase.from("categorization_rules").select("id, pattern, match_type")
+      .eq("household_id", membership.household_id);
     const normalize = (value: string) => value.trim().toLocaleLowerCase("pt-BR");
     const patterns = [...new Set(selected.map((item) => item.description.trim()).filter(Boolean))];
     const selectedPatterns = new Set(patterns.map(normalize));
-    const matchingRules = (existingRules ?? []).filter((rule) => selectedPatterns.has(normalize(rule.pattern)));
+    const exactRules = (existingRules ?? []).filter((rule) => rule.match_type === "exact");
+    const matchingRules = exactRules.filter((rule) => selectedPatterns.has(normalize(rule.pattern)));
     if (matchingRules.length) {
       await supabase.from("categorization_rules").update({ category_id: categoryId, priority: 200, is_active: true })
         .eq("household_id", membership.household_id).in("id", matchingRules.map((rule) => rule.id));
     }
-    const existing = new Set((existingRules ?? []).map((rule) => normalize(rule.pattern)));
+    const existing = new Set(exactRules.map((rule) => normalize(rule.pattern)));
     const newPatterns = patterns.filter((pattern) => !existing.has(normalize(pattern)));
     if (newPatterns.length) {
       await supabase.from("categorization_rules").insert(newPatterns.map((pattern) => ({
@@ -497,6 +518,27 @@ export async function bulkCategorizeTransactions(formData: FormData) {
         match_type: "exact",
         priority: 200,
       })));
+    }
+
+    const candidates = patterns.map(merchantCandidate).filter((candidate): candidate is { pattern: string; trusted: boolean } => Boolean(candidate));
+    const frequency = candidates.reduce((counts, candidate) => counts.set(candidate.pattern, (counts.get(candidate.pattern) ?? 0) + 1), new Map<string, number>());
+    const learnedMerchants = [...new Set(candidates.filter((candidate) => candidate.trusted || (frequency.get(candidate.pattern) ?? 0) >= 2).map((candidate) => candidate.pattern))];
+    const containsRules = (existingRules ?? []).filter((rule) => rule.match_type === "contains");
+    for (const pattern of learnedMerchants) {
+      const existingRule = containsRules.find((rule) => normalizedMerchantText(rule.pattern) === pattern);
+      if (existingRule) {
+        await supabase.from("categorization_rules").update({ category_id: categoryId, priority: 180, is_active: true })
+          .eq("id", existingRule.id).eq("household_id", membership.household_id);
+      } else {
+        await supabase.from("categorization_rules").insert({
+          household_id: membership.household_id,
+          category_id: categoryId,
+          name: `Estabelecimento aprendido: ${pattern}`.slice(0, 120),
+          pattern,
+          match_type: "contains",
+          priority: 180,
+        });
+      }
     }
   }
   await evaluateAndDispatchFinancialAlerts(membership.household_id);

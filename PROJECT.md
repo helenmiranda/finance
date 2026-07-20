@@ -209,6 +209,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Registro do PWA agora solicita atualização do service worker sem reutilizar o cache HTTP, mantendo os próximos deploys sincronizados.
 - Todas as entregas da manhã foram validadas com lint e build de produção antes do envio ao GitHub.
 - Categorias padrão de despesas e receitas preparadas para todos os espaços familiares, com preenchimento idempotente e criação automática nos próximos onboardings.
+- Aprendizado de categorias evoluído por tenant: além da descrição exata, estabelecimentos conhecidos ganham regras seguras de correspondência e comerciantes desconhecidos só são generalizados após variações repetidas.
 
 Commits principais desta etapa: `eae4974`, `3972e68`, `523cb64`, `0955a55`, `40fd7a9`, `75573db` e `345857c`.
 
