@@ -10,9 +10,10 @@ const accountTypes: Record<string, string> = {
 };
 
 type PageProps = { searchParams: Promise<{ error?: string; success?: string }> };
-type SyncItem = { id: string; connector_name: string; status: string; execution_status: string | null; error_code: string | null; connected_by: string; provider_updated_at: string | null; last_synced_at: string | null; status_detail: unknown };
+type SyncItem = { id: string; connector_name: string; status: string; is_active: boolean; execution_status: string | null; error_code: string | null; connected_by: string; provider_updated_at: string | null; last_synced_at: string | null; status_detail: unknown };
 
 function statusFor(item: SyncItem) {
+  if (!item.is_active) return { label: "Desvinculada", tone: "warning" };
   if (item.execution_status === "PARTIAL_SUCCESS") return { label: "Atualização parcial", tone: "warning" };
   if (item.error_code || ["OUTDATED", "LOGIN_ERROR"].includes(item.status)) return { label: "Requer atenção", tone: "error" };
   if (item.status === "UPDATING") return { label: "Atualizando", tone: "working" };
@@ -28,7 +29,7 @@ export default async function AccountsPage({ searchParams }: PageProps) {
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
   const [{ data: accounts }, { data: pluggyItems }, { data: refreshRuns }, { data: webhookEvents }] = membership ? await Promise.all([
     supabase.from("accounts").select("*").eq("household_id", membership.household_id).order("created_at"),
-    supabase.from("pluggy_items").select("id, connector_name, status, execution_status, error_code, connected_by, provider_updated_at, last_synced_at, status_detail").eq("household_id", membership.household_id).order("updated_at", { ascending: false }),
+    supabase.from("pluggy_items").select("id, connector_name, status, is_active, execution_status, error_code, connected_by, provider_updated_at, last_synced_at, status_detail").eq("household_id", membership.household_id).order("updated_at", { ascending: false }),
     supabase.from("pluggy_refresh_runs").select("pluggy_item_id, slot, status").eq("reference_date", today),
     supabase.from("pluggy_webhook_events").select("item_id, event_type, status, created_at").order("created_at", { ascending: false }).limit(100),
   ]) : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }];
@@ -49,7 +50,7 @@ export default async function AccountsPage({ searchParams }: PageProps) {
               <div className="sync-times"><span><small>Banco atualizado</small><strong>{formatted(item.provider_updated_at)}</strong></span><span><small>Importado no Poupemos</small><strong>{formatted(item.last_synced_at)}</strong></span></div>
               <div className="sync-meta"><span>{runs.length}/3 atualizações bancárias hoje</span><span>{latestEvent ? `Último evento: ${latestEvent.event_type.replace("transactions/", "transações ").replace("item/", "conexão ")}` : "Nenhum evento recebido"}</span></div>
               {item.error_code && <p className="sync-error">{item.error_code}</p>}
-              {item.connected_by === user.id && <PluggySyncButton connectionId={item.id} />}
+              {item.connected_by === user.id && item.is_active && <PluggySyncButton connectionId={item.id} />}
             </article>;
           })}</div>}
         </article>

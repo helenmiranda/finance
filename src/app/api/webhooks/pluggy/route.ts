@@ -45,6 +45,7 @@ export async function POST(request: Request) {
   const { data: connection } = await admin.from("pluggy_items")
     .select("id, household_id, pluggy_item_id, connector_name, connected_by")
     .eq("pluggy_item_id", itemId)
+    .eq("is_active", true)
     .maybeSingle();
   if (!connection) return NextResponse.json({ accepted: true, ignored: true });
 

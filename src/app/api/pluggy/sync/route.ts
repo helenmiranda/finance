@@ -10,7 +10,7 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   const body = await request.json().catch(() => null) as { connectionId?: string } | null;
   if (!body?.connectionId) return NextResponse.json({ error: "Conexão inválida." }, { status: 400 });
-  const { data: connection } = await supabase.from("pluggy_items").select("id, household_id, pluggy_item_id, connector_name, connected_by").eq("id", body.connectionId).eq("connected_by", user.id).maybeSingle();
+  const { data: connection } = await supabase.from("pluggy_items").select("id, household_id, pluggy_item_id, connector_name, connected_by").eq("id", body.connectionId).eq("connected_by", user.id).eq("is_active", true).maybeSingle();
   if (!connection) return NextResponse.json({ error: "Conexão não encontrada para este usuário." }, { status: 404 });
 
   try {

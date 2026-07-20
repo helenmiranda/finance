@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
   if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
   const supabase = createAdminClient();
-  const { data: connections, error } = await supabase.from("pluggy_items").select("id, pluggy_item_id");
+  const { data: connections, error } = await supabase.from("pluggy_items").select("id, pluggy_item_id").eq("is_active", true);
   if (error) return NextResponse.json({ error: "Não foi possível carregar as conexões." }, { status: 500 });
   await ensurePluggyWebhooks().catch(() => undefined);
   const window = brazilTime();

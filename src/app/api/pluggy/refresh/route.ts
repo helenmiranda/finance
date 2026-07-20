@@ -17,7 +17,7 @@ export async function POST() {
   if (!user) return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   const window = currentWindow();
   if (!window.slot) return NextResponse.json({ triggered: 0, reason: "outside_window" });
-  const { data: connections } = await userClient.from("pluggy_items").select("id, pluggy_item_id").eq("connected_by", user.id);
+  const { data: connections } = await userClient.from("pluggy_items").select("id, pluggy_item_id").eq("connected_by", user.id).eq("is_active", true);
   const admin = createAdminClient();
   await ensurePluggyWebhooks().catch(() => undefined);
   let triggered = 0;

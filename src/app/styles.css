@@ -785,9 +785,12 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .privacy-export-card a { white-space: nowrap; }
 .privacy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .privacy-row { display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; align-items: center; gap: 13px; padding: 17px 19px; }
+.privacy-connection { grid-template-columns: 46px minmax(0, 1fr) auto auto; }
+.privacy-connection.inactive { border-style: dashed; background: rgba(232, 235, 230, .58); }
 .privacy-row > div { display: grid; gap: 4px; min-width: 0; }
 .privacy-row small { overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .integration-mark { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--primary-dark); color: var(--primary); font-size: 20px; }
+.connection-state-form button { min-height: 34px; padding: 7px 10px; font-size: 9px; }
 .privacy-empty { display: grid; gap: 5px; min-height: 110px; align-content: center; }
 .privacy-empty small { color: var(--muted); }
 .privacy-note { margin-top: 20px; padding: 18px 20px; border-left: 3px solid var(--primary); border-radius: 0 16px 16px 0; background: rgba(255,255,255,.5); }
@@ -980,6 +983,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
   .privacy-export-card > a { grid-column: 1 / -1; justify-content: center; }
   .privacy-row { grid-template-columns: 42px 1fr; }
   .privacy-row > .member-role, .privacy-row > .sync-status { grid-column: 2; justify-self: start; }
+  .connection-state-form { grid-column: 2; }
   .member-role { grid-column: 2; justify-self: start; }
   .transaction-filters { grid-template-columns: 1fr; }
   .search-field { grid-column: auto; }

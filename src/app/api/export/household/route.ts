@@ -20,7 +20,7 @@ export async function GET() {
     supabase.from("goals").select("*").eq("household_id", householdId).limit(10000),
     supabase.from("categorization_rules").select("*").eq("household_id", householdId).limit(10000),
     supabase.from("investments").select("*").eq("household_id", householdId).limit(10000),
-    supabase.from("pluggy_items").select("connector_name, status, connected_by, last_synced_at, created_at").eq("household_id", householdId).limit(1000),
+    supabase.from("pluggy_items").select("connector_name, status, is_active, connected_by, last_synced_at, created_at").eq("household_id", householdId).limit(1000),
   ]);
   const results = [members, accounts, cards, statements, categories, transactions, budgets, goals, rules, investments, connections];
   if (results.some((result) => result.error)) return NextResponse.json({ error: "Não foi possível preparar todos os dados." }, { status: 500 });

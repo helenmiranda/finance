@@ -8,7 +8,7 @@ export async function GET() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
-  const { data: connections } = await supabase.from("pluggy_items").select("id, pluggy_item_id, last_synced_at").eq("connected_by", user.id);
+  const { data: connections } = await supabase.from("pluggy_items").select("id, pluggy_item_id, last_synced_at").eq("connected_by", user.id).eq("is_active", true);
   const pending: string[] = [];
   for (const connection of connections ?? []) {
     try {
