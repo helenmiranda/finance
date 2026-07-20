@@ -2,6 +2,8 @@ import { DashboardShell } from "@/components/dashboard-shell";
 import { getAuthenticatedContext } from "@/lib/household";
 import { addCreditCard, payStatement, updateFinancialNickname } from "../finance-actions";
 import { AddCardDialog } from "@/components/add-card-dialog";
+import { cardBrandStyle } from "@/lib/card-brand";
+import type { CSSProperties } from "react";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 type PageProps = { searchParams: Promise<{ error?: string; success?: string }> };
@@ -28,7 +30,11 @@ export default async function CardsPage({ searchParams }: PageProps) {
           <section className="items-column">
             <div className="section-heading"><h2>Cartões cadastrados</h2><span className="count-badge">{cards?.length ?? 0}</span></div>
             {!cards?.length && <article className="card empty-state"><span>＋</span><h2>Nenhum cartão ainda</h2><p className="muted">Adicione um cartão para acompanhar as faturas.</p></article>}
-            {cards?.map((card) => <article className="credit-card-preview" style={{ background: card.color ?? "#163300" }} key={card.id}><div><small>{card.nickname ? card.name : card.issuer || "Cartão de crédito"}</small><strong>{card.nickname || card.name}</strong></div><span>•••• {card.last_four_digits || "0000"}</span><div className="card-meta"><small>Limite<br/><strong>{card.credit_limit_cents == null ? "Não informado" : money.format(card.credit_limit_cents / 100)}</strong></small><small>Fecha dia<br/><strong>{card.closing_day}</strong></small><small>Vence dia<br/><strong>{card.due_day}</strong></small></div><details className="nickname-editor card-nickname"><summary>Editar apelido</summary><form action={updateFinancialNickname}><input type="hidden" name="kind" value="card" /><input type="hidden" name="id" value={card.id} /><input name="nickname" defaultValue={card.nickname ?? ""} maxLength={60} placeholder="Ex.: Cartão Ramon" /><button type="submit">Salvar</button></form></details></article>)}
+            {!!cards?.length && <div className="credit-cards-grid">{cards.map((card) => {
+              const brand = cardBrandStyle([card.name, card.nickname, card.issuer, card.accounts?.name], card.color ?? "#163300");
+              const style = { "--card-background": brand.background, "--card-foreground": brand.foreground } as CSSProperties;
+              return <article className="credit-card-preview" style={style} key={card.id}><div><small>{brand.label} · {card.issuer || "Cartão de crédito"}</small><strong>{card.nickname || card.name}</strong></div><span>•••• {card.last_four_digits || "0000"}</span><div className="card-meta"><small>Limite<br/><strong>{card.credit_limit_cents == null ? "Não informado" : money.format(card.credit_limit_cents / 100)}</strong></small><small>Fecha dia<br/><strong>{card.closing_day}</strong></small><small>Vence dia<br/><strong>{card.due_day}</strong></small></div><details className="nickname-editor card-nickname"><summary>Editar apelido</summary><form action={updateFinancialNickname}><input type="hidden" name="kind" value="card" /><input type="hidden" name="id" value={card.id} /><input name="nickname" defaultValue={card.nickname ?? ""} maxLength={60} placeholder="Ex.: Cartão Ramon" /><button type="submit">Salvar</button></form></details></article>;
+            })}</div>}
             {!!statements?.length && <div className="section-heading statements-heading"><h2>Faturas geradas</h2></div>}
             {statements?.map((statement) => {
               const isOverdue = statement.status !== "paid" && new Date(`${statement.due_date}T23:59:59`) < new Date();
