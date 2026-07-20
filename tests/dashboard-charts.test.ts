@@ -26,8 +26,16 @@ describe("gráficos do dashboard", () => {
 
   it("abre as transações filtradas ao selecionar uma categoria", () => {
     const charts = source("src/components/dashboard-charts.tsx");
-    expect(charts).toContain("/dashboard/transacoes?category=");
-    expect(charts).toContain("/dashboard/transacoes?review=uncategorized");
+    expect(charts).toContain("category=${encodeURIComponent(category.id)}");
+    expect(charts).toContain("&from=${periodFrom}&to=${periodTo}");
+    expect(charts).toContain('"review=uncategorized"');
     expect(charts).toContain("Ver transações de");
+  });
+
+  it("mostra entradas, saídas e saldo para os filtros aplicados", () => {
+    const transactions = source("src/app/dashboard/transacoes/page.tsx");
+    expect(transactions).toContain("filteredIncome");
+    expect(transactions).toContain("filteredExpense");
+    expect(transactions).toContain("Saldo líquido");
   });
 });

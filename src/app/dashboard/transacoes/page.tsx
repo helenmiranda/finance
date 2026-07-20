@@ -35,7 +35,25 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
     if (kind === "account" && id) transactionQuery = transactionQuery.eq("account_id", id);
     if (kind === "card" && id) transactionQuery = transactionQuery.eq("credit_card_id", id);
   }
-  const { data: transactions } = await transactionQuery;
+  let totalsQuery = supabase.from("transactions")
+    .select("type, amount_cents, transfer_direction", { count: "exact" })
+    .eq("household_id", householdId ?? "00000000-0000-0000-0000-000000000000")
+    .eq("status", "confirmed")
+    .limit(10000);
+  if (params.q?.trim()) totalsQuery = totalsQuery.ilike("description", `%${params.q.trim()}%`);
+  if (params.type && ["income", "expense", "transfer", "card_payment"].includes(params.type)) totalsQuery = totalsQuery.eq("type", params.type);
+  if (params.category) totalsQuery = totalsQuery.eq("category_id", params.category);
+  if (params.review === "uncategorized") totalsQuery = totalsQuery.in("type", ["income", "expense"]).is("category_id", null);
+  if (params.from) totalsQuery = totalsQuery.gte("occurred_on", params.from);
+  if (params.to) totalsQuery = totalsQuery.lte("occurred_on", params.to);
+  if (params.source) {
+    const [kind, id] = params.source.split(":");
+    if (kind === "account" && id) totalsQuery = totalsQuery.eq("account_id", id);
+    if (kind === "card" && id) totalsQuery = totalsQuery.eq("credit_card_id", id);
+  }
+  const [{ data: transactions }, { data: totalRows, count: filteredCount }] = await Promise.all([transactionQuery, totalsQuery]);
+  const filteredIncome = (totalRows ?? []).reduce((sum, item) => sum + (item.type === "income" || (item.type === "transfer" && item.transfer_direction === "in") ? item.amount_cents : 0), 0);
+  const filteredExpense = (totalRows ?? []).reduce((sum, item) => sum + (item.type === "expense" || item.type === "card_payment" || (item.type === "transfer" && item.transfer_direction === "out") ? item.amount_cents : 0), 0);
   const hasFilters = Boolean(params.q || params.type || params.category || params.source || params.from || params.to || params.review);
 
   return (
@@ -51,8 +69,14 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
 
         <details className="filter-disclosure" open={hasFilters}><summary><span>Filtrar transações</span><small>{hasFilters ? "Filtros ativos" : "Buscar, categoria e período"}</small></summary><form className="transaction-filters" method="get"><label className="search-field">Buscar<input name="q" defaultValue={params.q} placeholder="Descrição do lançamento" /></label><label>Tipo<select name="type" defaultValue={params.type ?? ""}><option value="">Todos</option><option value="expense">Despesas</option><option value="income">Receitas</option><option value="transfer">Transferências</option><option value="card_payment">Pagamentos de fatura</option></select></label><label>Categoria<select name="category" defaultValue={params.category ?? ""}><option value="">Todas</option>{categories?.map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}</select></label><label>Conta ou cartão<select name="source" defaultValue={params.source ?? ""}><option value="">Todos</option>{accounts?.map((account) => <option value={`account:${account.id}`} key={account.id}>Conta · {account.nickname || account.name}</option>)}{cards?.map((card) => <option value={`card:${card.id}`} key={card.id}>Cartão · {card.nickname || card.name}</option>)}</select></label><label>De<input name="from" type="date" defaultValue={params.from} /></label><label>Até<input name="to" type="date" defaultValue={params.to} /></label><button type="submit">Filtrar</button>{hasFilters && <Link href="/dashboard/transacoes">Limpar</Link>}</form></details>
 
+        <section className="transaction-totals" aria-label="Totais dos filtros aplicados">
+          <article><small>Entradas</small><strong className="positive">+ {money.format(filteredIncome / 100)}</strong></article>
+          <article><small>Saídas</small><strong className="negative">− {money.format(filteredExpense / 100)}</strong></article>
+          <article><small>Saldo líquido</small><strong className={filteredIncome - filteredExpense >= 0 ? "positive" : "negative"}>{money.format((filteredIncome - filteredExpense) / 100)}</strong></article>
+        </section>
+
         <form action={bulkCategorizeTransactions} className="bulk-form">
-          <div className="results-heading"><strong>{transactions?.length ?? 0}</strong><span> resultados</span></div><details className="bulk-disclosure"><summary>Organizar selecionados</summary><div className="bulk-toolbar"><label>Alterar categoria<select name="category_id" defaultValue="" required><option value="" disabled>Selecione</option>{categories?.map((category) => <option value={category.id} key={category.id}>{category.name} · {category.kind === "income" ? "Receita" : "Despesa"}</option>)}</select></label><label className="checkbox-label"><input name="remember_rule" type="checkbox" defaultChecked /> Lembrar descrições</label><button type="submit">Aplicar</button></div></details>
+          <div className="results-heading"><strong>{filteredCount ?? transactions?.length ?? 0}</strong><span> resultados{(filteredCount ?? 0) > 100 ? " · mostrando os 100 mais recentes" : ""}</span></div><details className="bulk-disclosure"><summary>Organizar selecionados</summary><div className="bulk-toolbar"><label>Alterar categoria<select name="category_id" defaultValue="" required><option value="" disabled>Selecione</option>{categories?.map((category) => <option value={category.id} key={category.id}>{category.name} · {category.kind === "income" ? "Receita" : "Despesa"}</option>)}</select></label><label className="checkbox-label"><input name="remember_rule" type="checkbox" defaultChecked /> Lembrar descrições</label><button type="submit">Aplicar</button></div></details>
           {!transactions?.length && <article className="card empty-state"><span>⌕</span><h2>Nenhum lançamento encontrado</h2><p className="muted">Tente remover alguns filtros.</p></article>}
           {!!transactions?.length && <article className="card transaction-table filtered-table">{transactions.map((transaction) => {
             const incoming = transaction.type === "income" || transaction.transfer_direction === "in";

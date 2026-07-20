@@ -38,6 +38,7 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
   const today = new Date();
   const monthStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1)).toISOString().slice(0, 10);
   const nextMonth = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 1)).toISOString().slice(0, 10);
+  const monthEnd = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 0)).toISOString().slice(0, 10);
   const monthLabel = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(today);
 
   const [accountsResult, connectedAccountsResult, balanceTransactionsResult, monthTransactionsResult, latestAccountsResult, latestCardsResult, statementsResult] = await Promise.all([
@@ -92,7 +93,7 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
           <article className="compact-metric"><span>Faturas em aberto</span><strong>{money.format(openStatements / 100)}</strong><Link href="/dashboard/cartoes">Ver cartões →</Link></article>
         </section>
 
-        <DashboardCharts categories={categoryChart} days={dailyChart} monthLabel={monthLabel} />
+        <DashboardCharts categories={categoryChart} days={dailyChart} monthLabel={monthLabel} periodFrom={monthStart} periodTo={monthEnd} />
 
         <section className="dashboard-lower-grid">
           <article className="clean-panel recent-panel">

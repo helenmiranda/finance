@@ -834,6 +834,10 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .transaction-filters > a { align-self: center; color: var(--primary-dark); font-size: 11px; font-weight: 800; text-decoration: none; }
 .bulk-form { display: grid; gap: 9px; }
 .results-heading { padding: 8px 10px 0; color: var(--muted); font-size: 11px; }
+.transaction-totals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 14px 0 8px; }
+.transaction-totals article { display: grid; gap: 5px; padding: 16px 18px; border: 1px solid var(--hairline); border-radius: 18px; background: rgba(255, 255, 255, .62); }
+.transaction-totals small { color: var(--body); font-size: 10px; font-weight: 700; }
+.transaction-totals strong { font-size: clamp(17px, 2vw, 24px); }
 .bulk-disclosure > summary { display: none; }
 .bulk-disclosure:not([open]) > .bulk-toolbar { display: flex; }
 .bulk-toolbar { display: flex; align-items: end; justify-content: flex-end; gap: 12px; padding: 0 10px; }
@@ -1023,6 +1027,8 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
   .connection-state-form { grid-column: 2; }
   .member-role { grid-column: 2; justify-self: start; }
   .transaction-filters { grid-template-columns: 1fr; }
+  .transaction-totals { grid-template-columns: 1fr 1fr; }
+  .transaction-totals article:last-child { grid-column: 1 / -1; }
   .search-field { grid-column: auto; }
   .filter-row { grid-template-columns: 20px 40px 1fr auto; }
   .filter-row > strong:last-child { grid-column: 3 / -1; justify-self: end; }

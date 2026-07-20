@@ -5,7 +5,7 @@ type DailyDatum = { day: number; income: number; expense: number };
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 
-export function DashboardCharts({ categories, days, monthLabel }: { categories: CategoryDatum[]; days: DailyDatum[]; monthLabel: string }) {
+export function DashboardCharts({ categories, days, monthLabel, periodFrom, periodTo }: { categories: CategoryDatum[]; days: DailyDatum[]; monthLabel: string; periodFrom: string; periodTo: string }) {
   const categoryMax = Math.max(...categories.map((item) => item.amount), 1);
   const dailyMax = Math.max(...days.flatMap((item) => [item.income, item.expense]), 1);
   const baseline = 186;
@@ -17,10 +17,13 @@ export function DashboardCharts({ categories, days, monthLabel }: { categories: 
     <article className="clean-panel category-chart-card">
       <div className="card-title"><div><h2>Gastos por categoria</h2><p className="muted">Onde o dinheiro saiu neste mês</p></div></div>
       {!categories.length ? <p className="chart-empty">Ainda não há despesas categorizadas neste mês.</p> : <div className="category-bars">
-        {categories.map((category) => <Link className="category-bar-row" href={category.id ? `/dashboard/transacoes?category=${encodeURIComponent(category.id)}` : "/dashboard/transacoes?review=uncategorized"} aria-label={`Ver transações de ${category.name}`} key={category.id ?? "uncategorized"}>
+        {categories.map((category) => {
+          const filter = category.id ? `category=${encodeURIComponent(category.id)}` : "review=uncategorized";
+          return <Link className="category-bar-row" href={`/dashboard/transacoes?${filter}&from=${periodFrom}&to=${periodTo}`} aria-label={`Ver transações de ${category.name} em ${monthLabel}`} key={category.id ?? "uncategorized"}>
           <div><span style={{ background: category.color }} /><strong>{category.name}</strong><small>{money.format(category.amount / 100)}</small></div>
           <div className="category-bar-track"><span style={{ width: `${Math.max(3, category.amount / categoryMax * 100)}%`, background: category.color }} /></div>
-        </Link>)}
+        </Link>;
+        })}
       </div>}
     </article>
 
