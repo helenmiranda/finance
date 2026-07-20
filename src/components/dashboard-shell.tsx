@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { logout } from "@/app/auth/actions";
-import { PluggyAutoCheck } from "@/components/pluggy-auto-check";
 import { getAuthenticatedContext } from "@/lib/household";
 import { PullToRefresh } from "@/components/pull-to-refresh";
 
@@ -37,7 +36,6 @@ export async function DashboardShell({ active, children }: DashboardShellProps) 
   ));
   return (
     <main className="shell">
-      <PluggyAutoCheck />
       <aside className="sidebar">
         <Link className="brand" href="/dashboard"><span className="brand-mark">P</span><span>Poupemos</span></Link>
         <nav aria-label="Navegação principal">{navigation}</nav>

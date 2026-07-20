@@ -34,4 +34,15 @@ describe("experiência PWA mobile", () => {
     expect(styles).toContain("env(safe-area-inset-top)");
     expect(styles).toContain("env(safe-area-inset-bottom)");
   });
+
+  it("mostra feedback imediato durante a navegação", () => {
+    const feedback = source("src/components/navigation-feedback.tsx");
+    expect(feedback).toContain("navigation-pending");
+    expect(feedback).toContain('document.addEventListener("click"');
+  });
+
+  it("mantém a verificação automática fora do shell que remonta por página", () => {
+    expect(source("src/app/dashboard/layout.tsx")).toContain("<PluggyAutoCheck />");
+    expect(source("src/components/dashboard-shell.tsx")).not.toContain("PluggyAutoCheck");
+  });
 });

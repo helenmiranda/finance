@@ -154,6 +154,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - [x] Atualizar primeiro os dados do Poupemos e consultar a Pluggy apenas quando houver atualização bancária disponível.
 - [x] Revisar áreas seguras, indicador de conexão, atualização offline, modais e navegação no celular.
 - [ ] Criar testes mobile de ponta a ponta para login, dashboard, transações, contas e cartões.
+- [x] Criar base Playwright mobile para login, proteção de rotas, instalação PWA e tela offline; jornadas autenticadas de menu, dashboard, contas e cartões usam credenciais E2E opcionais.
 
 ## Próximas decisões
 
@@ -249,6 +250,8 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Dashboard ganhou gráficos responsivos de despesas por categoria e de entradas versus saídas por dia no mês, com estados vazios e descrições acessíveis.
 - Categorias no gráfico de despesas passaram a abrir a lista de transações já filtrada; itens sem categoria levam diretamente à fila de revisão.
 - Tela de transações passou a mostrar entradas, saídas, saldo líquido e quantidade total para os filtros aplicados; atalhos do gráfico preservam o período mensal exibido.
+- Navegação do menu ganhou feedback visual imediato, e a verificação automática da Pluggy foi movida para um layout persistente para não reiniciar a cada troca de página.
+- Playwright configurado para testes E2E em Pixel e iPhone, separado da suíte Vitest; cenários públicos cobrem login, proteção de rota, manifesto instalável e tela offline.
 
 Commits principais desta etapa: `eae4974`, `3972e68`, `523cb64`, `0955a55`, `40fd7a9`, `75573db` e `345857c`.
 

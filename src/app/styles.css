@@ -48,6 +48,10 @@ body::after { bottom: -240px; left: 20%; background: #38c8ff; opacity: 0.12; }
 .network-status div { display: grid; gap: 1px; }
 .network-status strong { font-size: 12px; }
 .network-status small { font-size: 10px; }
+.navigation-progress { position: fixed; z-index: 150; top: 0; left: 0; width: 0; height: 3px; overflow: hidden; background: var(--primary); box-shadow: 0 0 12px rgba(159, 232, 112, .85); opacity: 0; pointer-events: none; transition: opacity .15s ease; }
+.navigation-pending .navigation-progress { width: 72%; opacity: 1; animation: navigation-progress 1.2s ease-in-out infinite; }
+.navigation-pending .mobile-menu-panel a { pointer-events: none; }
+@keyframes navigation-progress { 0% { width: 8%; } 55% { width: 68%; } 100% { width: 92%; } }
 
 button, a { font: inherit; }
 
