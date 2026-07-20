@@ -11,13 +11,17 @@ export function PluggyConnectButton() {
     setStatus("loading"); setMessage("");
     try {
       const itemId = String(formData.get("item_id") ?? "").trim();
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(itemId)) {
+        throw new Error("Digite um Item ID válido no formato xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.");
+      }
       const response = await fetch("/api/pluggy/items", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ itemId }) });
-      const data = await response.json() as { error?: string };
+      const responseBody = await response.text();
+      const data = (() => { try { return JSON.parse(responseBody) as { error?: string }; } catch { return {}; } })();
       if (!response.ok) throw new Error(data.error || "Não foi possível vincular a conexão.");
       setStatus("success"); setMessage("Conexão vinculada ao Poupemos."); router.refresh();
     } catch (error) { setStatus("error"); setMessage(error instanceof Error ? error.message : "Não foi possível vincular a conexão."); }
   }
-  return <form className="pluggy-connect-action" action={connect}><label>Item ID do Meu Pluggy<input name="item_id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}" required /></label><button type="submit" disabled={status === "loading"}>{status === "loading" ? "Validando…" : "Vincular conexão"}</button>{message && <small className={status === "error" ? "negative" : "positive"}>{message}</small>}</form>;
+  return <form className="pluggy-connect-action" action={connect}><label>Item ID do Meu Pluggy<input name="item_id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autoCapitalize="none" autoCorrect="off" spellCheck={false} required /></label><button type="submit" disabled={status === "loading"}>{status === "loading" ? "Validando…" : "Vincular conexão"}</button>{message && <small className={status === "error" ? "negative" : "positive"}>{message}</small>}</form>;
 }
 
 export function PluggySyncButton({ connectionId }: { connectionId: string }) {
