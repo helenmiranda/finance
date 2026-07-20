@@ -54,4 +54,11 @@ describe("experiência PWA mobile", () => {
     expect(splash).toContain("coinPositions");
     expect(splash).toContain("useState(true)");
   });
+
+  it("fornece tela de lançamento nativa para evitar fundo preto no iPhone", () => {
+    const layout = source("src/app/layout.tsx");
+    expect(layout).toContain("startupImage");
+    expect(layout).toContain("poupemos-1290x2796.jpg");
+    expect(layout).toContain('themeColor: "#163300"');
+  });
 });

@@ -255,6 +255,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Central de privacidade ganhou exclusão permanente do espaço e da conta com revalidação de senha, confirmação textual, bloqueio de responsáveis com membros e preservação do histórico compartilhado.
 - PWA instalado ganhou splash screen curta com moedas caindo, assinatura da marca, exibição única por sessão e alternativa sem animação para acessibilidade.
 - Splash passou a renderizar desde o primeiro frame do PWA, ganhou gradiente em camadas e 24 moedas que se acumulam na base antes da transição.
+- iOS ganhou imagens nativas de lançamento no gradiente da marca para eliminar o intervalo preto; moedas receberam acabamento metálico, relevo, brilho e rotação em perspectiva.
 
 Commits principais desta etapa: `eae4974`, `3972e68`, `523cb64`, `0955a55`, `40fd7a9`, `75573db` e `345857c`.
 

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1290" height="2796" viewBox="0 0 1290 2796">
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#234d12"/>
+      <stop offset="0.48" stop-color="#163300"/>
+      <stop offset="1" stop-color="#0a1a00"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="20%" cy="12%" r="70%">
+      <stop offset="0" stop-color="#9fe870" stop-opacity=".38"/>
+      <stop offset=".55" stop-color="#9fe870" stop-opacity=".08"/>
+      <stop offset="1" stop-color="#9fe870" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="28" stdDeviation="38" flood-color="#9fe870" flood-opacity=".25"/>
+    </filter>
+  </defs>
+  <rect width="1290" height="2796" fill="url(#background)"/>
+  <rect width="1290" height="2796" fill="url(#glow)"/>
+  <g transform="translate(645 1325)" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">
+    <circle r="122" fill="#9fe870" filter="url(#shadow)"/>
+    <text y="48" fill="#163300" font-size="132" font-weight="900">P</text>
+    <text y="260" fill="#ffffff" font-size="92" font-weight="800" letter-spacing="-5">Poupemos</text>
+    <text y="330" fill="#ffffff" fill-opacity=".68" font-size="34" font-weight="600">Seus planos começam aqui.</text>
+  </g>
+</svg>
