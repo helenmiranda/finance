@@ -868,6 +868,9 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .payable-actions summary { padding: 8px 11px; border-radius: 999px; background: var(--primary); color: var(--primary-dark); cursor: pointer; font-size: 9px; font-weight: 900; list-style: none; }
 .payable-actions summary::-webkit-details-marker { display: none; }
 .payable-actions details form { position: absolute; z-index: 5; top: 38px; right: 0; display: grid; gap: 9px; width: 230px; padding: 14px; border: 1px solid var(--hairline); border-radius: 15px; background: white; box-shadow: 0 16px 45px rgba(17,32,12,.15); }
+.payable-actions .payable-edit summary { background: #eef1eb; }
+.payable-actions .payable-series-cancel summary { background: transparent; color: var(--danger); }
+.payable-series-cancel label { color: var(--muted); font-size: 9px; }
 .payable-actions details input { height: 40px; font-size: 12px; }
 .payable-actions details button { min-height: 40px; font-size: 9px; }
 .card-payables { display: grid; gap: 12px; margin-top: 28px; }
@@ -878,6 +881,20 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .card-payables time, .card-payables small { color: var(--muted); font-size: 9px; }
 .card-payables article > div { display: grid; gap: 3px; }
 .card-payables article > strong { font-size: 12px; }
+.reconciliation-section { display: grid; gap: 10px; margin-bottom: 22px; }
+.reconciliation-section > .muted { margin: -5px 0 3px; font-size: 10px; }
+.reconciliation-list { display: grid; gap: 9px; }
+.reconciliation-item { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; align-items: center; gap: 16px; padding: 17px 19px; border-color: rgba(159,232,112,.65); }
+.reconciliation-score { display: grid; justify-items: center; gap: 2px; padding: 9px 5px; border-radius: 14px; background: rgba(159,232,112,.2); }
+.reconciliation-score strong { color: var(--primary-dark); font-size: 16px; }
+.reconciliation-score span { color: var(--muted); font-size: 7px; }
+.reconciliation-item > div:nth-child(2) { display: grid; grid-template-columns: auto 1fr; align-items: baseline; gap: 3px 8px; min-width: 0; }
+.reconciliation-item > div:nth-child(2) strong { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.reconciliation-item > div:nth-child(2) small { color: var(--muted); font-size: 9px; }
+.reconciliation-item > div:nth-child(2) > span { grid-row: span 2; color: var(--primary-dark); font-size: 14px; }
+.reconciliation-item > div:nth-child(2) p { grid-column: 1 / -1; margin: 4px 0 0; color: var(--muted); font-size: 8px; }
+.reconciliation-actions { display: flex; gap: 7px; }
+.reconciliation-actions button { min-height: 36px; padding: 8px 11px; font-size: 8px; }
 .projection-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; overflow: hidden; margin-bottom: 14px; border: 1px solid var(--hairline); border-radius: 22px; background: var(--hairline); }
 .projection-summary article { display: grid; gap: 9px; padding: 20px; background: rgba(255, 255, 255, .72); }
 .projection-summary span { color: var(--muted); font-size: 11px; }
@@ -1195,6 +1212,8 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
   .payable-actions details form { position: fixed; inset: auto 12px 12px; width: auto; }
   .card-payables article { grid-template-columns: 1fr auto; }
   .card-payables time { grid-column: 1 / -1; }
+  .reconciliation-item { grid-template-columns: 54px 1fr; }
+  .reconciliation-actions { grid-column: 1 / -1; justify-content: flex-end; }
   .finance-charts { gap: 14px; }
   .finance-charts .card-title { align-items: flex-start; flex-direction: column; gap: 10px; }
   .daily-chart { min-width: 560px; }

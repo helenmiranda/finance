@@ -181,7 +181,8 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - [x] Exibir parcelas futuras dos cartões sem duplicar despesas ou faturas.
 - [x] Mostrar vencimentos dos próximos sete dias no dashboard.
 - [x] Alertar contas próximas do vencimento e atrasadas sem repetição.
-- [ ] Sugerir conciliação automática entre contas agendadas e transações importadas pela Pluggy.
+- [x] Sugerir conciliação assistida entre contas agendadas e transações importadas pela Pluggy.
+- [x] Permitir corrigir vencimentos pendentes e cancelar parcelas futuras preservando pagamentos anteriores.
 
 ## Próximas decisões
 
@@ -291,6 +292,8 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Missões familiares passaram a acompanhar aportes automaticamente, com desafio, prazo, progresso e celebração simbólica escolhida pela família.
 - Dashboard passou a destacar o sonho prioritário, missão mais próxima e aporte rápido; alertas celebram marcos sem repetição e o Assistente IA relaciona economias aos propósitos familiares.
 - Central de Contas a pagar adicionada com contas únicas, recorrências, parcelamentos, baixas que geram transações, agenda de cartão sem duplicidade, resumo no dashboard e alertas de vencimento.
+- Conciliação assistida compara conta, valor e data após sincronizações Pluggy; a família confirma ou rejeita, e a confirmação vincula a transação existente sem duplicá-la.
+- Gestão da agenda ganhou edição individual de valor e vencimento, além de cancelamento seguro do restante de uma série sem apagar o que já foi pago.
 
 Commits principais desta etapa: `eae4974`, `3972e68`, `523cb64`, `0955a55`, `40fd7a9`, `75573db` e `345857c`.
 
