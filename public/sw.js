@@ -1,4 +1,4 @@
-const CACHE_NAME = "poupemos-shell-v1";
+const CACHE_NAME = "poupemos-shell-v2";
 const SHELL = ["/offline.html", "/icons/poupemos-192.png", "/icons/poupemos-512.png"];
 
 self.addEventListener("install", (event) => {
@@ -22,10 +22,7 @@ self.addEventListener("fetch", (event) => {
 
   const isStatic = url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/") || /\.(?:css|js|png|svg|woff2)$/.test(url.pathname);
   if (!isStatic) return;
-  event.respondWith(caches.match(request).then((cached) => cached || fetch(request).then((response) => {
-    if (response.ok) caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone()));
-    return response;
-  })));
+  event.respondWith(caches.match(request).then((cached) => cached || fetch(request)));
 });
 
 self.addEventListener("push", (event) => {
