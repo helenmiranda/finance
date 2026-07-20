@@ -1,4 +1,4 @@
-const CACHE_NAME = "poupemos-shell-v3";
+const CACHE_NAME = "poupemos-shell-v4";
 const SHELL = ["/offline.html", "/icons/poupemos-192.png", "/icons/poupemos-512.png"];
 
 self.addEventListener("install", (event) => {

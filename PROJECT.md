@@ -152,7 +152,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - [x] Implementar gesto de puxar para baixo para atualizar nas telas principais.
 - [x] Exibir feedback visual de atualização e impedir sincronizações concorrentes.
 - [x] Atualizar primeiro os dados do Poupemos e consultar a Pluggy apenas quando houver atualização bancária disponível.
-- [ ] Revisar áreas seguras, teclado, modais, navegação e estados offline no celular.
+- [x] Revisar áreas seguras, indicador de conexão, atualização offline, modais e navegação no celular.
 - [ ] Criar testes mobile de ponta a ponta para login, dashboard, transações, contas e cartões.
 
 ## Próximas decisões

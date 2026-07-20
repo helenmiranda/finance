@@ -21,4 +21,17 @@ describe("experiência PWA mobile", () => {
   it("impede gestos concorrentes durante a atualização", () => {
     expect(pullToRefresh).toContain("refreshingRef.current");
   });
+
+  it("informa quando o aparelho está offline", () => {
+    const status = source("src/components/network-status.tsx");
+    expect(status).toContain("useSyncExternalStore");
+    expect(status).toContain("Você está sem internet");
+    expect(pullToRefresh).toContain("navigator.onLine");
+  });
+
+  it("respeita as áreas seguras do aparelho", () => {
+    const styles = source("src/app/styles.css");
+    expect(styles).toContain("env(safe-area-inset-top)");
+    expect(styles).toContain("env(safe-area-inset-bottom)");
+  });
 });

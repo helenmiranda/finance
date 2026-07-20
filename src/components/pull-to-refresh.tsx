@@ -45,6 +45,15 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
       setRefreshing(true);
       setDistance(56);
       setMessage("Atualizando seus dados…");
+      if (!navigator.onLine) {
+        setMessage("Sem internet para atualizar");
+        window.setTimeout(() => {
+          refreshingRef.current = false;
+          setRefreshing(false);
+          setDistance(0);
+        }, 900);
+        return;
+      }
       router.refresh();
       try {
         const checkResponse = await fetch("/api/pluggy/check", { cache: "no-store" });
@@ -58,7 +67,7 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
         } else setMessage("Dados locais atualizados");
         router.refresh();
       } catch {
-        setMessage("Dados locais atualizados");
+        setMessage(navigator.onLine ? "Não foi possível atualizar" : "Sem internet para atualizar");
       }
       window.setTimeout(() => {
         refreshingRef.current = false;
