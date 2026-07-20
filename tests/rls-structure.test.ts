@@ -16,6 +16,12 @@ describe("estrutura multi-tenant", () => {
     expect(hasRlsEnabled(table)).toBe(true);
   });
 
+  it("serializa a criação do espaço familiar para evitar duplicatas", () => {
+    const migration = readFileSync(join(migrationDirectory, "202607200029_idempotent_household_creation.sql"), "utf8");
+    expect(migration).toContain("pg_advisory_xact_lock");
+    expect(migration).toContain("existing_household_id");
+  });
+
   it("protege a substituição de categorias por associação familiar", () => {
     expect(sql).toContain("not public.is_household_member(source_category.household_id)");
     expect(sql).toContain("source_category.household_id <> target_category.household_id");

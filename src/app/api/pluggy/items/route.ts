@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { pluggyRequest } from "@/lib/pluggy";
+import { resolveMembership } from "@/lib/household";
 
 type PluggyItem = { id: string; clientUserId?: string; status?: string; executionStatus?: string; lastUpdatedAt?: string; statusDetail?: unknown; connector?: { id?: number; name?: string }; error?: { code?: string } | null };
 
@@ -8,7 +9,7 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
-  const { data: membership } = await supabase.from("household_members").select("household_id").eq("user_id", user.id).limit(1).maybeSingle();
+  const membership = await resolveMembership(supabase, user.id);
   if (!membership) return NextResponse.json({ error: "Espaço familiar não encontrado." }, { status: 403 });
   const body = await request.json().catch(() => null) as { itemId?: string } | null;
   if (!body?.itemId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(body.itemId)) return NextResponse.json({ error: "Item ID inválido." }, { status: 400 });

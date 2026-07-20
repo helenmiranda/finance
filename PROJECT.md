@@ -236,6 +236,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Conexões Pluggy podem ser desvinculadas e reativadas apenas por quem as criou, mantendo mapeamentos, saldos e histórico enquanto cron, abertura do app e webhooks respeitam o estado inativo.
 - Primeiro vínculo Pluggy passou a iniciar a importação imediatamente e só registra `last_synced_at` após a conclusão, evitando conexões aparentemente atualizadas sem dados locais.
 - Sincronização Pluggy passou a aguardar o término da atualização bancária, rejeitar respostas vazias e usar `bankData.closingBalance` como saldo alternativo, cobrindo instituições como o Sicredi.
+- Resolução do espaço familiar passou a priorizar a família que contém a conexão Pluggy do usuário; a criação de famílias ganhou trava idempotente para impedir duplicações por envios concorrentes no onboarding.
 
 Commits principais desta etapa: `eae4974`, `3972e68`, `523cb64`, `0955a55`, `40fd7a9`, `75573db` e `345857c`.
 
