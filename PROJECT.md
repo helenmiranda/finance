@@ -99,6 +99,9 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - [x] Registrar compras à vista e parceladas.
 - [x] Gerar e acompanhar faturas.
 - [x] Registrar pagamento de fatura sem duplicar despesas.
+- [x] Identificar visualmente os cartões pelas instituições financeiras.
+- [x] Editar, ativar e desativar cartões sem perder o histórico.
+- [x] Exibir fatura atual e utilização do limite diretamente no cartão.
 
 ### Fase 4 — Importações
 
@@ -179,6 +182,33 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Web Push opcional entrega alertas importantes no PWA com conteúdo discreto, consentimento por dispositivo e rastreamento idempotente.
 - Saldo disponível usa o saldo atual da Pluggy para contas conectadas e saldo inicial mais movimentações apenas para contas manuais, evitando dupla contagem.
 - Apelidos persistentes identificam contas e cartões sem serem sobrescritos pela Pluggy, e o dashboard separa movimentações recentes de conta e cartão.
+
+### 2026-07-20
+
+- Revisão visual geral reduziu títulos, sombras, volumes e espaçamentos excessivos, preservando a identidade verde-lima e glass do Poupemos.
+- Lista de transações passou a separar descrição, categoria e origem em linhas e espaçamentos próprios, evitando informações visualmente coladas.
+- Experiência mobile refeita com cabeçalho compacto e fixo, navegação completa dentro de um menu e maior prioridade para o conteúdo financeiro.
+- Filtros de transações passaram a ser recolhíveis no mobile, com indicação de filtros ativos e campos organizados em duas colunas quando houver espaço.
+- Controles de categorização em lote também se tornaram recolhíveis, e o checkbox de aprendizado de descrições voltou ao tamanho correto.
+- Cadastro de cartão foi movido para um modal responsivo, evitando que o formulário esconda os cartões já cadastrados.
+- Modal de cartão usa apresentação central no desktop e painel inferior no mobile, com ações persistentes e fechamento pelo fundo ou botão dedicado.
+- Nome do espaço familiar no menu deixou de usar o texto fixo `Helen & Ramon` e agora é carregado do tenant autenticado.
+- Contexto de autenticação e espaço familiar passou a ser reutilizado durante a mesma renderização, evitando consultas duplicadas.
+- Cartões passaram a receber identidade visual automática por instituição, incluindo Nubank, Inter, Itaú, Santander, Bradesco, C6, Banco do Brasil, Caixa, Mercado Pago, PicPay, Neon, XP, BTG, PagBank, Will Bank, Sicredi e Sicoob.
+- Cor cadastrada continua sendo usada como alternativa quando a instituição do cartão não é reconhecida.
+- Cartões foram organizados em duas colunas no desktop e uma coluna no mobile.
+- Cada cartão passou a exibir fatura atual ou valor utilizado, percentual de utilização, barra de progresso, limite disponível, fechamento e vencimento.
+- Gestão completa do cartão adicionada em modal para editar nome, apelido, emissor, titular, final, limite, datas, conta de pagamento e cor alternativa.
+- Cartões podem ser ativados e desativados sem exclusão; cartões inativos preservam transações e faturas, mas deixam de aparecer em novos lançamentos.
+- Sincronização da Pluggy foi ajustada para não reativar cartões que foram desativados dentro do Poupemos.
+- Alterações de limite e ativação permanecem locais ao Poupemos; a integração Open Finance usada pelo projeto apenas consulta e importa informações autorizadas.
+- Validação do Item ID da Pluggy foi movida do atributo HTML incompatível para uma validação controlada pelo aplicativo, com mensagem clara sobre o formato esperado.
+- Leitura das respostas da rota de vínculo Pluggy ficou mais resiliente quando o servidor não retornar JSON.
+- Service worker atualizado para a versão 3 e deixou de armazenar bundles do Next.js, evitando que o PWA continue executando JavaScript antigo após um deploy.
+- Registro do PWA agora solicita atualização do service worker sem reutilizar o cache HTTP, mantendo os próximos deploys sincronizados.
+- Todas as entregas da manhã foram validadas com lint e build de produção antes do envio ao GitHub.
+
+Commits principais desta etapa: `eae4974`, `3972e68`, `523cb64`, `0955a55`, `40fd7a9`, `75573db` e `345857c`.
 
 ### Configuração do Supabase Cron
 
