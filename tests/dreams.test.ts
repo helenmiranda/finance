@@ -7,6 +7,9 @@ const migration = readFileSync(join(root, "supabase/migrations/202607200031_fami
 const coverMigration = readFileSync(join(root, "supabase/migrations/202607200032_dream_covers.sql"), "utf8");
 const missionMigration = readFileSync(join(root, "supabase/migrations/202607200033_dream_missions.sql"), "utf8");
 const page = readFileSync(join(root, "src/app/dashboard/sonhos/page.tsx"), "utf8");
+const dashboard = readFileSync(join(root, "src/app/dashboard/page.tsx"), "utf8");
+const assistant = readFileSync(join(root, "src/app/dashboard/assistente/actions.ts"), "utf8");
+const alertMigration = readFileSync(join(root, "supabase/migrations/202607200034_dream_alerts.sql"), "utf8");
 
 describe("sonhos familiares", () => {
   it("protege sonhos e aportes pelo tenant", () => {
@@ -47,5 +50,14 @@ describe("sonhos familiares", () => {
     expect(missionMigration).toContain("current_cents = current_cents + contribution_cents");
     expect(missionMigration).toContain("contribution_date between starts_on and ends_on");
     expect(page).toContain("Missões da família");
+  });
+
+  it("integra sonhos ao dashboard, alertas e assistente", () => {
+    expect(dashboard).toContain("SONHO EM MOVIMENTO");
+    expect(dashboard).toContain("addDreamContribution");
+    expect(assistant).toContain("family_dreams");
+    expect(assistant).toContain("active_dream_missions");
+    expect(alertMigration).toContain("evaluate_dream_milestones");
+    expect(alertMigration).toContain("on conflict (household_id, dedupe_key) do nothing");
   });
 });

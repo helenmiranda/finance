@@ -508,6 +508,7 @@ export async function addDreamContribution(formData: FormData) {
   const dreamId = text(formData, "dream_id");
   const amount = cents(text(formData, "amount"));
   const contributionDate = text(formData, "contributed_on");
+  const returnTo = text(formData, "return_to") === "/dashboard" ? "/dashboard" : "/dashboard/sonhos";
   if (!dreamId || !amount || !contributionDate) redirect("/dashboard/sonhos?error=Confira%20os%20dados%20do%20aporte.");
   const { error } = await supabase.rpc("add_dream_contribution", {
     target_dream_id: dreamId,
@@ -516,8 +517,11 @@ export async function addDreamContribution(formData: FormData) {
     contribution_note: optionalText(formData, "note"),
   });
   if (error) redirect("/dashboard/sonhos?error=Não%20foi%20possível%20registrar%20o%20aporte.");
+  await evaluateAndDispatchFinancialAlerts(membership.household_id);
   revalidatePath("/dashboard/sonhos");
-  redirect("/dashboard/sonhos?success=Mais%20perto%20do%20sonho!%20Aporte%20registrado.");
+  revalidatePath("/dashboard/alertas");
+  revalidatePath("/dashboard");
+  redirect(returnTo === "/dashboard" ? "/dashboard" : "/dashboard/sonhos?success=Mais%20perto%20do%20sonho!%20Aporte%20registrado.");
 }
 
 export async function updateDream(formData: FormData) {

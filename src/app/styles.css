@@ -204,6 +204,21 @@ nav a.active { border-color: transparent; background: rgba(159, 232, 112, 0.11);
 .insight-panel h2 { margin: auto 0 10px; font-size: 25px; line-height: 1.05; }
 .insight-panel p { margin: 0 0 22px; font-size: 13px; }
 .insight-panel > a { color: var(--primary-dark); font-size: 12px; font-weight: 800; text-decoration: none; }
+.dashboard-dream { --dream-color: #9fe870; display: grid; grid-template-columns: minmax(220px, 1fr) minmax(260px, .8fr) auto; align-items: center; gap: 14px 24px; margin-bottom: 12px; padding: 20px 22px; border-left: 5px solid var(--dream-color); }
+.dashboard-dream-main { display: grid; grid-template-columns: 48px 1fr; align-items: center; gap: 12px; }
+.dashboard-dream-main > span { display: grid; width: 46px; height: 46px; place-items: center; border-radius: 15px; background: color-mix(in srgb, var(--dream-color) 22%, white); font-size: 25px; }
+.dashboard-dream-main h2 { margin: 2px 0 3px; font-size: 19px; }
+.dashboard-dream-main p:last-child { margin: 0; color: var(--muted); font-size: 10px; }
+.dashboard-dream-progress { grid-column: 1 / -1; height: 7px; overflow: hidden; border-radius: 999px; background: #e7ebe4; }
+.dashboard-dream-progress span { display: block; height: 100%; border-radius: inherit; background: var(--dream-color); }
+.dashboard-mission { display: grid; gap: 3px; padding: 10px 12px; border-radius: 13px; background: #f0f3ed; }
+.dashboard-mission span { font-size: 10px; font-weight: 800; }
+.dashboard-mission strong { font-size: 10px; }
+.dashboard-dream form { display: grid; grid-template-columns: minmax(110px, 1fr) auto; align-items: end; gap: 8px; }
+.dashboard-dream form label { gap: 4px; font-size: 9px; }
+.dashboard-dream form input { height: 40px; border-radius: 12px; font-size: 12px; }
+.dashboard-dream form button { min-height: 40px; padding: 9px 14px; font-size: 10px; }
+.dashboard-dream > a { justify-self: end; color: var(--primary-dark); font-size: 10px; font-weight: 850; text-decoration: none; }
 
 header, .card-title, .assistant-heading {
   display: flex;
@@ -1023,6 +1038,8 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
   .overview-grid { margin-top: 24px; }
   .dashboard-lower-grid { grid-template-columns: 1fr; }
   .insight-panel { min-height: 250px; }
+  .dashboard-dream { grid-template-columns: 1fr 1fr; }
+  .dashboard-dream-main, .dashboard-dream-progress { grid-column: 1 / -1; }
   .settings-grid { grid-template-columns: 1fr; }
   .investment-grid { grid-template-columns: 1fr; }
   .credit-cards-grid { grid-template-columns: 1fr; }
@@ -1094,6 +1111,9 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
   .transaction-row { grid-template-columns: 40px 1fr auto; }
   .transaction-date { display: none; }
   .overview-grid { grid-template-columns: 1fr; }
+  .dashboard-dream { grid-template-columns: 1fr; padding: 18px; }
+  .dashboard-dream-main, .dashboard-dream-progress { grid-column: auto; }
+  .dashboard-dream > a { justify-self: start; }
   .dream-create form { padding: 18px; }
   .dream-icon-picker, .dream-form-row { grid-template-columns: 1fr; }
   .dream-card { padding: 20px; }

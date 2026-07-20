@@ -4,6 +4,7 @@ import { getAuthenticatedContext } from "@/lib/household";
 import { createHousehold } from "./actions";
 import { calculateAvailableBalance } from "@/lib/account-balances";
 import { DashboardCharts } from "@/components/dashboard-charts";
+import { addDreamContribution } from "./finance-actions";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const shortDate = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" });
@@ -41,7 +42,7 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
   const monthEnd = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 0)).toISOString().slice(0, 10);
   const monthLabel = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(today);
 
-  const [accountsResult, connectedAccountsResult, balanceTransactionsResult, monthTransactionsResult, latestAccountsResult, latestCardsResult, statementsResult] = await Promise.all([
+  const [accountsResult, connectedAccountsResult, balanceTransactionsResult, monthTransactionsResult, latestAccountsResult, latestCardsResult, statementsResult, dreamsResult, missionsResult] = await Promise.all([
     supabase.from("accounts").select("id, initial_balance_cents, current_balance_cents").eq("household_id", householdId).eq("is_active", true),
     supabase.from("pluggy_accounts").select("account_id").eq("household_id", householdId).not("account_id", "is", null),
     supabase.from("transactions").select("type, amount_cents, transfer_direction, account_id").eq("household_id", householdId).eq("status", "confirmed").not("account_id", "is", null),
@@ -49,6 +50,8 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
     supabase.from("transactions").select("id, description, amount_cents, occurred_on, type, transfer_direction, installment_number, installment_count, categories(name), accounts(name, nickname)").eq("household_id", householdId).not("account_id", "is", null).order("occurred_on", { ascending: false }).limit(4),
     supabase.from("transactions").select("id, description, amount_cents, occurred_on, type, transfer_direction, installment_number, installment_count, categories(name), credit_cards(name, nickname)").eq("household_id", householdId).not("credit_card_id", "is", null).order("occurred_on", { ascending: false }).limit(4),
     supabase.from("card_statements").select("total_cents").eq("household_id", householdId).in("status", ["open", "closed", "overdue"]),
+    supabase.from("dreams").select("id, title, emoji, color, target_cents, saved_cents, target_date").eq("household_id", householdId).eq("status", "active").order("target_date", { nullsFirst: false }).limit(20),
+    supabase.from("dream_missions").select("title, ends_on, current_cents, target_cents, dream_id").eq("household_id", householdId).eq("status", "active").gte("ends_on", today.toISOString().slice(0, 10)).order("ends_on").limit(1),
   ]);
 
   const availableBalance = calculateAvailableBalance(accountsResult.data ?? [], balanceTransactionsResult.data ?? [], (connectedAccountsResult.data ?? []).flatMap((mapping) => mapping.account_id ? [mapping.account_id] : []));
@@ -75,6 +78,8 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
   }
   const latestAccounts = latestAccountsResult.data ?? [];
   const latestCards = latestCardsResult.data ?? [];
+  const featuredMission = missionsResult.data?.[0];
+  const featuredDream = dreamsResult.data?.find((dream) => dream.id === featuredMission?.dream_id) ?? dreamsResult.data?.[0];
 
   return (
     <DashboardShell active="overview">
@@ -94,6 +99,8 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
         </section>
 
         <DashboardCharts categories={categoryChart} days={dailyChart} monthLabel={monthLabel} periodFrom={monthStart} periodTo={monthEnd} />
+
+        {featuredDream && <section className="clean-panel dashboard-dream" style={{ "--dream-color": featuredDream.color } as React.CSSProperties}><div className="dashboard-dream-main"><span>{featuredDream.emoji}</span><div><p className="eyebrow">SONHO EM MOVIMENTO</p><h2>{featuredDream.title}</h2><p>{money.format(featuredDream.saved_cents / 100)} de {money.format(featuredDream.target_cents / 100)} · {Math.min(Math.round((featuredDream.saved_cents / featuredDream.target_cents) * 100), 100)}%</p></div></div><div className="dashboard-dream-progress"><span style={{ width: `${Math.min((featuredDream.saved_cents / featuredDream.target_cents) * 100, 100)}%` }} /></div>{featuredMission && featuredMission.dream_id === featuredDream.id && <div className="dashboard-mission"><span>⚡ {featuredMission.title}</span><strong>{money.format(featuredMission.current_cents / 100)} de {money.format(featuredMission.target_cents / 100)}</strong></div>}<form action={addDreamContribution}><input type="hidden" name="dream_id" value={featuredDream.id} /><input type="hidden" name="contributed_on" value={today.toISOString().slice(0, 10)} /><input type="hidden" name="return_to" value="/dashboard" /><label><span>Guardar agora</span><input name="amount" inputMode="decimal" placeholder="100,00" required /></label><button type="submit">Aportar</button></form><Link href="/dashboard/sonhos">Ver todos os sonhos →</Link></section>}
 
         <section className="dashboard-lower-grid">
           <article className="clean-panel recent-panel">

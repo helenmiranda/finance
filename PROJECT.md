@@ -168,6 +168,9 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - [x] Proteger a remoção definitiva com confirmação textual explícita.
 - [x] Adicionar capas personalizadas privadas aos sonhos.
 - [x] Criar missões familiares opcionais, prazos curtos e celebrações configuráveis.
+- [x] Integrar o sonho prioritário e a missão ativa ao dashboard com aporte rápido.
+- [x] Celebrar marcos de 25%, 50%, 75% e 100% por alertas idempotentes.
+- [x] Incluir sonhos e missões no contexto minimizado do Assistente IA.
 
 ## Próximas decisões
 
@@ -275,6 +278,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Gestão de Sonhos ganhou edição completa, pausa, retomada e remoção protegida sem exigir recriação quando os planos mudarem.
 - Sonhos ganharam capas personalizadas em armazenamento privado, com links temporários, troca e remoção segura por espaço familiar.
 - Missões familiares passaram a acompanhar aportes automaticamente, com desafio, prazo, progresso e celebração simbólica escolhida pela família.
+- Dashboard passou a destacar o sonho prioritário, missão mais próxima e aporte rápido; alertas celebram marcos sem repetição e o Assistente IA relaciona economias aos propósitos familiares.
 
 Commits principais desta etapa: `eae4974`, `3972e68`, `523cb64`, `0955a55`, `40fd7a9`, `75573db` e `345857c`.
 
