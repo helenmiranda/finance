@@ -38,9 +38,14 @@ export default async function AssistantPage({ searchParams }: PageProps) {
       ])
     : [{ data: null }, { data: [] }, { data: [] }];
   const { data: messages } = conversation
-    ? await supabase.from("ai_messages").select("role, content").eq("conversation_id", conversation.id).order("created_at", { ascending: true }).limit(20)
+    ? await supabase.from("ai_messages").select("id, role, content").eq("conversation_id", conversation.id).order("created_at", { ascending: true }).limit(20)
     : { data: [] };
-  const initialMessages: AssistantMessage[] = (messages ?? []).map((message) => ({ role: message.role as "user" | "assistant", content: message.content }));
+  const messageIds = (messages ?? []).filter((message) => message.role === "assistant").map((message) => message.id);
+  const { data: feedback } = messageIds.length
+    ? await supabase.from("ai_recommendation_feedback").select("message_id, status").in("message_id", messageIds)
+    : { data: [] };
+  const feedbackByMessage = new Map((feedback ?? []).map((item) => [item.message_id, item.status as "accepted" | "discarded"]));
+  const initialMessages: AssistantMessage[] = (messages ?? []).map((message) => ({ id: message.id, role: message.role as "user" | "assistant", content: message.content, feedback: feedbackByMessage.get(message.id) ?? null }));
   const currentRows = (periodTransactions ?? []).filter((item) => item.occurred_on >= date(currentStart));
   const previousRows = (periodTransactions ?? []).filter((item) => item.occurred_on >= date(previousStart) && item.occurred_on < date(currentStart));
   const total = (rows: typeof currentRows, type: "income" | "expense") => rows.filter((item) => item.type === type).reduce((sum, item) => sum + item.amount_cents, 0);

@@ -125,7 +125,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - [x] Gerar resumos semanais e mensais.
 - [x] Identificar desvios, excessos e oportunidades de economia.
 - [x] Criar simulações e planos de redução de gastos.
-- [ ] Registrar recomendações aceitas ou descartadas.
+- [x] Registrar recomendações aceitas ou descartadas.
 
 ## Próximas decisões
 
@@ -211,6 +211,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Categorias padrão de despesas e receitas preparadas para todos os espaços familiares, com preenchimento idempotente e criação automática nos próximos onboardings.
 - Aprendizado de categorias evoluído por tenant: além da descrição exata, estabelecimentos conhecidos ganham regras seguras de correspondência e comerciantes desconhecidos só são generalizados após variações repetidas.
 - Gestão completa de categorias adicionada com edição, ativação, desativação, contagem de vínculos e substituição transacional que preserva histórico, regras e planejamentos.
+- Feedback familiar do assistente adicionado por recomendação, com estados aceita/descartada usados para personalizar respostas futuras e evitar repetições indesejadas.
 
 Commits principais desta etapa: `eae4974`, `3972e68`, `523cb64`, `0955a55`, `40fd7a9`, `75573db` e `345857c`.
 

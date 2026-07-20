@@ -750,11 +750,18 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .suggestion-list span { padding: 8px 11px; border: 1px solid var(--hairline); border-radius: 999px; background: rgba(255, 255, 255, .7); color: var(--body); font-size: 11px; }
 .chat-message { display: grid; grid-template-columns: 38px minmax(0, 680px); align-items: start; gap: 10px; }
 .chat-message > span { display: grid; place-items: center; min-height: 34px; border-radius: 50%; background: var(--primary-dark); color: var(--primary); font-size: 11px; font-weight: 850; }
-.chat-message > p { margin: 0; padding: 12px 15px; border: 1px solid var(--hairline); border-radius: 6px 17px 17px 17px; background: rgba(255, 255, 255, .8); font-size: 13px; line-height: 1.65; white-space: pre-wrap; }
+.chat-message-body { display: grid; overflow: hidden; border: 1px solid var(--hairline); border-radius: 6px 17px 17px 17px; background: rgba(255, 255, 255, .8); }
+.chat-message-body > p { margin: 0; padding: 12px 15px; font-size: 13px; line-height: 1.65; white-space: pre-wrap; }
 .chat-message.user { grid-template-columns: minmax(0, 680px) 46px; align-self: end; }
 .chat-message.user > span { grid-column: 2; grid-row: 1; width: 46px; border-radius: 999px; background: #e8ebe6; color: var(--body); }
-.chat-message.user > p { grid-column: 1; grid-row: 1; border: 0; border-radius: 17px 6px 17px 17px; background: var(--primary); color: var(--primary-dark); }
-.chat-message.loading p { color: var(--muted); font-style: italic; }
+.chat-message.user > .chat-message-body { grid-column: 1; grid-row: 1; border: 0; border-radius: 17px 6px 17px 17px; background: var(--primary); color: var(--primary-dark); }
+.chat-message.loading .chat-message-body > p { color: var(--muted); font-style: italic; }
+.recommendation-feedback { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 12px; border-top: 1px solid var(--hairline); background: rgba(246, 248, 243, .72); }
+.recommendation-feedback small { color: var(--muted); font-size: 9px; }
+.recommendation-feedback > div { display: flex; gap: 5px; }
+.recommendation-feedback button { min-height: 30px; padding: 5px 9px; border: 1px solid var(--hairline); background: white; color: var(--body); font-size: 9px; }
+.recommendation-feedback button.selected { border-color: var(--primary-dark); background: var(--primary); color: var(--primary-dark); }
+.recommendation-feedback button.selected.discarded { border-color: rgba(208, 50, 56, .25); background: rgba(208, 50, 56, .09); color: var(--danger); }
 .chat-form { padding: 16px 18px 14px; border-top: 1px solid var(--hairline); background: rgba(246, 248, 243, .88); }
 .chat-form > label { margin-bottom: 7px; }
 .chat-form > div { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 9px; }
@@ -946,6 +953,9 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
   .chat-messages { padding: 18px 12px; }
   .chat-message { grid-template-columns: 34px minmax(0, 1fr); }
   .chat-message.user { grid-template-columns: minmax(0, 1fr) 40px; }
+  .recommendation-feedback { align-items: flex-start; flex-direction: column; }
+  .recommendation-feedback > div { width: 100%; }
+  .recommendation-feedback button { flex: 1; }
   .chat-form > div { grid-template-columns: 1fr; }
   .chat-form button { width: 100%; }
   .member-item { grid-template-columns: 42px 1fr; }
