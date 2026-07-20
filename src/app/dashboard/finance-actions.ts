@@ -108,6 +108,47 @@ export async function addCreditCard(formData: FormData) {
   redirect("/dashboard/cartoes?success=Cartão%20adicionado.");
 }
 
+export async function updateCreditCard(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+
+  const id = text(formData, "id");
+  const name = text(formData, "name");
+  const nickname = optionalText(formData, "nickname");
+  const lastFour = optionalText(formData, "last_four_digits");
+  const closingDay = day(text(formData, "closing_day"));
+  const dueDay = day(text(formData, "due_day"));
+  const paymentAccountId = optionalText(formData, "payment_account_id");
+  if (!id || !name || !closingDay || !dueDay || (nickname && nickname.length > 60) || (lastFour && !/^\d{4}$/.test(lastFour))) {
+    redirect("/dashboard/cartoes?error=Confira%20os%20dados%20do%20cartão.");
+  }
+
+  if (paymentAccountId) {
+    const { data: account } = await supabase.from("accounts").select("id").eq("id", paymentAccountId).eq("household_id", membership.household_id).maybeSingle();
+    if (!account) redirect("/dashboard/cartoes?error=Conta%20de%20pagamento%20inválida.");
+  }
+
+  const { error } = await supabase.from("credit_cards").update({
+    name,
+    nickname,
+    issuer: optionalText(formData, "issuer"),
+    cardholder_name: optionalText(formData, "cardholder_name"),
+    last_four_digits: lastFour,
+    credit_limit_cents: cents(text(formData, "credit_limit")),
+    closing_day: closingDay,
+    due_day: dueDay,
+    payment_account_id: paymentAccountId,
+    color: text(formData, "color") || "#163300",
+    is_active: formData.get("is_active") === "on",
+  }).eq("id", id).eq("household_id", membership.household_id);
+
+  if (error) redirect(`/dashboard/cartoes?error=${encodeURIComponent("Não foi possível atualizar o cartão.")}`);
+  revalidatePath("/dashboard/cartoes");
+  revalidatePath("/dashboard/transacoes");
+  revalidatePath("/dashboard");
+  redirect("/dashboard/cartoes?success=Cartão%20atualizado.");
+}
+
 export async function addCategory(formData: FormData) {
   const { supabase, membership } = await getAuthenticatedContext();
   if (!membership) redirect("/dashboard");

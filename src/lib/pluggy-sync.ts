@@ -296,7 +296,7 @@ export async function syncPluggyConnection(supabase: SupabaseClient, connection:
     } else if (remote.type === "CREDIT") {
       let localId = mapping?.credit_card_id ?? null;
       const lastFour = remote.number?.match(/\d{4}$/)?.[0] ?? null;
-      const values = { name: displayName, issuer: connection.connector_name, last_four_digits: lastFour, cardholder_name: remote.owner ?? null, credit_limit_cents: cents(remote.creditData?.creditLimit), available_credit_limit_cents: cents(remote.creditData?.availableCreditLimit), current_balance_cents: cents(remote.balance), closing_day: day(remote.creditData?.balanceCloseDate), due_day: day(remote.creditData?.balanceDueDate), is_active: true };
+      const values = { name: displayName, issuer: connection.connector_name, last_four_digits: lastFour, cardholder_name: remote.owner ?? null, credit_limit_cents: cents(remote.creditData?.creditLimit), available_credit_limit_cents: cents(remote.creditData?.availableCreditLimit), current_balance_cents: cents(remote.balance), closing_day: day(remote.creditData?.balanceCloseDate), due_day: day(remote.creditData?.balanceDueDate) };
       if (localId) {
         const { error } = await supabase.from("credit_cards").update(values).eq("id", localId).eq("household_id", connection.household_id);
         if (error) throw error;

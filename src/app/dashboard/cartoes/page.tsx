@@ -1,7 +1,8 @@
 import { DashboardShell } from "@/components/dashboard-shell";
 import { getAuthenticatedContext } from "@/lib/household";
-import { addCreditCard, payStatement, updateFinancialNickname } from "../finance-actions";
+import { addCreditCard, payStatement, updateCreditCard } from "../finance-actions";
 import { AddCardDialog } from "@/components/add-card-dialog";
+import { EditCardDialog } from "@/components/edit-card-dialog";
 import { cardBrandStyle } from "@/lib/card-brand";
 import type { CSSProperties } from "react";
 
@@ -33,7 +34,18 @@ export default async function CardsPage({ searchParams }: PageProps) {
             {!!cards?.length && <div className="credit-cards-grid">{cards.map((card) => {
               const brand = cardBrandStyle([card.name, card.nickname, card.issuer, card.accounts?.name], card.color ?? "#163300");
               const style = { "--card-background": brand.background, "--card-foreground": brand.foreground } as CSSProperties;
-              return <article className="credit-card-preview" style={style} key={card.id}><div><small>{brand.label} · {card.issuer || "Cartão de crédito"}</small><strong>{card.nickname || card.name}</strong></div><span>•••• {card.last_four_digits || "0000"}</span><div className="card-meta"><small>Limite<br/><strong>{card.credit_limit_cents == null ? "Não informado" : money.format(card.credit_limit_cents / 100)}</strong></small><small>Fecha dia<br/><strong>{card.closing_day}</strong></small><small>Vence dia<br/><strong>{card.due_day}</strong></small></div><details className="nickname-editor card-nickname"><summary>Editar apelido</summary><form action={updateFinancialNickname}><input type="hidden" name="kind" value="card" /><input type="hidden" name="id" value={card.id} /><input name="nickname" defaultValue={card.nickname ?? ""} maxLength={60} placeholder="Ex.: Cartão Ramon" /><button type="submit">Salvar</button></form></details></article>;
+              const statement = statements?.find((item) => item.credit_card_id === card.id && item.status !== "paid");
+              const usedCents = card.available_credit_limit_cents != null && card.credit_limit_cents != null
+                ? Math.max(0, card.credit_limit_cents - card.available_credit_limit_cents)
+                : Math.abs(card.current_balance_cents ?? statement?.total_cents ?? 0);
+              const usage = card.credit_limit_cents ? Math.min(100, Math.round((usedCents / card.credit_limit_cents) * 100)) : 0;
+              return <article className={`credit-card-preview${card.is_active ? "" : " inactive"}`} style={style} key={card.id}>
+                <div className="card-heading"><div><small>{brand.label} · {card.issuer || "Cartão de crédito"}</small><strong>{card.nickname || card.name}</strong></div>{!card.is_active && <span>Inativo</span>}</div>
+                <span>•••• {card.last_four_digits || "0000"}</span>
+                <div className="card-limit"><div><small>{statement ? "Fatura atual" : "Limite utilizado"}</small><strong>{money.format((statement?.total_cents ?? usedCents) / 100)}</strong><small>{card.credit_limit_cents == null ? "Limite não informado" : `${usage}% de ${money.format(card.credit_limit_cents / 100)}`}</small></div>{card.credit_limit_cents != null && <div className="card-limit-track"><span style={{ width: `${usage}%` }} /></div>}</div>
+                <div className="card-meta"><small>Disponível<br/><strong>{card.available_credit_limit_cents == null ? "Não informado" : money.format(card.available_credit_limit_cents / 100)}</strong></small><small>Fecha dia<br/><strong>{card.closing_day}</strong></small><small>Vence dia<br/><strong>{card.due_day}</strong></small></div>
+                <EditCardDialog card={{ id: card.id, name: card.name, nickname: card.nickname, issuer: card.issuer, cardholder_name: card.cardholder_name, last_four_digits: card.last_four_digits, credit_limit: card.credit_limit_cents == null ? "" : (card.credit_limit_cents / 100).toFixed(2).replace(".", ","), closing_day: card.closing_day, due_day: card.due_day, payment_account_id: card.payment_account_id, color: card.color, is_active: card.is_active }} accounts={accounts ?? []} action={updateCreditCard} />
+              </article>;
             })}</div>}
             {!!statements?.length && <div className="section-heading statements-heading"><h2>Faturas geradas</h2></div>}
             {statements?.map((statement) => {
