@@ -144,7 +144,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - [x] Exportar dados familiares em JSON.
 - [x] Mostrar pessoas com acesso e integrações bancárias.
 - [x] Permitir desvincular integrações preservando o histórico.
-- [ ] Implementar exclusão segura da conta e do espaço familiar.
+- [x] Implementar exclusão segura da conta e do espaço familiar.
 
 ### Fase 9 — Experiência mobile e PWA
 
@@ -252,6 +252,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Tela de transações passou a mostrar entradas, saídas, saldo líquido e quantidade total para os filtros aplicados; atalhos do gráfico preservam o período mensal exibido.
 - Navegação do menu ganhou feedback visual imediato, e a verificação automática da Pluggy foi movida para um layout persistente para não reiniciar a cada troca de página.
 - Playwright configurado para testes E2E em Pixel e iPhone, separado da suíte Vitest; cenários públicos cobrem login, proteção de rota, manifesto instalável e tela offline.
+- Central de privacidade ganhou exclusão permanente do espaço e da conta com revalidação de senha, confirmação textual, bloqueio de responsáveis com membros e preservação do histórico compartilhado.
 
 Commits principais desta etapa: `eae4974`, `3972e68`, `523cb64`, `0955a55`, `40fd7a9`, `75573db` e `345857c`.
 

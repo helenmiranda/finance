@@ -1,10 +1,13 @@
 import { DashboardShell } from "@/components/dashboard-shell";
 import { getAuthenticatedContext } from "@/lib/household";
 import { ConnectionStateControl } from "./connection-state-control";
+import { DeleteDataControl } from "./delete-data-control";
 
 function relatedProfile(value: { display_name: string | null; email: string | null } | { display_name: string | null; email: string | null }[] | null) {
   return Array.isArray(value) ? value[0] : value;
 }
+
+function relatedHousehold(value: { name: string } | { name: string }[] | null) { return Array.isArray(value) ? value[0] : value; }
 
 type PageProps = { searchParams: Promise<{ error?: string; success?: string }> };
 
@@ -30,5 +33,6 @@ export default async function PrivacyPage({ searchParams }: PageProps) {
       <section className="items-column"><div className="section-heading"><h2>Integrações bancárias</h2><span className="count-badge">{connections?.length ?? 0}</span></div>{!connections?.length && <article className="card privacy-empty"><strong>Nenhuma integração conectada</strong><small>As contas manuais continuam disponíveis normalmente.</small></article>}{connections?.map((connection) => <article className={`card privacy-row privacy-connection${connection.is_active ? "" : " inactive"}`} key={connection.id}><span className="integration-mark">↻</span><div><strong>{connection.connector_name}</strong><small>{connection.is_active ? (connection.last_synced_at ? `Última importação em ${new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" }).format(new Date(connection.last_synced_at))}` : "Ainda não sincronizada") : "Desvinculada · histórico preservado"}</small></div><span className={`sync-status ${connection.is_active ? connection.status === "UPDATED" ? "success" : "working" : "warning"}`}>{connection.is_active ? connection.connected_by === user.id ? "Sua conexão" : "Familiar" : "Inativa"}</span>{connection.connected_by === user.id && <ConnectionStateControl connectionId={connection.id} active={connection.is_active} />}</article>)}</section>
     </div>
     <article className="privacy-note"><strong>Privacidade por padrão</strong><p>As exportações são geradas somente após validar sua sessão e o espaço familiar atual. Dados financeiros não são armazenados em cache pelo navegador ou pelo PWA.</p></article>
+    <DeleteDataControl householdName={relatedHousehold(membership?.households ?? null)?.name ?? "Espaço familiar"} canDeleteHousehold={membership?.role === "owner"} />
   </section></DashboardShell>;
 }
