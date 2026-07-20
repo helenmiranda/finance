@@ -16,7 +16,13 @@ describe("estado das conexões Pluggy", () => {
   });
 
   it("reativa um Item ID quando ele é vinculado novamente", () => {
-    expect(source("src/app/api/pluggy/items/route.ts")).toContain("is_active: true");
+    const itemRoute = source("src/app/api/pluggy/items/route.ts");
+    expect(itemRoute).toContain("is_active: true");
+    expect(itemRoute).toContain("last_synced_at: null");
+  });
+
+  it("inicia a primeira importação logo após o vínculo", () => {
+    expect(source("src/app/dashboard/contas/pluggy-connect-button.tsx")).toContain('fetch("/api/pluggy/sync"');
   });
 
   it("desvincula por estado sem apagar os mapeamentos financeiros", () => {

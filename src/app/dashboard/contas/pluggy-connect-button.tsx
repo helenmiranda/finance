@@ -16,9 +16,15 @@ export function PluggyConnectButton() {
       }
       const response = await fetch("/api/pluggy/items", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ itemId }) });
       const responseBody = await response.text();
-      const data = (() => { try { return JSON.parse(responseBody) as { error?: string }; } catch { return {}; } })();
+      const data = (() => { try { return JSON.parse(responseBody) as { connectionId?: string; error?: string }; } catch { return {}; } })();
       if (!response.ok) throw new Error(data.error || "Não foi possível vincular a conexão.");
-      setStatus("success"); setMessage("Conexão vinculada ao Poupemos."); router.refresh();
+      if (!data.connectionId) throw new Error("A conexão foi vinculada, mas não pôde iniciar a importação.");
+      setMessage("Conexão vinculada. Importando os dados…");
+      const syncResponse = await fetch("/api/pluggy/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ connectionId: data.connectionId }) });
+      const syncBody = await syncResponse.text();
+      const syncData = (() => { try { return JSON.parse(syncBody) as { bankCount?: number; cardCount?: number; transactionCount?: number; investmentCount?: number; error?: string }; } catch { return {}; } })();
+      if (!syncResponse.ok) throw new Error(`Conexão vinculada, mas a primeira importação falhou: ${syncData.error || "tente importar novamente."}`);
+      setStatus("success"); setMessage(`${syncData.bankCount ?? 0} contas, ${syncData.cardCount ?? 0} cartões, ${syncData.transactionCount ?? 0} transações e ${syncData.investmentCount ?? 0} ativos importados.`); router.refresh();
     } catch (error) { setStatus("error"); setMessage(error instanceof Error ? error.message : "Não foi possível vincular a conexão."); }
   }
   return <form className="pluggy-connect-action" action={connect}><label>Item ID do Meu Pluggy<input name="item_id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autoCapitalize="none" autoCorrect="off" spellCheck={false} required /></label><button type="submit" disabled={status === "loading"}>{status === "loading" ? "Validando…" : "Vincular conexão"}</button>{message && <small className={status === "error" ? "negative" : "positive"}>{message}</small>}</form>;
