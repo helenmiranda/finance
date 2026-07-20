@@ -51,5 +51,7 @@ describe("experiência PWA mobile", () => {
     expect(splash).toContain('display-mode: standalone');
     expect(splash).toContain('sessionStorage.getItem("poupemos:splash-seen")');
     expect(splash).toContain("splash-coins");
+    expect(splash).toContain("coinPositions");
+    expect(splash).toContain("useState(true)");
   });
 });
