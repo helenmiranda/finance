@@ -55,11 +55,11 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
   const monthExpense = monthTransactionsResult.data?.filter((item) => item.type === "expense").reduce((sum, item) => sum + item.amount_cents, 0) ?? 0;
   const openStatements = statementsResult.data?.reduce((sum, statement) => sum + statement.total_cents, 0) ?? 0;
   const monthTransactions = monthTransactionsResult.data ?? [];
-  const categoryTotals = new Map<string, { name: string; color: string; amount: number }>();
+  const categoryTotals = new Map<string, { id: string | null; name: string; color: string; amount: number }>();
   for (const transaction of monthTransactions.filter((item) => item.type === "expense")) {
     const category = Array.isArray(transaction.categories) ? transaction.categories[0] : transaction.categories;
     const key = transaction.category_id ?? "uncategorized";
-    const current = categoryTotals.get(key) ?? { name: category?.name ?? "Sem categoria", color: category?.color ?? "#b7bdb4", amount: 0 };
+    const current = categoryTotals.get(key) ?? { id: transaction.category_id, name: category?.name ?? "Sem categoria", color: category?.color ?? "#b7bdb4", amount: 0 };
     current.amount += transaction.amount_cents;
     categoryTotals.set(key, current);
   }

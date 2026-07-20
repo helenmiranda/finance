@@ -1,4 +1,6 @@
-type CategoryDatum = { name: string; color: string; amount: number };
+import Link from "next/link";
+
+type CategoryDatum = { id: string | null; name: string; color: string; amount: number };
 type DailyDatum = { day: number; income: number; expense: number };
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
@@ -15,10 +17,10 @@ export function DashboardCharts({ categories, days, monthLabel }: { categories: 
     <article className="clean-panel category-chart-card">
       <div className="card-title"><div><h2>Gastos por categoria</h2><p className="muted">Onde o dinheiro saiu neste mês</p></div></div>
       {!categories.length ? <p className="chart-empty">Ainda não há despesas categorizadas neste mês.</p> : <div className="category-bars">
-        {categories.map((category) => <div className="category-bar-row" key={category.name}>
+        {categories.map((category) => <Link className="category-bar-row" href={category.id ? `/dashboard/transacoes?category=${encodeURIComponent(category.id)}` : "/dashboard/transacoes?review=uncategorized"} aria-label={`Ver transações de ${category.name}`} key={category.id ?? "uncategorized"}>
           <div><span style={{ background: category.color }} /><strong>{category.name}</strong><small>{money.format(category.amount / 100)}</small></div>
           <div className="category-bar-track"><span style={{ width: `${Math.max(3, category.amount / categoryMax * 100)}%`, background: category.color }} /></div>
-        </div>)}
+        </Link>)}
       </div>}
     </article>
 

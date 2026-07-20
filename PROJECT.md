@@ -247,6 +247,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Sincronização Pluggy passou a aguardar o término da atualização bancária, rejeitar respostas vazias e usar `bankData.closingBalance` como saldo alternativo, cobrindo instituições como o Sicredi.
 - Resolução do espaço familiar passou a priorizar a família que contém a conexão Pluggy do usuário; a criação de famílias ganhou trava idempotente para impedir duplicações por envios concorrentes no onboarding.
 - Dashboard ganhou gráficos responsivos de despesas por categoria e de entradas versus saídas por dia no mês, com estados vazios e descrições acessíveis.
+- Categorias no gráfico de despesas passaram a abrir a lista de transações já filtrada; itens sem categoria levam diretamente à fila de revisão.
 
 Commits principais desta etapa: `eae4974`, `3972e68`, `523cb64`, `0955a55`, `40fd7a9`, `75573db` e `345857c`.
 

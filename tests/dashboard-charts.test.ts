@@ -23,4 +23,11 @@ describe("gráficos do dashboard", () => {
     expect(charts).toContain('role="img"');
     expect(charts).toContain("<title>");
   });
+
+  it("abre as transações filtradas ao selecionar uma categoria", () => {
+    const charts = source("src/components/dashboard-charts.tsx");
+    expect(charts).toContain("/dashboard/transacoes?category=");
+    expect(charts).toContain("/dashboard/transacoes?review=uncategorized");
+    expect(charts).toContain("Ver transações de");
+  });
 });
