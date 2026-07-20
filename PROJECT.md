@@ -127,6 +127,16 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - [x] Criar simulações e planos de redução de gastos.
 - [x] Registrar recomendações aceitas ou descartadas.
 
+### Fase 7 — Qualidade e segurança
+
+- [x] Adicionar framework e comandos de testes automatizados.
+- [x] Cobrir saldo disponível e prevenção de dupla contagem.
+- [x] Cobrir identidade de cartões, aprendizado de estabelecimentos e recorrências.
+- [x] Verificar estruturalmente RLS nas entidades multi-tenant críticas.
+- [x] Executar testes, lint e build automaticamente no GitHub Actions.
+- [ ] Criar testes de integração contra um projeto Supabase isolado.
+- [ ] Criar testes de ponta a ponta dos fluxos principais no navegador.
+
 ## Próximas decisões
 
 - Escolher se membros terão os mesmos poderes ou papéis de administrador e membro.
@@ -212,6 +222,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Aprendizado de categorias evoluído por tenant: além da descrição exata, estabelecimentos conhecidos ganham regras seguras de correspondência e comerciantes desconhecidos só são generalizados após variações repetidas.
 - Gestão completa de categorias adicionada com edição, ativação, desativação, contagem de vínculos e substituição transacional que preserva histórico, regras e planejamentos.
 - Feedback familiar do assistente adicionado por recomendação, com estados aceita/descartada usados para personalizar respostas futuras e evitar repetições indesejadas.
+- Suíte Vitest adicionada para regras financeiras e isolamento estrutural, com pipeline de qualidade no GitHub Actions usando Node.js 22.
 
 Commits principais desta etapa: `eae4974`, `3972e68`, `523cb64`, `0955a55`, `40fd7a9`, `75573db` e `345857c`.
 
