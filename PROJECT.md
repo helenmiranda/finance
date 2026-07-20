@@ -172,6 +172,17 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - [x] Celebrar marcos de 25%, 50%, 75% e 100% por alertas idempotentes.
 - [x] Incluir sonhos e missões no contexto minimizado do Assistente IA.
 
+### Fase 11 — Contas a pagar e agenda financeira
+
+- [x] Cadastrar contas únicas, recorrentes e parcelamentos pagos por conta bancária.
+- [x] Gerar vencimentos mensais com divisão exata de centavos nos parcelamentos.
+- [x] Manter compromissos futuros separados das transações realizadas.
+- [x] Criar a transação somente quando a conta for marcada como paga.
+- [x] Exibir parcelas futuras dos cartões sem duplicar despesas ou faturas.
+- [x] Mostrar vencimentos dos próximos sete dias no dashboard.
+- [x] Alertar contas próximas do vencimento e atrasadas sem repetição.
+- [ ] Sugerir conciliação automática entre contas agendadas e transações importadas pela Pluggy.
+
 ## Próximas decisões
 
 - Escolher se membros terão os mesmos poderes ou papéis de administrador e membro.
@@ -279,6 +290,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Sonhos ganharam capas personalizadas em armazenamento privado, com links temporários, troca e remoção segura por espaço familiar.
 - Missões familiares passaram a acompanhar aportes automaticamente, com desafio, prazo, progresso e celebração simbólica escolhida pela família.
 - Dashboard passou a destacar o sonho prioritário, missão mais próxima e aporte rápido; alertas celebram marcos sem repetição e o Assistente IA relaciona economias aos propósitos familiares.
+- Central de Contas a pagar adicionada com contas únicas, recorrências, parcelamentos, baixas que geram transações, agenda de cartão sem duplicidade, resumo no dashboard e alertas de vencimento.
 
 Commits principais desta etapa: `eae4974`, `3972e68`, `523cb64`, `0955a55`, `40fd7a9`, `75573db` e `345857c`.
 

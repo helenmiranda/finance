@@ -4,13 +4,14 @@ import { getAuthenticatedContext } from "@/lib/household";
 import { PullToRefresh } from "@/components/pull-to-refresh";
 
 type DashboardShellProps = {
-  active: "overview" | "transactions" | "categories" | "accounts" | "cards" | "investments" | "dreams" | "imports" | "budgets" | "alerts" | "assistant" | "privacy";
+  active: "overview" | "transactions" | "payables" | "categories" | "accounts" | "cards" | "investments" | "dreams" | "imports" | "budgets" | "alerts" | "assistant" | "privacy";
   children: React.ReactNode;
 };
 
 const links = [
   { key: "overview", href: "/dashboard", label: "Visão geral" },
   { key: "transactions", href: "/dashboard/transacoes", label: "Transações" },
+  { key: "payables", href: "/dashboard/contas-a-pagar", label: "Contas a pagar" },
   { key: "categories", href: "/dashboard/categorias", label: "Categorias" },
   { key: "accounts", href: "/dashboard/contas", label: "Contas" },
   { key: "cards", href: "/dashboard/cartoes", label: "Cartões" },

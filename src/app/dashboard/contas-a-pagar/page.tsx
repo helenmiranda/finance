@@ -1,0 +1,45 @@
+import { DashboardShell } from "@/components/dashboard-shell";
+import { getAuthenticatedContext } from "@/lib/household";
+import { cancelOccurrence, createPayable, payOccurrence } from "./actions";
+
+const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+const date = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+const today = new Date().toISOString().slice(0, 10);
+const monthEnd = `${today.slice(0, 8)}${String(new Date(Number(today.slice(0, 4)), Number(today.slice(5, 7)), 0).getDate()).padStart(2, "0")}`;
+type PageProps = { searchParams: Promise<{ error?: string; success?: string; view?: string }> };
+
+function relationName(value: { name: string; nickname?: string | null } | { name: string; nickname?: string | null }[] | null) {
+  const item = Array.isArray(value) ? value[0] : value;
+  return item?.nickname || item?.name;
+}
+
+export default async function PayablesPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const { supabase, membership } = await getAuthenticatedContext();
+  const householdId = membership?.household_id;
+  const [occurrencesResult, accountsResult, categoriesResult, cardInstallmentsResult] = householdId ? await Promise.all([
+    supabase.from("payable_occurrences").select("id, due_on, amount_cents, occurrence_number, status, paid_on, payables(id, title, schedule_type, occurrence_count, notes, accounts(name, nickname), categories(name))").eq("household_id", householdId).order("due_on").limit(300),
+    supabase.from("accounts").select("id, name, nickname").eq("household_id", householdId).eq("is_active", true).order("name"),
+    supabase.from("categories").select("id, name").eq("household_id", householdId).eq("kind", "expense").eq("is_active", true).order("name"),
+    supabase.from("transactions").select("id, description, amount_cents, occurred_on, installment_number, installment_count, credit_cards(name, nickname), categories(name)").eq("household_id", householdId).eq("type", "expense").eq("status", "confirmed").not("credit_card_id", "is", null).gt("installment_count", 1).gte("occurred_on", today).order("occurred_on").limit(100),
+  ]) : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }];
+  const allOccurrences = occurrencesResult.data ?? [];
+  const visibleOccurrences = params.view === "all" ? allOccurrences : allOccurrences.filter((item) => item.status === "pending");
+  const pending = allOccurrences.filter((item) => item.status === "pending");
+  const overdue = pending.filter((item) => item.due_on < today);
+  const dueThisMonth = pending.filter((item) => item.due_on >= today && item.due_on <= monthEnd);
+  const nextSeven = new Date(`${today}T12:00:00`); nextSeven.setDate(nextSeven.getDate() + 7);
+  const nextSevenIso = nextSeven.toISOString().slice(0, 10);
+  const dueSoon = pending.filter((item) => item.due_on >= today && item.due_on <= nextSevenIso);
+
+  return <DashboardShell active="payables"><section className="content settings-content payables-content">
+    <header><div><p className="eyebrow">AGENDA FINANCEIRA</p><h1>Contas a pagar</h1><p className="muted">Veja o que vem pela frente sem misturar previsão com gasto realizado.</p></div></header>
+    {params.error && <p className="form-message error">{params.error}</p>}{params.success && <p className="form-message success">{params.success}</p>}
+    <section className="payables-summary"><article><span>A vencer neste mês</span><strong>{money.format(dueThisMonth.reduce((sum, item) => sum + item.amount_cents, 0) / 100)}</strong></article><article><span>Próximos 7 dias</span><strong>{dueSoon.length}</strong><small>{money.format(dueSoon.reduce((sum, item) => sum + item.amount_cents, 0) / 100)}</small></article><article className={overdue.length ? "overdue" : ""}><span>Em atraso</span><strong>{overdue.length}</strong><small>{money.format(overdue.reduce((sum, item) => sum + item.amount_cents, 0) / 100)}</small></article></section>
+    <details className="card payable-create"><summary>+ Adicionar conta ou parcelamento</summary><form action={createPayable}><div className="payable-form-row"><label>Descrição<input name="title" maxLength={120} placeholder="Ex.: Condomínio" required /></label><label>Categoria<select name="category_id"><option value="">Sem categoria</option>{categoriesResult.data?.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label></div><div className="payable-form-row"><label>Tipo<select name="schedule_type" defaultValue="one_time"><option value="one_time">Conta única</option><option value="installment">Parcelamento</option><option value="recurring">Conta recorrente</option></select></label><label>Conta para pagamento<select name="account_id" required><option value="">Selecione</option>{accountsResult.data?.map((account) => <option key={account.id} value={account.id}>{account.nickname || account.name}</option>)}</select></label></div><div className="payable-form-row three"><label>Valor<input name="amount" inputMode="decimal" placeholder="250,00" required /><small>No parcelamento, informe o valor total.</small></label><label>Primeiro vencimento<input name="first_due_on" type="date" required /></label><label>Quantidade<input name="occurrence_count" type="number" min={1} max={60} defaultValue={1} /><small>Meses ou parcelas.</small></label></div><label>Observação<input name="notes" maxLength={300} placeholder="Opcional" /></label><button type="submit">Adicionar à agenda</button></form></details>
+    <div className="payables-heading"><div><h2>Agenda</h2><span className="count-badge">{visibleOccurrences.length}</span></div><nav aria-label="Visualização da agenda"><a className={params.view !== "all" ? "active" : ""} href="/dashboard/contas-a-pagar">Pendentes</a><a className={params.view === "all" ? "active" : ""} href="/dashboard/contas-a-pagar?view=all">Todas</a></nav></div>
+    {!visibleOccurrences.length && <article className="card empty-state"><span>✓</span><h2>Nada pendente</h2><p className="muted">Adicione uma conta para começar a organizar os próximos vencimentos.</p></article>}
+    <section className="payables-list">{visibleOccurrences.map((occurrence) => { const payable = Array.isArray(occurrence.payables) ? occurrence.payables[0] : occurrence.payables; const isOverdue = occurrence.status === "pending" && occurrence.due_on < today; return <article className={`card payable-item ${occurrence.status} ${isOverdue ? "overdue" : ""}`} key={occurrence.id}><time dateTime={occurrence.due_on}><strong>{occurrence.due_on.slice(8, 10)}</strong><span>{date.format(new Date(`${occurrence.due_on}T12:00:00`)).split(" de ")[1] ?? occurrence.due_on.slice(5, 7)}</span></time><div className="payable-main"><div><strong>{payable?.title}</strong>{(payable?.occurrence_count ?? 0) > 1 && <span>{occurrence.occurrence_number}/{payable?.occurrence_count}</span>}</div><small>{relationName(payable?.categories ?? null) || "Sem categoria"} · {relationName(payable?.accounts ?? null) || "Conta"}</small></div><div className="payable-value"><strong>{money.format(occurrence.amount_cents / 100)}</strong><span>{occurrence.status === "paid" ? `Pago em ${date.format(new Date(`${occurrence.paid_on}T12:00:00`))}` : occurrence.status === "cancelled" ? "Cancelada" : isOverdue ? "Em atraso" : "Pendente"}</span></div>{occurrence.status === "pending" && <div className="payable-actions"><details><summary>Marcar como paga</summary><form action={payOccurrence}><input type="hidden" name="occurrence_id" value={occurrence.id} /><label>Data do pagamento<input name="paid_on" type="date" defaultValue={today} required /></label><button type="submit">Confirmar pagamento</button></form></details><form action={cancelOccurrence}><input type="hidden" name="occurrence_id" value={occurrence.id} /><button className="quiet-danger" type="submit">Cancelar</button></form></div>}</article>; })}</section>
+    {!!cardInstallmentsResult.data?.length && <section className="card-payables"><div className="section-heading"><div><p className="eyebrow">JÁ REGISTRADO</p><h2>Próximas parcelas dos cartões</h2></div><span className="count-badge">{cardInstallmentsResult.data.length}</span></div><p className="muted">Estes valores já estão nas transações e faturas. Aqui aparecem apenas como agenda.</p><div>{cardInstallmentsResult.data.map((item) => <article key={item.id}><time>{date.format(new Date(`${item.occurred_on}T12:00:00`))}</time><div><strong>{item.description}</strong><small>{relationName(item.credit_cards)} · {relationName(item.categories) || "Sem categoria"}{item.installment_count > 1 ? ` · ${item.installment_number}/${item.installment_count}` : ""}</small></div><strong>{money.format(item.amount_cents / 100)}</strong></article>)}</div></section>}
+  </section></DashboardShell>;
+}
