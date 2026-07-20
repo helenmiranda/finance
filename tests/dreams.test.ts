@@ -26,4 +26,10 @@ describe("sonhos familiares", () => {
     expect(page).toContain("Histórico de aportes");
     expect(page).toContain("contributionStreak");
   });
+
+  it("permite ajustar planos e protege a remoção definitiva", () => {
+    expect(page).toContain("Gerenciar sonho");
+    expect(page).toContain("Pausar sonho");
+    expect(page).toContain('name="confirmation"');
+  });
 });

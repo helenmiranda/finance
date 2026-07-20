@@ -518,10 +518,52 @@ export async function addDreamContribution(formData: FormData) {
   redirect("/dashboard/sonhos?success=Mais%20perto%20do%20sonho!%20Aporte%20registrado.");
 }
 
+export async function updateDream(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const dreamId = text(formData, "dream_id");
+  const title = text(formData, "title");
+  const whyText = text(formData, "why_text");
+  const target = cents(text(formData, "target"));
+  if (!dreamId || !title || title.length > 80 || !whyText || whyText.length > 280 || !target) {
+    redirect("/dashboard/sonhos?error=Confira%20os%20dados%20do%20sonho.");
+  }
+  const { data: current } = await supabase.from("dreams").select("saved_cents, status")
+    .eq("id", dreamId).eq("household_id", membership.household_id).maybeSingle();
+  if (!current) redirect("/dashboard/sonhos?error=Sonho%20não%20encontrado.");
+  const status = target <= current.saved_cents ? "achieved" : current.status === "achieved" ? "active" : current.status;
+  const { error } = await supabase.from("dreams").update({
+    title,
+    why_text: whyText,
+    target_cents: target,
+    target_date: optionalText(formData, "target_date"),
+    emoji: text(formData, "emoji") || "✨",
+    color: text(formData, "color") || "#9fe870",
+    status,
+  }).eq("id", dreamId).eq("household_id", membership.household_id);
+  if (error) redirect("/dashboard/sonhos?error=Não%20foi%20possível%20atualizar%20o%20sonho.");
+  revalidatePath("/dashboard/sonhos");
+  redirect("/dashboard/sonhos?success=Sonho%20atualizado.");
+}
+
+export async function toggleDreamStatus(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const dreamId = text(formData, "dream_id");
+  const status = text(formData, "status");
+  if (!dreamId || !["active", "paused"].includes(status)) redirect("/dashboard/sonhos?error=Ação%20inválida.");
+  const { error } = await supabase.from("dreams").update({ status })
+    .eq("id", dreamId).eq("household_id", membership.household_id).neq("status", "achieved");
+  if (error) redirect("/dashboard/sonhos?error=Não%20foi%20possível%20alterar%20o%20sonho.");
+  revalidatePath("/dashboard/sonhos");
+  redirect(`/dashboard/sonhos?success=${status === "paused" ? "Sonho%20pausado.%20Ele%20continua%20guardado%20aqui." : "Sonho%20retomado!"}`);
+}
+
 export async function deleteDream(formData: FormData) {
   const { supabase, membership } = await getAuthenticatedContext();
   if (!membership) redirect("/dashboard");
   const dreamId = text(formData, "dream_id");
+  if (text(formData, "confirmation") !== "REMOVER") redirect("/dashboard/sonhos?error=Digite%20REMOVER%20para%20confirmar.");
   const { error } = await supabase.from("dreams").delete().eq("id", dreamId).eq("household_id", membership.household_id);
   if (error) redirect("/dashboard/sonhos?error=Não%20foi%20possível%20remover%20o%20sonho.");
   revalidatePath("/dashboard/sonhos");
