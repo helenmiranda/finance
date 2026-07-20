@@ -256,6 +256,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - PWA instalado ganhou splash screen curta com moedas caindo, assinatura da marca, exibição única por sessão e alternativa sem animação para acessibilidade.
 - Splash passou a renderizar desde o primeiro frame do PWA, ganhou gradiente em camadas e 24 moedas que se acumulam na base antes da transição.
 - iOS ganhou imagens nativas de lançamento no gradiente da marca para eliminar o intervalo preto; moedas receberam acabamento metálico, relevo, brilho e rotação em perspectiva.
+- Login mobile passou a usar campos de 16px para impedir o zoom automático do Safari, remove o foco ao enviar e mostra progresso imediato enquanto o Supabase autentica.
 
 Commits principais desta etapa: `eae4974`, `3972e68`, `523cb64`, `0955a55`, `40fd7a9`, `75573db` e `345857c`.
 

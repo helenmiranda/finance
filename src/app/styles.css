@@ -409,6 +409,9 @@ input, select, textarea {
 textarea { height: auto; min-height: 86px; padding-top: 14px; resize: vertical; }
 input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); box-shadow: 0 0 0 4px rgba(159, 232, 112, .28); }
 .auth-card form button, .onboarding-card form button { width: 100%; margin-top: 5px; }
+.auth-card form button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; }
+.button-spinner { width: 17px; height: 17px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: button-spin .7s linear infinite; }
+@keyframes button-spin { to { transform: rotate(360deg); } }
 .auth-switch { margin-top: 24px; color: var(--muted); font-size: 14px; text-align: center; }
 .auth-switch a { color: var(--primary-dark); font-weight: 800; }
 
@@ -894,6 +897,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 }
 
 @media (max-width: 760px) {
+  body input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), body select, body textarea { font-size: 16px; }
   .shell { display: block; padding: 0; }
   .sidebar { position: sticky; z-index: 20; top: 0; display: flex; align-items: center; flex-direction: row; justify-content: space-between; height: calc(72px + env(safe-area-inset-top)); padding: calc(12px + env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) 12px max(18px, env(safe-area-inset-left)); border-radius: 0 0 22px 22px; box-shadow: 0 8px 24px rgba(14, 15, 12, .12); }
   .pull-refresh-indicator { position: fixed; z-index: 19; top: calc(72px + env(safe-area-inset-top)); left: 50%; display: flex; align-items: center; gap: 8px; min-height: 38px; padding: 8px 14px; border: 1px solid rgba(22, 51, 0, .12); border-radius: 999px; background: rgba(255, 255, 255, .92); color: var(--primary-dark); box-shadow: 0 8px 24px rgba(14, 15, 12, .12); backdrop-filter: blur(14px); transition: opacity .18s ease, transform .18s ease; pointer-events: none; }
@@ -1080,4 +1084,5 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
   * { scroll-behavior: auto !important; transition: none !important; }
   .splash-coins { display: none; }
   .splash-brand { animation: none; }
+  .button-spinner { animation-duration: 1.4s; }
 }

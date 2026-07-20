@@ -61,4 +61,13 @@ describe("experiência PWA mobile", () => {
     expect(layout).toContain("poupemos-1290x2796.jpg");
     expect(layout).toContain('themeColor: "#163300"');
   });
+
+  it("evita zoom automático do Safari nos campos e mostra o login em andamento", () => {
+    const styles = source("src/app/styles.css");
+    const button = source("src/components/auth-submit-button.tsx");
+    expect(styles).toContain('body input:not([type="checkbox"])');
+    expect(styles).toContain("font-size: 16px");
+    expect(source("src/app/login/page.tsx")).toContain('pendingLabel={isSignup ? "Criando sua conta…" : "Entrando…"}');
+    expect(button).toContain("document.activeElement.blur()");
+  });
 });

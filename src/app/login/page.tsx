@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { login, signup } from "@/app/auth/actions";
 import { createClient } from "@/lib/supabase/server";
+import { AuthSubmitButton } from "@/components/auth-submit-button";
 
 type LoginPageProps = {
   searchParams: Promise<{ mode?: string; error?: string; message?: string }>;
@@ -56,7 +57,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               Senha
               <input name="password" type="password" placeholder="Mínimo de 8 caracteres" autoComplete={isSignup ? "new-password" : "current-password"} minLength={8} required />
             </label>
-            <button type="submit">{isSignup ? "Criar minha conta" : "Entrar"}</button>
+            <AuthSubmitButton label={isSignup ? "Criar minha conta" : "Entrar"} pendingLabel={isSignup ? "Criando sua conta…" : "Entrando…"} />
           </form>
 
           <p className="auth-switch">
