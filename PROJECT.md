@@ -137,6 +137,15 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - [ ] Criar testes de integração contra um projeto Supabase isolado.
 - [ ] Criar testes de ponta a ponta dos fluxos principais no navegador.
 
+### Fase 8 — Dados e privacidade
+
+- [x] Criar Central de dados e privacidade.
+- [x] Exportar transações em CSV.
+- [x] Exportar dados familiares em JSON.
+- [x] Mostrar pessoas com acesso e integrações bancárias.
+- [ ] Permitir desvincular integrações preservando o histórico.
+- [ ] Implementar exclusão segura da conta e do espaço familiar.
+
 ## Próximas decisões
 
 - Escolher se membros terão os mesmos poderes ou papéis de administrador e membro.
@@ -223,6 +232,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Gestão completa de categorias adicionada com edição, ativação, desativação, contagem de vínculos e substituição transacional que preserva histórico, regras e planejamentos.
 - Feedback familiar do assistente adicionado por recomendação, com estados aceita/descartada usados para personalizar respostas futuras e evitar repetições indesejadas.
 - Suíte Vitest adicionada para regras financeiras e isolamento estrutural, com pipeline de qualidade no GitHub Actions usando Node.js 22.
+- Central de dados e privacidade adicionada com exportações autenticadas em CSV/JSON e inventário de acessos e integrações do espaço familiar.
 
 Commits principais desta etapa: `eae4974`, `3972e68`, `523cb64`, `0955a55`, `40fd7a9`, `75573db` e `345857c`.
 

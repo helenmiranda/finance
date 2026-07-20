@@ -4,7 +4,7 @@ import { PluggyAutoCheck } from "@/components/pluggy-auto-check";
 import { getAuthenticatedContext } from "@/lib/household";
 
 type DashboardShellProps = {
-  active: "overview" | "transactions" | "categories" | "accounts" | "cards" | "investments" | "imports" | "budgets" | "alerts" | "assistant";
+  active: "overview" | "transactions" | "categories" | "accounts" | "cards" | "investments" | "imports" | "budgets" | "alerts" | "assistant" | "privacy";
   children: React.ReactNode;
 };
 
@@ -19,6 +19,7 @@ const links = [
   { key: "budgets", href: "/dashboard/orcamentos", label: "Orçamentos" },
   { key: "alerts", href: "/dashboard/alertas", label: "Alertas" },
   { key: "assistant", href: "/dashboard/assistente", label: "Assistente IA" },
+  { key: "privacy", href: "/dashboard/privacidade", label: "Dados e privacidade" },
 ];
 
 function relatedHousehold(value: { name: string } | { name: string }[] | null) {
