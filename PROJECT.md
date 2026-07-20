@@ -156,6 +156,16 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - [ ] Criar testes mobile de ponta a ponta para login, dashboard, transações, contas e cartões.
 - [x] Criar base Playwright mobile para login, proteção de rotas, instalação PWA e tela offline; jornadas autenticadas de menu, dashboard, contas e cartões usam credenciais E2E opcionais.
 
+### Fase 10 — Sonhos e gamificação positiva
+
+- [x] Criar uma área emocional separada das metas financeiras técnicas.
+- [x] Permitir registrar o propósito, símbolo, cor, valor desejado e prazo de cada sonho.
+- [x] Registrar aportes familiares com atualização transacional e isolamento por espaço familiar.
+- [x] Mostrar progresso, valor restante, ritmo mensal sugerido e marcos de 10%, 25%, 50%, 75% e 100%.
+- [x] Celebrar conquistas sem criar culpa ou competição entre membros.
+- [ ] Adicionar capas personalizadas e histórico visual de aportes.
+- [ ] Criar missões familiares opcionais e celebrações configuráveis.
+
 ## Próximas decisões
 
 - Escolher se membros terão os mesmos poderes ou papéis de administrador e membro.
@@ -257,6 +267,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Splash passou a renderizar desde o primeiro frame do PWA, ganhou gradiente em camadas e 24 moedas que se acumulam na base antes da transição.
 - iOS ganhou imagens nativas de lançamento no gradiente da marca para eliminar o intervalo preto; moedas receberam acabamento metálico, relevo, brilho e rotação em perspectiva.
 - Login mobile passou a usar campos de 16px para impedir o zoom automático do Safari, remove o foco ao enviar e mostra progresso imediato enquanto o Supabase autentica.
+- Área de Sonhos criada com propósito, valor, prazo, aportes, progresso, ritmo sugerido, marcos de conquista e celebração familiar responsiva.
 
 Commits principais desta etapa: `eae4974`, `3972e68`, `523cb64`, `0955a55`, `40fd7a9`, `75573db` e `345857c`.
 

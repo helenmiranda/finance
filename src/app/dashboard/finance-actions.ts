@@ -476,6 +476,58 @@ export async function deleteGoal(formData: FormData) {
   redirect("/dashboard/metas?success=Meta%20removida.");
 }
 
+export async function createDream(formData: FormData) {
+  const { supabase, membership, user } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const title = text(formData, "title");
+  const whyText = text(formData, "why_text");
+  const target = cents(text(formData, "target"));
+  if (!title || title.length > 80 || !whyText || whyText.length > 280 || !target) {
+    redirect("/dashboard/sonhos?error=Confira%20os%20dados%20do%20sonho.");
+  }
+  const { error } = await supabase.from("dreams").insert({
+    household_id: membership.household_id,
+    title,
+    why_text: whyText,
+    target_cents: target,
+    target_date: optionalText(formData, "target_date"),
+    emoji: text(formData, "emoji") || "✨",
+    color: text(formData, "color") || "#9fe870",
+    created_by: user.id,
+  });
+  if (error) redirect(`/dashboard/sonhos?error=${encodeURIComponent("Não foi possível criar o sonho. A migration 031 foi aplicada?")}`);
+  revalidatePath("/dashboard/sonhos");
+  redirect("/dashboard/sonhos?success=Um%20novo%20sonho%20começou.");
+}
+
+export async function addDreamContribution(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const dreamId = text(formData, "dream_id");
+  const amount = cents(text(formData, "amount"));
+  const contributionDate = text(formData, "contributed_on");
+  if (!dreamId || !amount || !contributionDate) redirect("/dashboard/sonhos?error=Confira%20os%20dados%20do%20aporte.");
+  const { error } = await supabase.rpc("add_dream_contribution", {
+    target_dream_id: dreamId,
+    contribution_cents: amount,
+    contribution_date: contributionDate,
+    contribution_note: optionalText(formData, "note"),
+  });
+  if (error) redirect("/dashboard/sonhos?error=Não%20foi%20possível%20registrar%20o%20aporte.");
+  revalidatePath("/dashboard/sonhos");
+  redirect("/dashboard/sonhos?success=Mais%20perto%20do%20sonho!%20Aporte%20registrado.");
+}
+
+export async function deleteDream(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const dreamId = text(formData, "dream_id");
+  const { error } = await supabase.from("dreams").delete().eq("id", dreamId).eq("household_id", membership.household_id);
+  if (error) redirect("/dashboard/sonhos?error=Não%20foi%20possível%20remover%20o%20sonho.");
+  revalidatePath("/dashboard/sonhos");
+  redirect("/dashboard/sonhos?success=Sonho%20removido.");
+}
+
 export async function inviteFamilyMember(formData: FormData) {
   const { supabase, membership } = await getAuthenticatedContext();
   if (!membership) redirect("/dashboard");

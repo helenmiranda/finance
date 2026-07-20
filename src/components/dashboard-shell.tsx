@@ -4,7 +4,7 @@ import { getAuthenticatedContext } from "@/lib/household";
 import { PullToRefresh } from "@/components/pull-to-refresh";
 
 type DashboardShellProps = {
-  active: "overview" | "transactions" | "categories" | "accounts" | "cards" | "investments" | "imports" | "budgets" | "alerts" | "assistant" | "privacy";
+  active: "overview" | "transactions" | "categories" | "accounts" | "cards" | "investments" | "dreams" | "imports" | "budgets" | "alerts" | "assistant" | "privacy";
   children: React.ReactNode;
 };
 
@@ -15,6 +15,7 @@ const links = [
   { key: "accounts", href: "/dashboard/contas", label: "Contas" },
   { key: "cards", href: "/dashboard/cartoes", label: "Cartões" },
   { key: "investments", href: "/dashboard/patrimonio", label: "Patrimônio" },
+  { key: "dreams", href: "/dashboard/sonhos", label: "Sonhos" },
   { key: "imports", href: "/dashboard/importacoes", label: "Importações" },
   { key: "budgets", href: "/dashboard/orcamentos", label: "Orçamentos" },
   { key: "alerts", href: "/dashboard/alertas", label: "Alertas" },

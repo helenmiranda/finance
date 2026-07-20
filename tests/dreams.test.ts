@@ -1,0 +1,27 @@
+import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+const root = process.cwd();
+const migration = readFileSync(join(root, "supabase/migrations/202607200031_family_dreams.sql"), "utf8");
+const page = readFileSync(join(root, "src/app/dashboard/sonhos/page.tsx"), "utf8");
+
+describe("sonhos familiares", () => {
+  it("protege sonhos e aportes pelo tenant", () => {
+    expect(migration).toContain("dreams_member_access");
+    expect(migration).toContain("dream_contributions_member_access");
+    expect(migration).toContain("public.is_household_member");
+  });
+
+  it("registra o aporte e atualiza o total de forma atômica", () => {
+    expect(migration).toContain("for update");
+    expect(migration).toContain("saved_cents = new_total");
+    expect(migration).toContain("status = case when new_total >= target_cents then 'achieved'");
+  });
+
+  it("exibe propósito, ritmo e marcos positivos", () => {
+    expect(page).toContain("why_text");
+    expect(page).toContain("Ritmo sugerido");
+    expect(page).toContain("const milestones = [10, 25, 50, 75, 100]");
+  });
+});
