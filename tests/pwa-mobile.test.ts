@@ -45,4 +45,11 @@ describe("experiência PWA mobile", () => {
     expect(source("src/app/dashboard/layout.tsx")).toContain("<PluggyAutoCheck />");
     expect(source("src/components/dashboard-shell.tsx")).not.toContain("PluggyAutoCheck");
   });
+
+  it("mostra splash animada somente no PWA instalado e uma vez por sessão", () => {
+    const splash = source("src/components/pwa-splash.tsx");
+    expect(splash).toContain('display-mode: standalone');
+    expect(splash).toContain('sessionStorage.getItem("poupemos:splash-seen")');
+    expect(splash).toContain("splash-coins");
+  });
 });

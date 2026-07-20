@@ -52,6 +52,16 @@ body::after { bottom: -240px; left: 20%; background: #38c8ff; opacity: 0.12; }
 .navigation-pending .navigation-progress { width: 72%; opacity: 1; animation: navigation-progress 1.2s ease-in-out infinite; }
 .navigation-pending .mobile-menu-panel a { pointer-events: none; }
 @keyframes navigation-progress { 0% { width: 8%; } 55% { width: 68%; } 100% { width: 92%; } }
+.pwa-splash { position: fixed; z-index: 1000; inset: 0; display: grid; place-items: center; overflow: hidden; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); background: radial-gradient(circle at 50% 42%, #315f1c 0, #163300 42%, #0d2000 100%); color: white; opacity: 1; transition: opacity .42s ease, visibility .42s ease; }
+.pwa-splash.leaving { visibility: hidden; opacity: 0; }
+.splash-brand { position: relative; z-index: 2; display: grid; justify-items: center; transform: translateY(-6px); animation: splash-brand-in .65s cubic-bezier(.2,.8,.2,1) both; }
+.splash-mark { display: grid; place-items: center; width: 82px; height: 82px; border-radius: 50%; background: var(--primary); color: var(--primary-dark); box-shadow: 0 18px 55px rgba(159, 232, 112, .3); font-size: 39px; font-weight: 950; }
+.splash-brand strong { margin-top: 18px; font-size: clamp(36px, 10vw, 52px); letter-spacing: -.06em; }
+.splash-brand small { margin-top: 8px; color: rgba(255,255,255,.72); font-size: 13px; font-weight: 650; letter-spacing: .02em; }
+.splash-coins { position: absolute; inset: -80px 0 0; pointer-events: none; }
+.splash-coins span { position: absolute; top: -40px; display: grid; place-items: center; border: 2px solid rgba(255,255,255,.45); border-radius: 50%; background: linear-gradient(145deg, #c8ff9f, #78c84f); color: #163300; box-shadow: 0 8px 20px rgba(0,0,0,.18); font-size: 9px; font-weight: 950; animation-name: splash-coin-fall; animation-timing-function: cubic-bezier(.35,.05,.75,.55); animation-iteration-count: infinite; }
+@keyframes splash-brand-in { from { opacity: 0; transform: translateY(12px) scale(.92); } to { opacity: 1; transform: translateY(-6px) scale(1); } }
+@keyframes splash-coin-fall { 0% { transform: translateY(-12vh) rotate(0); opacity: 0; } 12% { opacity: .9; } 100% { transform: translateY(118vh) rotate(540deg); opacity: .15; } }
 
 button, a { font: inherit; }
 
@@ -1063,4 +1073,6 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 
 @media (prefers-reduced-motion: reduce) {
   * { scroll-behavior: auto !important; transition: none !important; }
+  .splash-coins { display: none; }
+  .splash-brand { animation: none; }
 }

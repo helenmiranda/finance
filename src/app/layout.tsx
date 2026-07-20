@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { PwaRegister } from "@/components/pwa-register";
 import { NetworkStatus } from "@/components/network-status";
 import { NavigationFeedback } from "@/components/navigation-feedback";
+import { PwaSplash } from "@/components/pwa-splash";
 import "./styles.css";
 
 export const metadata: Metadata = {
@@ -19,7 +20,7 @@ export const viewport: Viewport = { themeColor: "#f6f8f3", colorScheme: "light",
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pt-BR">
-      <body><NavigationFeedback /><NetworkStatus />{children}<PwaRegister /></body>
+      <body><PwaSplash /><NavigationFeedback /><NetworkStatus />{children}<PwaRegister /></body>
     </html>
   );
 }
