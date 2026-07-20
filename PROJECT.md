@@ -183,6 +183,10 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - [x] Alertar contas próximas do vencimento e atrasadas sem repetição.
 - [x] Sugerir conciliação assistida entre contas agendadas e transações importadas pela Pluggy.
 - [x] Permitir corrigir vencimentos pendentes e cancelar parcelas futuras preservando pagamentos anteriores.
+- [x] Adicionar calendário mensal com contas agendadas e parcelas de cartão.
+- [x] Manter uma janela móvel de doze meses para contas recorrentes contínuas pelo Supabase Cron.
+- [x] Projetar o saldo disponível após contas e faturas conhecidas do mês.
+- [x] Sugerir a criação de contas recorrentes a partir de padrões bancários confirmados pelo usuário.
 
 ## Próximas decisões
 
@@ -294,6 +298,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Central de Contas a pagar adicionada com contas únicas, recorrências, parcelamentos, baixas que geram transações, agenda de cartão sem duplicidade, resumo no dashboard e alertas de vencimento.
 - Conciliação assistida compara conta, valor e data após sincronizações Pluggy; a família confirma ou rejeita, e a confirmação vincula a transação existente sem duplicá-la.
 - Gestão da agenda ganhou edição individual de valor e vencimento, além de cancelamento seguro do restante de uma série sem apagar o que já foi pago.
+- Agenda financeira ganhou calendário mensal, recorrências contínuas mantidas pelo Supabase, saldo pós-compromissos e sugestões de contas baseadas em padrões bancários.
 
 Commits principais desta etapa: `eae4974`, `3972e68`, `523cb64`, `0955a55`, `40fd7a9`, `75573db` e `345857c`.
 

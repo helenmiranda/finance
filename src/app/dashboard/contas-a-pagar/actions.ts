@@ -15,12 +15,13 @@ export async function createPayable(formData: FormData) {
   const { supabase, membership } = await getAuthenticatedContext();
   if (!membership) redirect("/dashboard");
   const type = text(formData, "schedule_type");
-  const count = type === "one_time" ? 1 : Number(text(formData, "occurrence_count"));
+  const autoRenew = type === "recurring" && formData.get("auto_renew") === "on";
+  const count = type === "one_time" ? 1 : autoRenew ? 12 : Number(text(formData, "occurrence_count"));
   const amount = cents(text(formData, "amount"));
   if (!text(formData, "title") || !text(formData, "account_id") || !text(formData, "first_due_on") || !amount || !["one_time", "installment", "recurring"].includes(type) || !Number.isInteger(count) || count < 1 || count > 60) {
     redirect("/dashboard/contas-a-pagar?error=Confira%20os%20dados%20da%20conta.");
   }
-  const { error } = await supabase.rpc("create_payable_schedule", {
+  const { data: payableId, error } = await supabase.rpc("create_payable_schedule", {
     target_account_id: text(formData, "account_id"),
     target_category_id: text(formData, "category_id") || null,
     payable_title: text(formData, "title"),
@@ -31,6 +32,10 @@ export async function createPayable(formData: FormData) {
     total_occurrences: count,
   });
   if (error) redirect("/dashboard/contas-a-pagar?error=Não%20foi%20possível%20criar.%20A%20migration%20035%20foi%20aplicada?");
+  if (autoRenew && payableId) {
+    const { error: renewalError } = await supabase.from("payables").update({ auto_renew: true }).eq("id", payableId).eq("household_id", membership.household_id);
+    if (renewalError) redirect("/dashboard/contas-a-pagar?error=Conta%20criada,%20mas%20a%20renovação%20automática%20falhou.%20A%20migration%20038%20foi%20aplicada?");
+  }
   await supabase.rpc("suggest_payable_reconciliations", { target_household_id: membership.household_id });
   await evaluateAndDispatchFinancialAlerts(membership.household_id);
   revalidatePath("/dashboard/contas-a-pagar"); revalidatePath("/dashboard");

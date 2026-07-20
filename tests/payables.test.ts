@@ -7,6 +7,7 @@ const migration = source("supabase/migrations/202607200035_accounts_payable.sql"
 const page = source("src/app/dashboard/contas-a-pagar/page.tsx");
 const reconciliation = source("supabase/migrations/202607200036_payable_reconciliation.sql");
 const pluggySync = source("src/lib/pluggy-sync.ts");
+const dashboard = source("src/app/dashboard/page.tsx");
 
 describe("contas a pagar", () => {
   it("isola agenda e ocorrências por espaço familiar", () => {
@@ -60,5 +61,27 @@ describe("contas a pagar", () => {
     expect(management).toContain("cancel_payable_series");
     expect(management).toContain("where payable_id = payable_record.id and status = 'pending'");
     expect(page).toContain("Cancelar parcelas futuras");
+  });
+
+  it("mantém recorrências contínuas e oferece visão em calendário", () => {
+    const rolling = source("supabase/migrations/202607200038_rolling_payables_calendar.sql");
+    expect(rolling).toContain("auto_renew");
+    expect(rolling).toContain("extend_recurring_payables");
+    expect(rolling).toContain("poupemos-renew-recurring-payables");
+    expect(page).toContain("payables-calendar");
+    expect(page).toContain("Manter sempre 12 meses futuros");
+  });
+
+  it("sugere padrões bancários sem criar contas automaticamente", () => {
+    expect(page).toContain("detectRecurringTransactions");
+    expect(page).toContain("Transformar padrões em contas agendadas");
+    expect(page).toContain("Adicionar à agenda");
+  });
+
+  it("projeta o saldo depois dos compromissos do mês", () => {
+    expect(dashboard).toContain("projectedAvailable");
+    expect(dashboard).toContain("monthPayablesTotal");
+    expect(dashboard).toContain("monthStatements");
+    expect(dashboard).toContain("Após contas e faturas do mês");
   });
 });

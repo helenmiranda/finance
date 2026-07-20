@@ -9,6 +9,7 @@ export type RecurringTransaction = {
   occurrences: number;
   lastDate: string;
   confidence: number;
+  sourceId: string;
 };
 
 type SourceTransaction = {
@@ -79,6 +80,7 @@ export function detectRecurringTransactions(transactions: SourceTransaction[]): 
       occurrences: items.length,
       lastDate: last.occurred_on,
       confidence,
+      sourceId: last.sourceId,
     });
   });
 

@@ -55,10 +55,10 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
     supabase.from("transactions").select("occurred_on, type, amount_cents, category_id, categories(name, color)").eq("household_id", householdId).eq("status", "confirmed").gte("occurred_on", monthStart).lt("occurred_on", nextMonth),
     supabase.from("transactions").select("id, description, amount_cents, occurred_on, type, transfer_direction, installment_number, installment_count, categories(name), accounts(name, nickname)").eq("household_id", householdId).not("account_id", "is", null).order("occurred_on", { ascending: false }).limit(4),
     supabase.from("transactions").select("id, description, amount_cents, occurred_on, type, transfer_direction, installment_number, installment_count, categories(name), credit_cards(name, nickname)").eq("household_id", householdId).not("credit_card_id", "is", null).order("occurred_on", { ascending: false }).limit(4),
-    supabase.from("card_statements").select("total_cents").eq("household_id", householdId).in("status", ["open", "closed", "overdue"]),
+    supabase.from("card_statements").select("total_cents, due_date").eq("household_id", householdId).in("status", ["open", "closed", "overdue"]),
     supabase.from("dreams").select("id, title, emoji, color, target_cents, saved_cents, target_date").eq("household_id", householdId).eq("status", "active").order("target_date", { nullsFirst: false }).limit(20),
     supabase.from("dream_missions").select("title, ends_on, current_cents, target_cents, dream_id").eq("household_id", householdId).eq("status", "active").gte("ends_on", today.toISOString().slice(0, 10)).order("ends_on").limit(1),
-    supabase.from("payable_occurrences").select("id, due_on, amount_cents, payables(title)").eq("household_id", householdId).eq("status", "pending").lte("due_on", weekEnd).order("due_on").limit(5),
+    supabase.from("payable_occurrences").select("id, due_on, amount_cents, payables(title)").eq("household_id", householdId).eq("status", "pending").lte("due_on", monthEnd).order("due_on").limit(300),
     supabase.from("transactions").select("id, occurred_on, amount_cents, description").eq("household_id", householdId).eq("type", "expense").eq("status", "confirmed").not("credit_card_id", "is", null).gt("installment_count", 1).gte("occurred_on", today.toISOString().slice(0, 10)).lte("occurred_on", weekEnd).order("occurred_on").limit(20),
   ]);
 
@@ -66,6 +66,7 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
   const monthIncome = monthTransactionsResult.data?.filter((item) => item.type === "income").reduce((sum, item) => sum + item.amount_cents, 0) ?? 0;
   const monthExpense = monthTransactionsResult.data?.filter((item) => item.type === "expense").reduce((sum, item) => sum + item.amount_cents, 0) ?? 0;
   const openStatements = statementsResult.data?.reduce((sum, statement) => sum + statement.total_cents, 0) ?? 0;
+  const monthStatements = statementsResult.data?.filter((statement) => statement.due_date >= today.toISOString().slice(0, 10) && statement.due_date <= monthEnd).reduce((sum, statement) => sum + statement.total_cents, 0) ?? 0;
   const monthTransactions = monthTransactionsResult.data ?? [];
   const categoryTotals = new Map<string, { id: string | null; name: string; color: string; amount: number }>();
   for (const transaction of monthTransactions.filter((item) => item.type === "expense")) {
@@ -88,8 +89,11 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
   const latestCards = latestCardsResult.data ?? [];
   const featuredMission = missionsResult.data?.[0];
   const featuredDream = dreamsResult.data?.find((dream) => dream.id === featuredMission?.dream_id) ?? dreamsResult.data?.[0];
-  const upcomingPayables = payableOccurrencesResult.data ?? [];
+  const pendingPayables = payableOccurrencesResult.data ?? [];
+  const upcomingPayables = pendingPayables.filter((item) => item.due_on <= weekEnd).slice(0, 5);
   const upcomingCommitmentTotal = upcomingPayables.reduce((sum, item) => sum + item.amount_cents, 0) + (upcomingCardResult.data?.reduce((sum, item) => sum + item.amount_cents, 0) ?? 0);
+  const monthPayablesTotal = pendingPayables.filter((item) => item.due_on >= today.toISOString().slice(0, 10)).reduce((sum, item) => sum + item.amount_cents, 0);
+  const projectedAvailable = availableBalance - monthPayablesTotal - monthStatements;
 
   return (
     <DashboardShell active="overview">
@@ -110,7 +114,7 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
 
         <DashboardCharts categories={categoryChart} days={dailyChart} monthLabel={monthLabel} periodFrom={monthStart} periodTo={monthEnd} />
 
-        {(upcomingPayables.length > 0 || upcomingCardResult.data?.length) && <section className="clean-panel dashboard-payables"><div><p className="eyebrow">PRÓXIMOS 7 DIAS</p><h2>{money.format(upcomingCommitmentTotal / 100)} comprometidos</h2><p className="muted">{upcomingPayables.length} contas agendadas · {upcomingCardResult.data?.length ?? 0} parcelas no cartão</p></div><div>{upcomingPayables.slice(0, 3).map((item) => <span key={item.id}><strong>{relatedTitle(item.payables)}</strong><small>{shortDate.format(new Date(`${item.due_on}T12:00:00`))} · {money.format(item.amount_cents / 100)}</small></span>)}</div><Link href="/dashboard/contas-a-pagar">Abrir agenda →</Link></section>}
+        {(upcomingPayables.length > 0 || upcomingCardResult.data?.length || monthPayablesTotal > 0 || monthStatements > 0) && <section className="clean-panel dashboard-payables"><div><p className="eyebrow">PRÓXIMOS 7 DIAS</p><h2>{money.format(upcomingCommitmentTotal / 100)} comprometidos</h2><p className="muted">{upcomingPayables.length} contas agendadas · {upcomingCardResult.data?.length ?? 0} parcelas no cartão</p><strong className={projectedAvailable < 0 ? "negative" : ""}>Após contas e faturas do mês: {money.format(projectedAvailable / 100)}</strong></div><div>{upcomingPayables.slice(0, 3).map((item) => <span key={item.id}><strong>{relatedTitle(item.payables)}</strong><small>{shortDate.format(new Date(`${item.due_on}T12:00:00`))} · {money.format(item.amount_cents / 100)}</small></span>)}</div><Link href="/dashboard/contas-a-pagar">Abrir agenda →</Link></section>}
 
         {featuredDream && <section className="clean-panel dashboard-dream" style={{ "--dream-color": featuredDream.color } as React.CSSProperties}><div className="dashboard-dream-main"><span>{featuredDream.emoji}</span><div><p className="eyebrow">SONHO EM MOVIMENTO</p><h2>{featuredDream.title}</h2><p>{money.format(featuredDream.saved_cents / 100)} de {money.format(featuredDream.target_cents / 100)} · {Math.min(Math.round((featuredDream.saved_cents / featuredDream.target_cents) * 100), 100)}%</p></div></div><div className="dashboard-dream-progress"><span style={{ width: `${Math.min((featuredDream.saved_cents / featuredDream.target_cents) * 100, 100)}%` }} /></div>{featuredMission && featuredMission.dream_id === featuredDream.id && <div className="dashboard-mission"><span>⚡ {featuredMission.title}</span><strong>{money.format(featuredMission.current_cents / 100)} de {money.format(featuredMission.target_cents / 100)}</strong></div>}<form action={addDreamContribution}><input type="hidden" name="dream_id" value={featuredDream.id} /><input type="hidden" name="contributed_on" value={today.toISOString().slice(0, 10)} /><input type="hidden" name="return_to" value="/dashboard" /><label><span>Guardar agora</span><input name="amount" inputMode="decimal" placeholder="100,00" required /></label><button type="submit">Aportar</button></form><Link href="/dashboard/sonhos">Ver todos os sonhos →</Link></section>}
 
