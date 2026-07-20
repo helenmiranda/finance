@@ -12,9 +12,8 @@ const suggestions = [
 function RecommendationFeedback({ messageId, initial }: { messageId: string; initial: "accepted" | "discarded" | null | undefined }) {
   const [status, setStatus] = useState(initial ?? null);
   return <form className="recommendation-feedback" action={setRecommendationFeedback} onSubmit={(event) => {
-    const value = (event.nativeEvent as SubmitEvent).submitter instanceof HTMLButtonElement
-      ? (event.nativeEvent as SubmitEvent).submitter?.value as "accepted" | "discarded"
-      : null;
+    const submitter = (event.nativeEvent as SubmitEvent).submitter;
+    const value = submitter instanceof HTMLButtonElement ? submitter.value as "accepted" | "discarded" : null;
     if (value) setStatus(value);
   }}><input type="hidden" name="message_id" value={messageId} /><small>{status === "accepted" ? "Recomendação aceita pela família" : status === "discarded" ? "Recomendação descartada pela família" : "Esta recomendação foi útil?"}</small><div><button className={status === "accepted" ? "selected" : ""} name="status" value="accepted" type="submit">✓ Aceitar</button><button className={status === "discarded" ? "selected discarded" : ""} name="status" value="discarded" type="submit">× Descartar</button></div></form>;
 }
