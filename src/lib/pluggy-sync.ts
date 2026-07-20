@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { pluggyRequest } from "@/lib/pluggy";
+import { evaluateAndDispatchFinancialAlerts } from "@/lib/financial-alerts";
 
 type PluggyAccount = {
   id: string; type: "BANK" | "CREDIT"; subtype?: string; name: string; marketingName?: string | null;
@@ -316,6 +317,6 @@ export async function syncPluggyConnection(supabase: SupabaseClient, connection:
   }
   const investmentCount = await syncInvestments(supabase, connection.pluggy_item_id, connection.id, connection.household_id);
   await supabase.from("pluggy_items").update({ last_synced_at: new Date().toISOString(), status: "UPDATED", error_code: null }).eq("id", connection.id);
-  await supabase.rpc("evaluate_financial_alerts", { target_household_id: connection.household_id });
+  await evaluateAndDispatchFinancialAlerts(connection.household_id);
   return { success: true, bankCount, cardCount, transactionCount, investmentCount };
 }

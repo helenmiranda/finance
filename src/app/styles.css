@@ -410,6 +410,11 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .alert-item h2 { margin: 4px 0; font-size: 16px; }
 .alert-item p { margin: 0; color: var(--body); font-size: 11px; }
 .alert-item > a { color: var(--primary-dark); font-size: 10px; font-weight: 800; text-decoration: none; }
+.push-card { margin-bottom: 14px; padding: 16px 18px; }
+.push-settings { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px 14px; }
+.push-settings > div { display: grid; gap: 4px; }
+.push-settings small { color: var(--muted); font-size: 9px; }
+.push-settings > small { grid-column: 1 / -1; }
 .wealth-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; overflow: hidden; margin-bottom: 14px; border: 1px solid var(--hairline); border-radius: 22px; background: var(--hairline); }
 .wealth-summary article { display: grid; gap: 8px; padding: 22px 24px; background: rgba(255, 255, 255, .72); }
 .wealth-summary span { color: var(--muted); font-size: 11px; }

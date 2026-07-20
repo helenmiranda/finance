@@ -27,3 +27,24 @@ self.addEventListener("fetch", (event) => {
     return response;
   })));
 });
+
+self.addEventListener("push", (event) => {
+  const data = event.data ? event.data.json() : {};
+  event.waitUntil(self.registration.showNotification(data.title || "Poupemos", {
+    body: data.body || "Você recebeu um novo alerta.",
+    icon: "/icons/poupemos-192.png",
+    badge: "/icons/poupemos-192.png",
+    data: { url: data.url || "/dashboard/alertas" },
+    tag: "poupemos-financial-alert",
+  }));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = new URL(event.notification.data?.url || "/dashboard/alertas", self.location.origin).href;
+  event.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+    const existing = clients.find((client) => client.url.startsWith(self.location.origin));
+    if (existing) { existing.navigate(target); return existing.focus(); }
+    return self.clients.openWindow(target);
+  }));
+});

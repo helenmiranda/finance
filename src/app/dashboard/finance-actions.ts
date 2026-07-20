@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAuthenticatedContext } from "@/lib/household";
+import { evaluateAndDispatchFinancialAlerts } from "@/lib/financial-alerts";
 
 function text(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -179,7 +180,7 @@ export async function addTransaction(formData: FormData) {
       });
 
   if (error) redirect(`/dashboard/transacoes?error=${encodeURIComponent("Não foi possível salvar o lançamento.")}`);
-  await supabase.rpc("evaluate_financial_alerts", { target_household_id: membership.household_id });
+  await evaluateAndDispatchFinancialAlerts(membership.household_id);
   revalidatePath("/dashboard/transacoes");
   revalidatePath("/dashboard");
   redirect("/dashboard/transacoes?success=Lançamento%20adicionado.");
@@ -304,7 +305,7 @@ export async function saveBudget(formData: FormData) {
   }, { onConflict: "household_id,category_id,reference_month" });
 
   if (error) redirect(`/dashboard/orcamentos?month=${referenceMonth.slice(0, 7)}&error=${encodeURIComponent("Não foi possível salvar o orçamento.")}`);
-  await supabase.rpc("evaluate_financial_alerts", { target_household_id: membership.household_id });
+  await evaluateAndDispatchFinancialAlerts(membership.household_id);
   revalidatePath("/dashboard/orcamentos");
   revalidatePath("/dashboard");
   redirect(`/dashboard/orcamentos?month=${referenceMonth.slice(0, 7)}&success=${encodeURIComponent("Orçamento salvo.")}`);
@@ -440,7 +441,7 @@ export async function bulkCategorizeTransactions(formData: FormData) {
       })));
     }
   }
-  await supabase.rpc("evaluate_financial_alerts", { target_household_id: membership.household_id });
+  await evaluateAndDispatchFinancialAlerts(membership.household_id);
   revalidatePath("/dashboard/transacoes");
   revalidatePath("/dashboard");
   redirect(`/dashboard/transacoes?success=${encodeURIComponent(`${transactionIds.length} lançamentos atualizados.`)}`);
