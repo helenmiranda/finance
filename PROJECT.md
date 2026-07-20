@@ -166,7 +166,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - [x] Adicionar histórico visual de aportes, sequência mensal e indicação do próximo marco.
 - [x] Permitir editar, pausar e retomar sonhos sem perder o progresso acumulado.
 - [x] Proteger a remoção definitiva com confirmação textual explícita.
-- [ ] Adicionar capas personalizadas aos sonhos.
+- [x] Adicionar capas personalizadas privadas aos sonhos.
 - [ ] Criar missões familiares opcionais e celebrações configuráveis.
 
 ## Próximas decisões
@@ -273,6 +273,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Área de Sonhos criada com propósito, valor, prazo, aportes, progresso, ritmo sugerido, marcos de conquista e celebração familiar responsiva.
 - Sonhos passaram a mostrar histórico recente de aportes, meses consecutivos de contribuição, marcos conquistados e a próxima conquista.
 - Gestão de Sonhos ganhou edição completa, pausa, retomada e remoção protegida sem exigir recriação quando os planos mudarem.
+- Sonhos ganharam capas personalizadas em armazenamento privado, com links temporários, troca e remoção segura por espaço familiar.
 
 Commits principais desta etapa: `eae4974`, `3972e68`, `523cb64`, `0955a55`, `40fd7a9`, `75573db` e `345857c`.
 

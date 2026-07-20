@@ -26,6 +26,8 @@ function day(value: string) {
   return Number.isInteger(parsed) && parsed >= 1 && parsed <= 31 ? parsed : null;
 }
 
+const MAX_DREAM_COVER_SIZE = 5 * 1024 * 1024;
+
 export async function addAccount(formData: FormData) {
   const { supabase, membership } = await getAuthenticatedContext();
   if (!membership) redirect("/dashboard");
@@ -559,13 +561,57 @@ export async function toggleDreamStatus(formData: FormData) {
   redirect(`/dashboard/sonhos?success=${status === "paused" ? "Sonho%20pausado.%20Ele%20continua%20guardado%20aqui." : "Sonho%20retomado!"}`);
 }
 
+export async function uploadDreamCover(formData: FormData) {
+  const { supabase, membership, user } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const dreamId = text(formData, "dream_id");
+  const file = formData.get("cover");
+  const allowedTypes: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+  if (!(file instanceof File) || !dreamId || file.size === 0 || file.size > MAX_DREAM_COVER_SIZE || !allowedTypes[file.type]) {
+    redirect("/dashboard/sonhos?error=Escolha%20uma%20imagem%20JPG,%20PNG%20ou%20WebP%20de%20até%205%20MB.");
+  }
+  const { data: dream } = await supabase.from("dreams").select("id, cover_path")
+    .eq("id", dreamId).eq("household_id", membership.household_id).maybeSingle();
+  if (!dream) redirect("/dashboard/sonhos?error=Sonho%20não%20encontrado.");
+  const storagePath = `${membership.household_id}/${user.id}/${dreamId}-${crypto.randomUUID()}.${allowedTypes[file.type]}`;
+  const { error: uploadError } = await supabase.storage.from("dream-covers").upload(storagePath, file, { contentType: file.type, upsert: false });
+  if (uploadError) redirect("/dashboard/sonhos?error=Não%20foi%20possível%20enviar%20a%20capa.%20A%20migration%20032%20foi%20aplicada?");
+  const { error: updateError } = await supabase.from("dreams").update({ cover_path: storagePath })
+    .eq("id", dreamId).eq("household_id", membership.household_id);
+  if (updateError) {
+    await supabase.storage.from("dream-covers").remove([storagePath]);
+    redirect("/dashboard/sonhos?error=Não%20foi%20possível%20salvar%20a%20capa.");
+  }
+  if (dream.cover_path) await supabase.storage.from("dream-covers").remove([dream.cover_path]);
+  revalidatePath("/dashboard/sonhos");
+  redirect("/dashboard/sonhos?success=Capa%20do%20sonho%20atualizada.");
+}
+
+export async function removeDreamCover(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const dreamId = text(formData, "dream_id");
+  const { data: dream } = await supabase.from("dreams").select("cover_path")
+    .eq("id", dreamId).eq("household_id", membership.household_id).maybeSingle();
+  if (!dream?.cover_path) redirect("/dashboard/sonhos?error=Capa%20não%20encontrada.");
+  const { error } = await supabase.from("dreams").update({ cover_path: null })
+    .eq("id", dreamId).eq("household_id", membership.household_id);
+  if (error) redirect("/dashboard/sonhos?error=Não%20foi%20possível%20remover%20a%20capa.");
+  await supabase.storage.from("dream-covers").remove([dream.cover_path]);
+  revalidatePath("/dashboard/sonhos");
+  redirect("/dashboard/sonhos?success=Capa%20removida.");
+}
+
 export async function deleteDream(formData: FormData) {
   const { supabase, membership } = await getAuthenticatedContext();
   if (!membership) redirect("/dashboard");
   const dreamId = text(formData, "dream_id");
   if (text(formData, "confirmation") !== "REMOVER") redirect("/dashboard/sonhos?error=Digite%20REMOVER%20para%20confirmar.");
+  const { data: dream } = await supabase.from("dreams").select("cover_path")
+    .eq("id", dreamId).eq("household_id", membership.household_id).maybeSingle();
   const { error } = await supabase.from("dreams").delete().eq("id", dreamId).eq("household_id", membership.household_id);
   if (error) redirect("/dashboard/sonhos?error=Não%20foi%20possível%20remover%20o%20sonho.");
+  if (dream?.cover_path) await supabase.storage.from("dream-covers").remove([dream.cover_path]);
   revalidatePath("/dashboard/sonhos");
   redirect("/dashboard/sonhos?success=Sonho%20removido.");
 }

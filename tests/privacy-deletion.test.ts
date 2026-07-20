@@ -20,5 +20,6 @@ describe("exclusão segura de dados", () => {
     expect(route).toContain("signInWithPassword");
     expect(route).toContain('body.confirmation !== "EXCLUIR MINHA CONTA"');
     expect(route).toContain("admin.auth.admin.deleteUser");
+    expect(route).toContain('storage.from("dream-covers").remove');
   });
 });

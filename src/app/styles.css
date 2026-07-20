@@ -725,6 +725,8 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .dream-gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 18px; }
 .dream-card { --dream-color: #9fe870; display: grid; gap: 17px; padding: 24px; border-radius: 28px; border-top: 5px solid var(--dream-color); }
 .dream-card.achieved { background: linear-gradient(145deg, rgba(159,232,112,.2), rgba(255,255,255,.92)); }
+.dream-cover { display: flex; align-items: flex-end; height: 180px; margin: -19px -19px 2px; padding: 16px; border-radius: 23px 23px 15px 15px; background-position: center; background-size: cover; }
+.dream-cover span { display: grid; width: 42px; height: 42px; place-items: center; border: 1px solid rgba(255,255,255,.55); border-radius: 14px; background: rgba(255,255,255,.78); box-shadow: 0 8px 22px rgba(0,0,0,.14); font-size: 23px; backdrop-filter: blur(10px); }
 .dream-card-top { display: grid; grid-template-columns: 52px 1fr auto; align-items: center; gap: 13px; }
 .dream-card-top > div { min-width: 0; }
 .dream-card-top small { color: var(--muted); font-size: 9px; font-weight: 900; letter-spacing: .11em; }
@@ -770,6 +772,10 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .dream-manage > summary { color: var(--muted); cursor: pointer; font-size: 10px; font-weight: 800; list-style: none; }
 .dream-manage > summary::-webkit-details-marker { display: none; }
 .dream-manage > form { display: grid; gap: 10px; margin-top: 14px; padding: 14px; border-radius: 16px; background: rgba(240,243,237,.7); }
+.dream-manage .dream-cover-form { border: 1px dashed color-mix(in srgb, var(--dream-color) 55%, #cbd1c6); background: color-mix(in srgb, var(--dream-color) 8%, white); }
+.dream-cover-form input[type="file"] { height: auto; padding: 10px; font-size: 10px; }
+.dream-cover-form small { color: var(--muted); font-size: 9px; }
+.dream-manage .dream-remove-cover { justify-items: end; margin-top: 7px; padding: 0; background: transparent; }
 .dream-manage textarea { resize: vertical; }
 .dream-manage .dream-status { padding: 0; background: transparent; }
 .dream-status button { width: 100%; }
