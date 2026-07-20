@@ -2,6 +2,7 @@ import Link from "next/link";
 import { logout } from "@/app/auth/actions";
 import { PluggyAutoCheck } from "@/components/pluggy-auto-check";
 import { getAuthenticatedContext } from "@/lib/household";
+import { PullToRefresh } from "@/components/pull-to-refresh";
 
 type DashboardShellProps = {
   active: "overview" | "transactions" | "categories" | "accounts" | "cards" | "investments" | "imports" | "budgets" | "alerts" | "assistant" | "privacy";
@@ -51,7 +52,7 @@ export async function DashboardShell({ active, children }: DashboardShellProps) 
           </div>
         </details>
       </aside>
-      {children}
+      <PullToRefresh>{children}</PullToRefresh>
     </main>
   );
 }

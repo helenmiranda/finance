@@ -836,6 +836,10 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 @media (max-width: 760px) {
   .shell { display: block; padding: 0; }
   .sidebar { position: sticky; z-index: 20; top: 0; display: flex; align-items: center; flex-direction: row; justify-content: space-between; height: 72px; padding: 12px 18px; border-radius: 0 0 22px 22px; box-shadow: 0 8px 24px rgba(14, 15, 12, .12); }
+  .pull-refresh-indicator { position: fixed; z-index: 19; top: 72px; left: 50%; display: flex; align-items: center; gap: 8px; min-height: 38px; padding: 8px 14px; border: 1px solid rgba(22, 51, 0, .12); border-radius: 999px; background: rgba(255, 255, 255, .92); color: var(--primary-dark); box-shadow: 0 8px 24px rgba(14, 15, 12, .12); backdrop-filter: blur(14px); transition: opacity .18s ease, transform .18s ease; pointer-events: none; }
+  .pull-refresh-indicator span { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--primary); font-weight: 900; transition: transform .2s ease; }
+  .pull-refresh-indicator small { white-space: nowrap; font-weight: 800; }
+  .pull-refresh-indicator.refreshing span { animation: pull-refresh-spin .8s linear infinite; }
   .brand { gap: 9px; margin: 0; font-size: 18px; }
   .brand-mark { width: 36px; height: 36px; font-size: 16px; }
   .sidebar > nav, .sidebar > .family, .sidebar > .logout-form { display: none; }
@@ -904,6 +908,12 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
   .category-item { grid-template-columns: 44px minmax(0, 1fr) auto; }
   .category-manage { padding-inline: 9px; }
   .category-merge form { grid-template-columns: 1fr; }
+}
+
+@keyframes pull-refresh-spin { to { transform: rotate(360deg); } }
+
+@media (min-width: 761px) {
+  .pull-refresh-indicator { display: none; }
 }
 
 @media (max-width: 540px) {
