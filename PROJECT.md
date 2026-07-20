@@ -90,6 +90,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 
 - [x] Implementar contas financeiras.
 - [x] Implementar categorias e subcategorias.
+- [x] Criar categorias padrão para espaços existentes e novos cadastros.
 - [x] Implementar receitas, despesas e transferências.
 - [x] Adicionar busca, filtros e edição em massa.
 
@@ -207,6 +208,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Service worker atualizado para a versão 3 e deixou de armazenar bundles do Next.js, evitando que o PWA continue executando JavaScript antigo após um deploy.
 - Registro do PWA agora solicita atualização do service worker sem reutilizar o cache HTTP, mantendo os próximos deploys sincronizados.
 - Todas as entregas da manhã foram validadas com lint e build de produção antes do envio ao GitHub.
+- Categorias padrão de despesas e receitas preparadas para todos os espaços familiares, com preenchimento idempotente e criação automática nos próximos onboardings.
 
 Commits principais desta etapa: `eae4974`, `3972e68`, `523cb64`, `0955a55`, `40fd7a9`, `75573db` e `345857c`.
 
