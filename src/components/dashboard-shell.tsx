@@ -22,20 +22,27 @@ const links = [
 ];
 
 export function DashboardShell({ active, householdName = "Helen & Ramon", children }: DashboardShellProps) {
+  const navigation = links.map((link) => (
+    <Link className={link.key === active ? "active" : undefined} href={link.href} key={link.key}>
+      {link.label}
+    </Link>
+  ));
   return (
     <main className="shell">
       <PluggyAutoCheck />
       <aside className="sidebar">
         <Link className="brand" href="/dashboard"><span className="brand-mark">P</span><span>Poupemos</span></Link>
-        <nav aria-label="Navegação principal">
-          {links.map((link) => (
-            <Link className={link.key === active ? "active" : undefined} href={link.href} key={link.key}>
-              {link.label}
-            </Link>
-          ))}
-        </nav>
+        <nav aria-label="Navegação principal">{navigation}</nav>
         <Link className="family" href="/dashboard/familia"><small>Espaço familiar</small><strong>{householdName}</strong></Link>
         <form action={logout} className="logout-form"><button type="submit">Sair</button></form>
+        <details className="mobile-menu">
+          <summary aria-label="Abrir navegação"><span>Menu</span><span aria-hidden="true">☰</span></summary>
+          <div className="mobile-menu-panel">
+            <nav aria-label="Navegação móvel">{navigation}</nav>
+            <Link className="family" href="/dashboard/familia"><small>Espaço familiar</small><strong>{householdName}</strong></Link>
+            <form action={logout} className="logout-form"><button type="submit">Sair</button></form>
+          </div>
+        </details>
       </aside>
       {children}
     </main>
