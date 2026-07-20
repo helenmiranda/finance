@@ -2,6 +2,7 @@ import Link from "next/link";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { getAuthenticatedContext } from "@/lib/household";
 import { createHousehold } from "./actions";
+import { calculateAvailableBalance } from "@/lib/account-balances";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const shortDate = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" });
@@ -37,20 +38,16 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
   const nextMonth = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 1)).toISOString().slice(0, 10);
   const monthLabel = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(today);
 
-  const [accountsResult, balanceTransactionsResult, monthTransactionsResult, latestResult, statementsResult] = await Promise.all([
-    supabase.from("accounts").select("initial_balance_cents").eq("household_id", householdId).eq("is_active", true),
+  const [accountsResult, connectedAccountsResult, balanceTransactionsResult, monthTransactionsResult, latestResult, statementsResult] = await Promise.all([
+    supabase.from("accounts").select("id, initial_balance_cents, current_balance_cents").eq("household_id", householdId).eq("is_active", true),
+    supabase.from("pluggy_accounts").select("account_id").eq("household_id", householdId).not("account_id", "is", null),
     supabase.from("transactions").select("type, amount_cents, transfer_direction, account_id").eq("household_id", householdId).eq("status", "confirmed").not("account_id", "is", null),
     supabase.from("transactions").select("type, amount_cents").eq("household_id", householdId).eq("status", "confirmed").gte("occurred_on", monthStart).lt("occurred_on", nextMonth),
     supabase.from("transactions").select("id, description, amount_cents, occurred_on, type, transfer_direction, installment_number, installment_count, categories(name), accounts(name), credit_cards(name)").eq("household_id", householdId).order("occurred_on", { ascending: false }).limit(5),
     supabase.from("card_statements").select("total_cents").eq("household_id", householdId).in("status", ["open", "closed", "overdue"]),
   ]);
 
-  const initialBalance = accountsResult.data?.reduce((sum, account) => sum + account.initial_balance_cents, 0) ?? 0;
-  const availableBalance = balanceTransactionsResult.data?.reduce((sum, transaction) => {
-    if (transaction.type === "income") return sum + transaction.amount_cents;
-    if (transaction.type === "expense" || transaction.type === "card_payment") return sum - transaction.amount_cents;
-    return sum + (transaction.transfer_direction === "in" ? transaction.amount_cents : -transaction.amount_cents);
-  }, initialBalance) ?? initialBalance;
+  const availableBalance = calculateAvailableBalance(accountsResult.data ?? [], balanceTransactionsResult.data ?? [], (connectedAccountsResult.data ?? []).flatMap((mapping) => mapping.account_id ? [mapping.account_id] : []));
   const monthIncome = monthTransactionsResult.data?.filter((item) => item.type === "income").reduce((sum, item) => sum + item.amount_cents, 0) ?? 0;
   const monthExpense = monthTransactionsResult.data?.filter((item) => item.type === "expense").reduce((sum, item) => sum + item.amount_cents, 0) ?? 0;
   const openStatements = statementsResult.data?.reduce((sum, statement) => sum + statement.total_cents, 0) ?? 0;

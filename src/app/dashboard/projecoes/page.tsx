@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { getAuthenticatedContext } from "@/lib/household";
+import { calculateAvailableBalance } from "@/lib/account-balances";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 const monthName = new Intl.DateTimeFormat("pt-BR", { month: "short" });
@@ -25,22 +26,18 @@ export default async function ProjectionsPage() {
   const historyStart = isoDate(monthStart(now, -3));
   const currentMonthStart = isoDate(monthStart(now));
 
-  const [accountsResult, cashTransactionsResult, historyResult, statementsResult, goalsResult] = householdId
+  const [accountsResult, connectedAccountsResult, cashTransactionsResult, historyResult, statementsResult, goalsResult] = householdId
     ? await Promise.all([
-        supabase.from("accounts").select("initial_balance_cents").eq("household_id", householdId).eq("is_active", true),
-        supabase.from("transactions").select("type, amount_cents, transfer_direction").eq("household_id", householdId).not("account_id", "is", null).eq("status", "confirmed"),
+        supabase.from("accounts").select("id, initial_balance_cents, current_balance_cents").eq("household_id", householdId).eq("is_active", true),
+        supabase.from("pluggy_accounts").select("account_id").eq("household_id", householdId).not("account_id", "is", null),
+        supabase.from("transactions").select("account_id, type, amount_cents, transfer_direction").eq("household_id", householdId).not("account_id", "is", null).eq("status", "confirmed"),
         supabase.from("transactions").select("type, amount_cents, occurred_on").eq("household_id", householdId).in("type", ["income", "expense"]).eq("status", "confirmed").gte("occurred_on", historyStart).lt("occurred_on", currentMonthStart),
         supabase.from("card_statements").select("total_cents").eq("household_id", householdId).in("status", ["open", "closed", "overdue"]),
         supabase.from("goals").select("id, name, target_cents, current_cents, target_date, color").eq("household_id", householdId).eq("status", "active").not("target_date", "is", null).order("target_date"),
       ])
-    : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }];
+    : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }];
 
-  const initialBalance = accountsResult.data?.reduce((sum, account) => sum + account.initial_balance_cents, 0) ?? 0;
-  const cashBalance = cashTransactionsResult.data?.reduce((sum, transaction) => {
-    if (transaction.type === "income") return sum + transaction.amount_cents;
-    if (transaction.type === "expense" || transaction.type === "card_payment") return sum - transaction.amount_cents;
-    return sum + (transaction.transfer_direction === "in" ? transaction.amount_cents : -transaction.amount_cents);
-  }, initialBalance) ?? initialBalance;
+  const cashBalance = calculateAvailableBalance(accountsResult.data ?? [], cashTransactionsResult.data ?? [], (connectedAccountsResult.data ?? []).flatMap((mapping) => mapping.account_id ? [mapping.account_id] : []));
   const openStatements = statementsResult.data?.reduce((sum, statement) => sum + statement.total_cents, 0) ?? 0;
   const adjustedBalance = cashBalance - openStatements;
 
