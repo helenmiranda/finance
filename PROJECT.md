@@ -146,6 +146,15 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - [x] Permitir desvincular integrações preservando o histórico.
 - [ ] Implementar exclusão segura da conta e do espaço familiar.
 
+### Fase 9 — Experiência mobile e PWA
+
+- [ ] Revisar instalação, atualização e execução standalone no Android e iOS.
+- [ ] Implementar gesto de puxar para baixo para atualizar nas telas principais.
+- [ ] Exibir feedback visual de atualização e impedir sincronizações concorrentes.
+- [ ] Atualizar primeiro os dados do Poupemos e consultar a Pluggy apenas quando houver atualização bancária disponível.
+- [ ] Revisar áreas seguras, teclado, modais, navegação e estados offline no celular.
+- [ ] Criar testes mobile de ponta a ponta para login, dashboard, transações, contas e cartões.
+
 ## Próximas decisões
 
 - Escolher se membros terão os mesmos poderes ou papéis de administrador e membro.
