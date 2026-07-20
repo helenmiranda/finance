@@ -521,10 +521,19 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .toggle-field span { display: grid; gap: 4px; }
 .toggle-field small { color: var(--muted); font-weight: 500; }
 .category-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.category-item { display: grid; grid-template-columns: 46px 1fr; align-items: center; gap: 13px; padding: 18px; border-radius: 22px; }
+.category-item { display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; align-items: center; gap: 13px; padding: 18px; border-radius: 22px; }
+.category-item.inactive { border-style: dashed; background: rgba(232, 235, 230, .58); }
 .category-icon { display: grid; place-items: center; width: 44px; height: 44px; border: 4px solid rgba(255, 255, 255, .6); border-radius: 50%; color: var(--primary-dark); font-weight: 850; }
 .category-item > div { display: grid; gap: 4px; }
 .category-item small { color: var(--muted); }
+.category-item > div > span { color: var(--muted); font-size: 9px; }
+.category-manage { min-height: 34px; padding: 7px 11px; border: 1px solid var(--hairline); background: rgba(255,255,255,.62); font-size: 9px; }
+.category-merge { display: grid; gap: 12px; margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--hairline); }
+.category-merge > div { display: grid; gap: 4px; }
+.category-merge small { color: var(--muted); font-size: 11px; }
+.category-merge form { display: grid; grid-template-columns: 1fr auto; gap: 9px; }
+.category-merge select { height: 44px; }
+.category-merge button { min-height: 44px; }
 .transaction-settings-grid { grid-template-columns: minmax(360px, .75fr) minmax(520px, 1.25fr); }
 .transaction-table { padding: 10px 22px; }
 .transaction-row { display: grid; grid-template-columns: 44px minmax(150px, 1fr) auto auto; align-items: center; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--hairline); }
@@ -866,6 +875,9 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
   .dialog-heading h2 { font-size: 24px; }
   .form-dialog .form-row { grid-template-columns: 1fr; }
   .dialog-actions { position: sticky; bottom: -24px; margin: 6px -18px -24px; padding: 14px 18px 20px; background: rgba(246, 248, 243, .96); }
+  .category-item { grid-template-columns: 44px minmax(0, 1fr) auto; }
+  .category-manage { padding-inline: 9px; }
+  .category-merge form { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 540px) {

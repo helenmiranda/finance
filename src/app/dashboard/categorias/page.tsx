@@ -1,6 +1,7 @@
 import { DashboardShell } from "@/components/dashboard-shell";
 import { getAuthenticatedContext } from "@/lib/household";
-import { addCategory } from "../finance-actions";
+import { addCategory, mergeCategory, updateCategory } from "../finance-actions";
+import { EditCategoryDialog } from "@/components/edit-category-dialog";
 import Link from "next/link";
 
 type PageProps = { searchParams: Promise<{ error?: string; success?: string }> };
@@ -9,7 +10,7 @@ export default async function CategoriesPage({ searchParams }: PageProps) {
   const { supabase, membership } = await getAuthenticatedContext();
   const params = await searchParams;
   const { data: categories } = membership
-    ? await supabase.from("categories").select("*").eq("household_id", membership.household_id).order("kind").order("name")
+    ? await supabase.from("categories").select("*, transactions(count), categorization_rules(count), budgets(count)").eq("household_id", membership.household_id).order("kind").order("name")
     : { data: [] };
   const parents = categories?.filter((category) => !category.parent_id) ?? [];
 
@@ -31,7 +32,10 @@ export default async function CategoriesPage({ searchParams }: PageProps) {
           </article>
           <section className="items-column"><div className="section-heading"><h2>Categorias cadastradas</h2><span className="count-badge">{categories?.length ?? 0}</span></div>
             {!categories?.length && <article className="card empty-state"><span>＋</span><h2>Nenhuma categoria</h2><p className="muted">Comece pelas despesas mais frequentes.</p></article>}
-            <div className="category-grid">{categories?.map((category) => <article className="card category-item" key={category.id}><span className="category-icon" style={{ background: category.color ?? "#9fe870" }}>{category.icon || (category.kind === "income" ? "↗" : "↘")}</span><div><strong>{category.name}</strong><small>{category.kind === "income" ? "Receita" : "Despesa"}{category.parent_id ? " · Subcategoria" : ""}</small></div></article>)}</div>
+            <div className="category-grid">{categories?.map((category) => {
+              const usageCount = (category.transactions?.[0]?.count ?? 0) + (category.categorization_rules?.[0]?.count ?? 0) + (category.budgets?.[0]?.count ?? 0);
+              return <article className={`card category-item${category.is_active ? "" : " inactive"}`} key={category.id}><span className="category-icon" style={{ background: category.color ?? "#9fe870" }}>{category.icon || (category.kind === "income" ? "↗" : "↘")}</span><div><strong>{category.name}</strong><small>{category.kind === "income" ? "Receita" : "Despesa"}{category.parent_id ? " · Subcategoria" : ""}{category.is_active ? "" : " · Inativa"}</small><span>{usageCount} vínculo{usageCount === 1 ? "" : "s"}</span></div><EditCategoryDialog category={{ id: category.id, name: category.name, kind: category.kind, parent_id: category.parent_id, color: category.color, icon: category.icon, is_active: category.is_active, usageCount }} categories={(categories ?? []).map((item) => ({ id: item.id, name: item.name, kind: item.kind, parent_id: item.parent_id, is_active: item.is_active }))} updateAction={updateCategory} mergeAction={mergeCategory} /></article>;
+            })}</div>
           </section>
         </div>
       </section>

@@ -200,6 +200,47 @@ export async function addCategory(formData: FormData) {
   redirect("/dashboard/categorias?success=Categoria%20adicionada.");
 }
 
+export async function updateCategory(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const id = text(formData, "id");
+  const name = text(formData, "name");
+  const kind = text(formData, "kind");
+  const parentId = optionalText(formData, "parent_id");
+  if (!id || !name || !["income", "expense"].includes(kind) || parentId === id) redirect("/dashboard/categorias?error=Confira%20os%20dados%20da%20categoria.");
+
+  const { data: current } = await supabase.from("categories").select("id, kind").eq("id", id).eq("household_id", membership.household_id).maybeSingle();
+  if (!current) redirect("/dashboard/categorias?error=Categoria%20não%20encontrada.");
+  if (current.kind !== kind) {
+    const [{ count: transactionCount }, { count: ruleCount }, { count: budgetCount }] = await Promise.all([
+      supabase.from("transactions").select("id", { count: "exact", head: true }).eq("category_id", id),
+      supabase.from("categorization_rules").select("id", { count: "exact", head: true }).eq("category_id", id),
+      supabase.from("budgets").select("id", { count: "exact", head: true }).eq("category_id", id),
+    ]);
+    if ((transactionCount ?? 0) + (ruleCount ?? 0) + (budgetCount ?? 0) > 0) redirect("/dashboard/categorias?error=O%20tipo%20não%20pode%20ser%20alterado%20enquanto%20a%20categoria%20estiver%20em%20uso.");
+  }
+  if (parentId) {
+    const { data: parent } = await supabase.from("categories").select("id, kind").eq("id", parentId).eq("household_id", membership.household_id).eq("is_active", true).maybeSingle();
+    if (!parent || parent.kind !== kind) redirect("/dashboard/categorias?error=Categoria%20principal%20inválida.");
+  }
+  const { error } = await supabase.from("categories").update({ name, kind, parent_id: parentId, icon: optionalText(formData, "icon"), color: text(formData, "color") || "#9fe870", is_active: formData.get("is_active") === "on" }).eq("id", id).eq("household_id", membership.household_id);
+  if (error) redirect(`/dashboard/categorias?error=${encodeURIComponent("Não foi possível atualizar. Verifique se o nome já está em uso.")}`);
+  revalidatePath("/dashboard/categorias"); revalidatePath("/dashboard/transacoes"); revalidatePath("/dashboard/orcamentos"); revalidatePath("/dashboard");
+  redirect("/dashboard/categorias?success=Categoria%20atualizada.");
+}
+
+export async function mergeCategory(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const sourceId = text(formData, "source_category_id");
+  const targetId = text(formData, "target_category_id");
+  if (!sourceId || !targetId || sourceId === targetId) redirect("/dashboard/categorias?error=Selecione%20uma%20categoria%20de%20destino.");
+  const { error } = await supabase.rpc("merge_household_category", { source_category_id: sourceId, target_category_id: targetId });
+  if (error) redirect(`/dashboard/categorias?error=${encodeURIComponent(error.message.includes("subcategorias") ? error.message : "Não foi possível substituir a categoria. A migration 026 foi aplicada?")}`);
+  revalidatePath("/dashboard/categorias"); revalidatePath("/dashboard/transacoes"); revalidatePath("/dashboard/orcamentos"); revalidatePath("/dashboard/regras"); revalidatePath("/dashboard");
+  redirect("/dashboard/categorias?success=Categoria%20substituída%20e%20histórico%20preservado.");
+}
+
 export async function addTransaction(formData: FormData) {
   const { supabase, membership, user } = await getAuthenticatedContext();
   if (!membership) redirect("/dashboard");

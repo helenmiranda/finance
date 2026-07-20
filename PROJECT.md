@@ -210,6 +210,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Todas as entregas da manhã foram validadas com lint e build de produção antes do envio ao GitHub.
 - Categorias padrão de despesas e receitas preparadas para todos os espaços familiares, com preenchimento idempotente e criação automática nos próximos onboardings.
 - Aprendizado de categorias evoluído por tenant: além da descrição exata, estabelecimentos conhecidos ganham regras seguras de correspondência e comerciantes desconhecidos só são generalizados após variações repetidas.
+- Gestão completa de categorias adicionada com edição, ativação, desativação, contagem de vínculos e substituição transacional que preserva histórico, regras e planejamentos.
 
 Commits principais desta etapa: `eae4974`, `3972e68`, `523cb64`, `0955a55`, `40fd7a9`, `75573db` e `345857c`.
 
