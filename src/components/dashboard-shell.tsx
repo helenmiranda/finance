@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { logout } from "@/app/auth/actions";
 import { PluggyAutoCheck } from "@/components/pluggy-auto-check";
+import { getAuthenticatedContext } from "@/lib/household";
 
 type DashboardShellProps = {
   active: "overview" | "transactions" | "categories" | "accounts" | "cards" | "investments" | "imports" | "budgets" | "alerts" | "assistant";
-  householdName?: string;
   children: React.ReactNode;
 };
 
@@ -21,7 +21,13 @@ const links = [
   { key: "assistant", href: "/dashboard/assistente", label: "Assistente IA" },
 ];
 
-export function DashboardShell({ active, householdName = "Helen & Ramon", children }: DashboardShellProps) {
+function relatedHousehold(value: { name: string } | { name: string }[] | null) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export async function DashboardShell({ active, children }: DashboardShellProps) {
+  const { membership } = await getAuthenticatedContext();
+  const householdName = relatedHousehold(membership?.households ?? null)?.name ?? "Seu espaço";
   const navigation = links.map((link) => (
     <Link className={link.key === active ? "active" : undefined} href={link.href} key={link.key}>
       {link.label}

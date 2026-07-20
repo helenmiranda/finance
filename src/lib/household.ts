@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 
-export async function getAuthenticatedContext() {
+export const getAuthenticatedContext = cache(async function getAuthenticatedContext() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
@@ -18,4 +19,4 @@ export async function getAuthenticatedContext() {
     user,
     membership: memberships?.[0] ?? null,
   };
-}
+});
