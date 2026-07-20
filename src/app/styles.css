@@ -501,6 +501,10 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .transaction-row:last-child { border-bottom: 0; }
 .transaction-row > div:nth-child(2) { display: grid; gap: 5px; }
 .transaction-row small, .transaction-date { color: var(--muted); font-size: 12px; }
+.transaction-copy { display: grid; min-width: 0; gap: 8px; }
+.transaction-copy > strong { overflow: hidden; font-size: 14px; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+.transaction-copy > small { display: flex; align-items: center; flex-wrap: wrap; gap: 3px 7px; line-height: 1.3; }
+.transaction-copy > small span { display: inline-block; }
 .movement-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; font-weight: 900; }
 .movement-icon.income { background: rgba(159, 232, 112, .4); color: #054d28; }
 .movement-icon.expense { background: rgba(208, 50, 56, .09); color: var(--danger); }
