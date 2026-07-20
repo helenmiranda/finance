@@ -23,5 +23,7 @@ describe("sonhos familiares", () => {
     expect(page).toContain("why_text");
     expect(page).toContain("Ritmo sugerido");
     expect(page).toContain("const milestones = [10, 25, 50, 75, 100]");
+    expect(page).toContain("Histórico de aportes");
+    expect(page).toContain("contributionStreak");
   });
 });

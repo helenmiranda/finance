@@ -739,6 +739,9 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .dream-milestones i { width: 7px; height: 7px; border: 2px solid white; border-radius: 50%; background: #d9ddd6; box-shadow: 0 0 0 1px #d9ddd6; }
 .dream-milestones .reached { color: var(--primary-dark); font-weight: 900; }
 .dream-milestones .reached i { background: var(--dream-color); box-shadow: 0 0 0 1px var(--dream-color); }
+.dream-achievements { display: flex; flex-wrap: wrap; gap: 6px; }
+.dream-achievements span { padding: 6px 9px; border-radius: 999px; background: #f0f3ed; color: var(--body); font-size: 9px; font-weight: 800; }
+.dream-achievements span:first-child { background: color-mix(in srgb, var(--dream-color) 18%, white); color: var(--primary-dark); }
 .dream-values { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .dream-values > div { display: grid; gap: 4px; min-width: 0; }
 .dream-values small { color: var(--muted); font-size: 9px; }
@@ -751,6 +754,17 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .dream-contribution input { height: 42px; border-radius: 12px; font-size: 12px; }
 .dream-contribution button { grid-column: 1 / -1; min-height: 42px; }
 .dream-celebration { padding: 12px; border-radius: 14px; background: var(--primary-dark); color: var(--primary); font-size: 12px; font-weight: 900; text-align: center; }
+.dream-history { border-top: 1px solid var(--hairline); padding-top: 12px; }
+.dream-history summary { display: flex; align-items: center; justify-content: space-between; color: var(--body); cursor: pointer; font-size: 11px; font-weight: 850; list-style: none; }
+.dream-history summary::-webkit-details-marker { display: none; }
+.dream-history summary span { display: grid; width: 23px; height: 23px; place-items: center; border-radius: 50%; background: #edf1e9; font-size: 9px; }
+.dream-history > div { display: grid; margin-top: 10px; }
+.dream-history article { display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 9px; padding: 10px 0; border-top: 1px solid var(--hairline); }
+.dream-history article > span { display: grid; width: 26px; height: 26px; place-items: center; border-radius: 50%; background: color-mix(in srgb, var(--dream-color) 20%, white); color: var(--primary-dark); font-size: 11px; font-weight: 900; }
+.dream-history article > div { display: grid; gap: 2px; min-width: 0; }
+.dream-history strong { font-size: 12px; }
+.dream-history small { overflow: hidden; color: var(--muted); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.dream-history time { color: var(--muted); font-size: 9px; }
 .dream-delete { justify-self: end; }
 .dream-empty { margin-top: 10px; }
 .projection-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; overflow: hidden; margin-bottom: 14px; border: 1px solid var(--hairline); border-radius: 22px; background: var(--hairline); }

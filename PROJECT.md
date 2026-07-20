@@ -163,7 +163,8 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - [x] Registrar aportes familiares com atualização transacional e isolamento por espaço familiar.
 - [x] Mostrar progresso, valor restante, ritmo mensal sugerido e marcos de 10%, 25%, 50%, 75% e 100%.
 - [x] Celebrar conquistas sem criar culpa ou competição entre membros.
-- [ ] Adicionar capas personalizadas e histórico visual de aportes.
+- [x] Adicionar histórico visual de aportes, sequência mensal e indicação do próximo marco.
+- [ ] Adicionar capas personalizadas aos sonhos.
 - [ ] Criar missões familiares opcionais e celebrações configuráveis.
 
 ## Próximas decisões
@@ -268,6 +269,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - iOS ganhou imagens nativas de lançamento no gradiente da marca para eliminar o intervalo preto; moedas receberam acabamento metálico, relevo, brilho e rotação em perspectiva.
 - Login mobile passou a usar campos de 16px para impedir o zoom automático do Safari, remove o foco ao enviar e mostra progresso imediato enquanto o Supabase autentica.
 - Área de Sonhos criada com propósito, valor, prazo, aportes, progresso, ritmo sugerido, marcos de conquista e celebração familiar responsiva.
+- Sonhos passaram a mostrar histórico recente de aportes, meses consecutivos de contribuição, marcos conquistados e a próxima conquista.
 
 Commits principais desta etapa: `eae4974`, `3972e68`, `523cb64`, `0955a55`, `40fd7a9`, `75573db` e `345857c`.
 
