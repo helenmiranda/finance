@@ -3,6 +3,7 @@ import { DashboardShell } from "@/components/dashboard-shell";
 import { getAuthenticatedContext } from "@/lib/household";
 import { createHousehold } from "./actions";
 import { calculateAvailableBalance } from "@/lib/account-balances";
+import { DashboardCharts } from "@/components/dashboard-charts";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const shortDate = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" });
@@ -43,7 +44,7 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
     supabase.from("accounts").select("id, initial_balance_cents, current_balance_cents").eq("household_id", householdId).eq("is_active", true),
     supabase.from("pluggy_accounts").select("account_id").eq("household_id", householdId).not("account_id", "is", null),
     supabase.from("transactions").select("type, amount_cents, transfer_direction, account_id").eq("household_id", householdId).eq("status", "confirmed").not("account_id", "is", null),
-    supabase.from("transactions").select("type, amount_cents").eq("household_id", householdId).eq("status", "confirmed").gte("occurred_on", monthStart).lt("occurred_on", nextMonth),
+    supabase.from("transactions").select("occurred_on, type, amount_cents, category_id, categories(name, color)").eq("household_id", householdId).eq("status", "confirmed").gte("occurred_on", monthStart).lt("occurred_on", nextMonth),
     supabase.from("transactions").select("id, description, amount_cents, occurred_on, type, transfer_direction, installment_number, installment_count, categories(name), accounts(name, nickname)").eq("household_id", householdId).not("account_id", "is", null).order("occurred_on", { ascending: false }).limit(4),
     supabase.from("transactions").select("id, description, amount_cents, occurred_on, type, transfer_direction, installment_number, installment_count, categories(name), credit_cards(name, nickname)").eq("household_id", householdId).not("credit_card_id", "is", null).order("occurred_on", { ascending: false }).limit(4),
     supabase.from("card_statements").select("total_cents").eq("household_id", householdId).in("status", ["open", "closed", "overdue"]),
@@ -53,6 +54,24 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
   const monthIncome = monthTransactionsResult.data?.filter((item) => item.type === "income").reduce((sum, item) => sum + item.amount_cents, 0) ?? 0;
   const monthExpense = monthTransactionsResult.data?.filter((item) => item.type === "expense").reduce((sum, item) => sum + item.amount_cents, 0) ?? 0;
   const openStatements = statementsResult.data?.reduce((sum, statement) => sum + statement.total_cents, 0) ?? 0;
+  const monthTransactions = monthTransactionsResult.data ?? [];
+  const categoryTotals = new Map<string, { name: string; color: string; amount: number }>();
+  for (const transaction of monthTransactions.filter((item) => item.type === "expense")) {
+    const category = Array.isArray(transaction.categories) ? transaction.categories[0] : transaction.categories;
+    const key = transaction.category_id ?? "uncategorized";
+    const current = categoryTotals.get(key) ?? { name: category?.name ?? "Sem categoria", color: category?.color ?? "#b7bdb4", amount: 0 };
+    current.amount += transaction.amount_cents;
+    categoryTotals.set(key, current);
+  }
+  const categoryChart = [...categoryTotals.values()].sort((a, b) => b.amount - a.amount).slice(0, 7);
+  const daysInMonth = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 0)).getUTCDate();
+  const dailyChart = Array.from({ length: daysInMonth }, (_, index) => ({ day: index + 1, income: 0, expense: 0 }));
+  for (const transaction of monthTransactions) {
+    const day = Number(transaction.occurred_on.slice(8, 10));
+    if (!dailyChart[day - 1]) continue;
+    if (transaction.type === "income") dailyChart[day - 1].income += transaction.amount_cents;
+    if (transaction.type === "expense") dailyChart[day - 1].expense += transaction.amount_cents;
+  }
   const latestAccounts = latestAccountsResult.data ?? [];
   const latestCards = latestCardsResult.data ?? [];
 
@@ -72,6 +91,8 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
           <article className="compact-metric"><span>Gastos no mês</span><strong>{money.format(monthExpense / 100)}</strong><small>Inclui contas e cartões</small></article>
           <article className="compact-metric"><span>Faturas em aberto</span><strong>{money.format(openStatements / 100)}</strong><Link href="/dashboard/cartoes">Ver cartões →</Link></article>
         </section>
+
+        <DashboardCharts categories={categoryChart} days={dailyChart} monthLabel={monthLabel} />
 
         <section className="dashboard-lower-grid">
           <article className="clean-panel recent-panel">
