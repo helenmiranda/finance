@@ -178,6 +178,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Detecção de anomalias compara cada despesa relevante à média de 90 dias da categoria e alerta sem repetir a mesma transação.
 - Web Push opcional entrega alertas importantes no PWA com conteúdo discreto, consentimento por dispositivo e rastreamento idempotente.
 - Saldo disponível usa o saldo atual da Pluggy para contas conectadas e saldo inicial mais movimentações apenas para contas manuais, evitando dupla contagem.
+- Apelidos persistentes identificam contas e cartões sem serem sobrescritos pela Pluggy, e o dashboard separa movimentações recentes de conta e cartão.
 
 ### Configuração do Supabase Cron
 

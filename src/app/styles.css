@@ -415,6 +415,19 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .push-settings > div { display: grid; gap: 4px; }
 .push-settings small { color: var(--muted); font-size: 9px; }
 .push-settings > small { grid-column: 1 / -1; }
+.recent-source-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.recent-source-grid > section { min-width: 0; }
+.recent-source-grid h3 { margin: 0 0 8px; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; }
+.recent-source-grid .compact-transaction { grid-template-columns: 8px minmax(0, 1fr) auto; }
+.recent-source-grid .compact-transaction > strong:last-child { grid-column: 2 / -1; justify-self: end; font-size: 10px; }
+.recent-empty { font-size: 10px; }
+.nickname-editor { grid-column: 2 / -1; }
+.nickname-editor summary { color: var(--muted); cursor: pointer; font-size: 9px; }
+.nickname-editor form { display: grid; grid-template-columns: 1fr auto; gap: 6px; margin-top: 7px; }
+.nickname-editor input { height: 36px; font-size: 10px; }
+.nickname-editor button { padding: 7px 10px; font-size: 9px; }
+.card-nickname { grid-column: auto; }
+.card-nickname input { border-color: rgba(255,255,255,.22); background: rgba(255,255,255,.12); color: white; }
 .wealth-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; overflow: hidden; margin-bottom: 14px; border: 1px solid var(--hairline); border-radius: 22px; background: var(--hairline); }
 .wealth-summary article { display: grid; gap: 8px; padding: 22px 24px; background: rgba(255, 255, 255, .72); }
 .wealth-summary span { color: var(--muted); font-size: 11px; }
@@ -754,6 +767,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
   .investment-grid { grid-template-columns: 1fr; }
   .bank-connections { grid-template-columns: 1fr; }
   .sync-center { grid-template-columns: 1fr; }
+  .recent-source-grid { grid-template-columns: 1fr; }
   .pluggy-connect-action { grid-template-columns: 1fr; }
   .pluggy-connect-action small { max-width: none; text-align: left; }
   .transaction-settings-grid { grid-template-columns: 1fr; }

@@ -7,8 +7,9 @@ import { calculateAvailableBalance } from "@/lib/account-balances";
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const shortDate = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" });
 
-function relatedName(value: { name: string } | { name: string }[] | null) {
-  return Array.isArray(value) ? value[0]?.name : value?.name;
+function relatedName(value: { name: string; nickname?: string | null } | { name: string; nickname?: string | null }[] | null) {
+  const source = Array.isArray(value) ? value[0] : value;
+  return source?.nickname || source?.name;
 }
 
 type DashboardProps = { searchParams: Promise<{ error?: string }> };
@@ -38,12 +39,13 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
   const nextMonth = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 1)).toISOString().slice(0, 10);
   const monthLabel = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(today);
 
-  const [accountsResult, connectedAccountsResult, balanceTransactionsResult, monthTransactionsResult, latestResult, statementsResult] = await Promise.all([
+  const [accountsResult, connectedAccountsResult, balanceTransactionsResult, monthTransactionsResult, latestAccountsResult, latestCardsResult, statementsResult] = await Promise.all([
     supabase.from("accounts").select("id, initial_balance_cents, current_balance_cents").eq("household_id", householdId).eq("is_active", true),
     supabase.from("pluggy_accounts").select("account_id").eq("household_id", householdId).not("account_id", "is", null),
     supabase.from("transactions").select("type, amount_cents, transfer_direction, account_id").eq("household_id", householdId).eq("status", "confirmed").not("account_id", "is", null),
     supabase.from("transactions").select("type, amount_cents").eq("household_id", householdId).eq("status", "confirmed").gte("occurred_on", monthStart).lt("occurred_on", nextMonth),
-    supabase.from("transactions").select("id, description, amount_cents, occurred_on, type, transfer_direction, installment_number, installment_count, categories(name), accounts(name), credit_cards(name)").eq("household_id", householdId).order("occurred_on", { ascending: false }).limit(5),
+    supabase.from("transactions").select("id, description, amount_cents, occurred_on, type, transfer_direction, installment_number, installment_count, categories(name), accounts(name, nickname)").eq("household_id", householdId).not("account_id", "is", null).order("occurred_on", { ascending: false }).limit(4),
+    supabase.from("transactions").select("id, description, amount_cents, occurred_on, type, transfer_direction, installment_number, installment_count, categories(name), credit_cards(name, nickname)").eq("household_id", householdId).not("credit_card_id", "is", null).order("occurred_on", { ascending: false }).limit(4),
     supabase.from("card_statements").select("total_cents").eq("household_id", householdId).in("status", ["open", "closed", "overdue"]),
   ]);
 
@@ -51,7 +53,8 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
   const monthIncome = monthTransactionsResult.data?.filter((item) => item.type === "income").reduce((sum, item) => sum + item.amount_cents, 0) ?? 0;
   const monthExpense = monthTransactionsResult.data?.filter((item) => item.type === "expense").reduce((sum, item) => sum + item.amount_cents, 0) ?? 0;
   const openStatements = statementsResult.data?.reduce((sum, statement) => sum + statement.total_cents, 0) ?? 0;
-  const latest = latestResult.data ?? [];
+  const latestAccounts = latestAccountsResult.data ?? [];
+  const latestCards = latestCardsResult.data ?? [];
 
   return (
     <DashboardShell active="overview">
@@ -72,18 +75,27 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
 
         <section className="dashboard-lower-grid">
           <article className="clean-panel recent-panel">
-            <div className="card-title"><div><h2>Últimas movimentações</h2><p className="muted">O que aconteceu recentemente</p></div><Link href="/dashboard/transacoes">Ver todas</Link></div>
-            {!latest.length && <div className="simple-empty"><p>Nenhuma movimentação registrada.</p><Link href="/dashboard/transacoes">Adicionar a primeira</Link></div>}
-            <div className="compact-transactions">
-              {latest.map((transaction) => {
+            <div className="card-title"><div><h2>Últimas movimentações</h2><p className="muted">Separadas pela origem</p></div><Link href="/dashboard/transacoes">Ver todas</Link></div>
+            {!latestAccounts.length && !latestCards.length && <div className="simple-empty"><p>Nenhuma movimentação registrada.</p><Link href="/dashboard/transacoes">Adicionar a primeira</Link></div>}
+            <div className="recent-source-grid"><section><h3>Contas</h3><div className="compact-transactions">
+              {latestAccounts.map((transaction) => {
                 const incoming = transaction.type === "income" || transaction.transfer_direction === "in";
                 const installment = transaction.installment_count > 1 ? ` · ${transaction.installment_number}/${transaction.installment_count}` : "";
                 const categoryName = relatedName(transaction.categories);
-                const sourceName = relatedName(transaction.accounts) || relatedName(transaction.credit_cards);
+                const sourceName = relatedName(transaction.accounts);
                 const kindLabel = transaction.type === "transfer" ? "Transferência" : transaction.type === "card_payment" ? "Pagamento de fatura" : categoryName || "Sem categoria";
                 return <div className="compact-transaction" key={transaction.id}><span className={`movement-dot ${incoming ? "in" : "out"}`} /><div><strong>{transaction.description}{installment}</strong><small>{kindLabel} · {sourceName || "—"}</small></div><time>{shortDate.format(new Date(`${transaction.occurred_on}T12:00:00`))}</time><strong className={incoming ? "positive" : "negative"}>{incoming ? "+" : "−"} {money.format(transaction.amount_cents / 100)}</strong></div>;
               })}
-            </div>
+              {!latestAccounts.length && <p className="muted recent-empty">Nenhuma movimentação em conta.</p>}
+            </div></section><section><h3>Cartões</h3><div className="compact-transactions">
+              {latestCards.map((transaction) => {
+                const installment = transaction.installment_count > 1 ? ` · ${transaction.installment_number}/${transaction.installment_count}` : "";
+                const categoryName = relatedName(transaction.categories);
+                const sourceName = relatedName(transaction.credit_cards);
+                return <div className="compact-transaction" key={transaction.id}><span className="movement-dot out" /><div><strong>{transaction.description}{installment}</strong><small>{categoryName || "Sem categoria"} · {sourceName || "—"}</small></div><time>{shortDate.format(new Date(`${transaction.occurred_on}T12:00:00`))}</time><strong className="negative">− {money.format(transaction.amount_cents / 100)}</strong></div>;
+              })}
+              {!latestCards.length && <p className="muted recent-empty">Nenhuma compra no cartão.</p>}
+            </div></section></div>
           </article>
 
           <aside className="clean-panel insight-panel" id="assistente">

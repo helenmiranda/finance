@@ -49,6 +49,23 @@ export async function addAccount(formData: FormData) {
   redirect("/dashboard/contas?success=Conta%20adicionada.");
 }
 
+export async function updateFinancialNickname(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const kind = text(formData, "kind");
+  const id = text(formData, "id");
+  const nickname = optionalText(formData, "nickname");
+  if (!id || !["account", "card"].includes(kind) || (nickname && nickname.length > 60)) redirect("/dashboard/contas?error=Apelido%20inválido.");
+  const table = kind === "account" ? "accounts" : "credit_cards";
+  const destination = kind === "account" ? "/dashboard/contas" : "/dashboard/cartoes";
+  const { error } = await supabase.from(table).update({ nickname }).eq("id", id).eq("household_id", membership.household_id);
+  if (error) redirect(`${destination}?error=${encodeURIComponent("Não foi possível salvar o apelido. A migration 024 foi aplicada?")}`);
+  revalidatePath(destination);
+  revalidatePath("/dashboard/transacoes");
+  revalidatePath("/dashboard");
+  redirect(`${destination}?success=Apelido%20salvo.`);
+}
+
 export async function addCreditCard(formData: FormData) {
   const { supabase, membership } = await getAuthenticatedContext();
   if (!membership) redirect("/dashboard");
