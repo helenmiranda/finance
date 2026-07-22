@@ -853,7 +853,8 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .calendar-weekdays, .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
 .calendar-weekdays { border-bottom: 1px solid var(--hairline); }
 .calendar-weekdays span { padding: 8px; color: var(--muted); font-size: 8px; font-weight: 800; text-align: center; text-transform: uppercase; }
-.calendar-day { min-width: 0; min-height: 105px; padding: 8px; border-right: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); }
+.calendar-day { position: relative; min-width: 0; min-height: 105px; padding: 8px; border: 0; border-right: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); border-radius: 0; background: transparent; color: var(--ink); cursor: pointer; font: inherit; text-align: left; }
+.calendar-day.has-events:hover { background: rgba(159,232,112,.08); }
 .calendar-day:nth-child(7n) { border-right: 0; }
 .calendar-day.empty { background: rgba(239,242,236,.45); }
 .calendar-day > strong { display: grid; width: 23px; height: 23px; place-items: center; margin-bottom: 5px; border-radius: 50%; font-size: 9px; }
@@ -870,6 +871,24 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .calendar-legend i { width: 8px; height: 8px; border-radius: 3px; background: var(--primary); }
 .calendar-legend i.paid { background: #67b87e; }
 .calendar-legend i.card-event { background: #7b61a8; }
+.calendar-mobile-count { display: none; }
+.calendar-modal-backdrop { position: fixed; z-index: 80; inset: 0; display: grid; place-items: center; padding: 18px; background: rgba(10,19,8,.52); backdrop-filter: blur(5px); }
+.calendar-day-modal { width: min(520px, 100%); max-height: min(720px, calc(100dvh - 36px)); overflow: auto; padding: 23px; border: 1px solid rgba(255,255,255,.55); border-radius: 27px; background: rgba(249,250,247,.98); box-shadow: 0 24px 80px rgba(10,25,6,.3); }
+.calendar-day-modal > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; margin: 0 0 18px; }
+.calendar-day-modal > header h2 { margin: 3px 0 0; font-size: 22px; text-transform: capitalize; }
+.calendar-day-modal > header > button { display: grid; flex: 0 0 auto; width: 36px; min-height: 36px; padding: 0; place-items: center; border: 1px solid var(--hairline); border-radius: 50%; background: white; color: var(--primary-dark); font-size: 22px; }
+.calendar-modal-events { display: grid; gap: 8px; }
+.calendar-modal-events article { display: grid; grid-template-columns: 38px 1fr auto; align-items: center; gap: 11px; padding: 13px; border: 1px solid var(--hairline); border-radius: 16px; background: white; }
+.calendar-modal-events article > span { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 12px; background: rgba(159,232,112,.18); color: var(--primary-dark); }
+.calendar-modal-events article > span.card { background: rgba(123,97,168,.12); color: #60478b; }
+.calendar-modal-events article > div { display: grid; gap: 3px; min-width: 0; }
+.calendar-modal-events article > div strong { overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.calendar-modal-events article small { color: var(--muted); font-size: 9px; }
+.calendar-modal-events article > strong { font-size: 12px; white-space: nowrap; }
+.calendar-modal-empty { display: grid; justify-items: center; gap: 7px; padding: 35px 15px; color: var(--muted); text-align: center; }
+.calendar-modal-empty > span { display: grid; width: 46px; height: 46px; place-items: center; border-radius: 50%; background: rgba(159,232,112,.2); color: var(--primary-dark); font-size: 20px; }
+.calendar-modal-empty p { margin: 0; font-size: 11px; }
+.calendar-modal-close { width: 100%; margin-top: 17px; }
 .payables-heading { display: flex; align-items: center; justify-content: space-between; margin: 0 3px 12px; }
 .payables-heading > div { display: flex; align-items: center; gap: 9px; }
 .payables-heading h2 { margin: 0; font-size: 23px; }
@@ -1255,8 +1274,21 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
   .payable-actions details form { position: fixed; inset: auto 12px 12px; width: auto; }
   .card-payables article { grid-template-columns: 1fr auto; }
   .card-payables time { grid-column: 1 / -1; }
-  .payables-calendar { overflow-x: auto; }
-  .payables-calendar > header, .calendar-weekdays, .calendar-grid, .calendar-legend { min-width: 650px; }
+  .payables-calendar { overflow: hidden; border-radius: 19px; }
+  .payables-calendar > header { padding: 13px; }
+  .payables-calendar > header h2 { font-size: 17px; }
+  .calendar-weekdays span { padding: 7px 1px; font-size: 7px; }
+  .calendar-day { min-height: 55px; padding: 5px; }
+  .calendar-day > strong { width: 22px; height: 22px; margin: 0; font-size: 9px; }
+  .calendar-day > div { display: none; }
+  .calendar-mobile-count { position: absolute; right: 5px; bottom: 5px; display: grid; width: 17px; height: 17px; place-items: center; border-radius: 50%; background: var(--primary); color: var(--primary-dark); font-size: 7px; font-weight: 900; }
+  .calendar-day.has-events::after { position: absolute; bottom: 7px; left: 8px; width: 5px; height: 5px; border-radius: 50%; background: var(--primary-dark); content: ""; }
+  .calendar-legend { flex-wrap: wrap; gap: 7px 13px; padding: 9px 11px; }
+  .calendar-modal-backdrop { align-items: end; padding: 0; }
+  .calendar-day-modal { width: 100%; max-height: calc(88dvh - env(safe-area-inset-top)); padding: 21px 17px max(18px, env(safe-area-inset-bottom)); border-radius: 27px 27px 0 0; }
+  .calendar-day-modal > header h2 { font-size: 19px; }
+  .calendar-modal-events article { grid-template-columns: 35px minmax(0, 1fr); }
+  .calendar-modal-events article > strong { grid-column: 2; }
   .payable-renew small { margin-left: 0; }
   .reconciliation-item { grid-template-columns: 54px 1fr; }
   .reconciliation-actions { grid-column: 1 / -1; justify-content: flex-end; }

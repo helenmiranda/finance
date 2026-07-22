@@ -187,6 +187,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - [x] Manter uma janela móvel de doze meses para contas recorrentes contínuas pelo Supabase Cron.
 - [x] Projetar o saldo disponível após contas e faturas conhecidas do mês.
 - [x] Sugerir a criação de contas recorrentes a partir de padrões bancários confirmados pelo usuário.
+- [x] Compactar o calendário no celular e abrir os compromissos do dia em um modal inferior acessível.
 
 ## Próximas decisões
 
@@ -299,6 +300,7 @@ Todas as entidades financeiras pertencem a um espaço familiar (`household_id`).
 - Conciliação assistida compara conta, valor e data após sincronizações Pluggy; a família confirma ou rejeita, e a confirmação vincula a transação existente sem duplicá-la.
 - Gestão da agenda ganhou edição individual de valor e vencimento, além de cancelamento seguro do restante de uma série sem apagar o que já foi pago.
 - Agenda financeira ganhou calendário mensal, recorrências contínuas mantidas pelo Supabase, saldo pós-compromissos e sugestões de contas baseadas em padrões bancários.
+- Calendário mobile passou a caber integralmente na tela, com contadores por dia e modal inferior para consultar contas e parcelas.
 
 Commits principais desta etapa: `eae4974`, `3972e68`, `523cb64`, `0955a55`, `40fd7a9`, `75573db` e `345857c`.
 

@@ -8,6 +8,7 @@ const page = source("src/app/dashboard/contas-a-pagar/page.tsx");
 const reconciliation = source("supabase/migrations/202607200036_payable_reconciliation.sql");
 const pluggySync = source("src/lib/pluggy-sync.ts");
 const dashboard = source("src/app/dashboard/page.tsx");
+const calendarComponent = source("src/components/payables-calendar.tsx");
 
 describe("contas a pagar", () => {
   it("isola agenda e ocorrências por espaço familiar", () => {
@@ -83,5 +84,13 @@ describe("contas a pagar", () => {
     expect(dashboard).toContain("monthPayablesTotal");
     expect(dashboard).toContain("monthStatements");
     expect(dashboard).toContain("Após contas e faturas do mês");
+  });
+
+  it("abre os detalhes de cada dia em um modal acessível", () => {
+    expect(calendarComponent).toContain('role="dialog"');
+    expect(calendarComponent).toContain('aria-modal="true"');
+    expect(calendarComponent).toContain("setSelectedDate(dayDate)");
+    expect(calendarComponent).toContain('event.key === "Escape"');
+    expect(calendarComponent).toContain("calendar-mobile-count");
   });
 });
