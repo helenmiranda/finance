@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { pluggyRequest } from "@/lib/pluggy";
+import { pluggyRequest, type PluggyCredentialProfile } from "@/lib/pluggy";
 import { evaluateAndDispatchFinancialAlerts } from "@/lib/financial-alerts";
 
 type PluggyAccount = {
@@ -40,6 +40,7 @@ export type PluggyConnection = {
   pluggy_item_id: string;
   connector_name: string;
   connected_by: string;
+  credential_profile: PluggyCredentialProfile;
 };
 
 const cents = (value?: number | null) => value == null || !Number.isFinite(value) ? null : Math.round(value * 100);
@@ -104,6 +105,7 @@ async function syncTransactions(
   householdId: string,
   userId: string,
   categorization: CategorizationContext,
+  credentialProfile: PluggyCredentialProfile,
   initialPath?: string,
 ) {
   const fromDate = new Date();
@@ -112,7 +114,7 @@ async function syncTransactions(
   let imported = 0;
   let page = 0;
   while (path && page < 12) {
-    const response: { results?: PluggyTransaction[]; next?: string | null } = await pluggyRequest(path);
+    const response: { results?: PluggyTransaction[]; next?: string | null } = await pluggyRequest(path, undefined, credentialProfile);
     const rows = (response.results ?? []).filter((transaction) => Number.isFinite(transaction.amount) && transaction.amount !== 0 && (remote.type === "BANK" || transaction.amount > 0));
     const ids = rows.map((transaction) => transaction.id);
     const { data: existing } = ids.length
@@ -208,6 +210,7 @@ export async function reconcilePluggyTransactions(supabase: SupabaseClient, conn
       connection.household_id,
       connection.connected_by,
       categorization,
+      connection.credential_profile,
       `/v2/transactions?${query.toString()}`,
     );
     return { created, updated: 0, cancelled: 0 };
@@ -215,7 +218,7 @@ export async function reconcilePluggyTransactions(supabase: SupabaseClient, conn
 
   if (!transactionIds.length) return { created: 0, updated: 0, cancelled: 0 };
   const query = new URLSearchParams({ accountId: event.accountId, ids: transactionIds.join(",") });
-  const response = await pluggyRequest<{ results?: PluggyTransaction[] }>(`/v2/transactions?${query.toString()}`);
+  const response = await pluggyRequest<{ results?: PluggyTransaction[] }>(`/v2/transactions?${query.toString()}`, undefined, connection.credential_profile);
   const rows = (response.results ?? []).filter((transaction) => Number.isFinite(transaction.amount) && transaction.amount !== 0);
   const updates = rows.map((transaction) => {
     const type = mapping.type === "CREDIT" ? "expense" : transaction.type === "CREDIT" ? "income" : "expense";
@@ -237,11 +240,11 @@ export async function reconcilePluggyTransactions(supabase: SupabaseClient, conn
   return { created: 0, updated: Number(updated ?? 0), cancelled: 0 };
 }
 
-async function syncInvestments(supabase: SupabaseClient, itemId: string, connectionId: string, householdId: string) {
+async function syncInvestments(supabase: SupabaseClient, itemId: string, connectionId: string, householdId: string, credentialProfile: PluggyCredentialProfile) {
   let page = 1;
   let synced = 0;
   while (page <= 10) {
-    const response: { results?: PluggyInvestment[] } = await pluggyRequest(`/investments?itemId=${encodeURIComponent(itemId)}&pageSize=500&page=${page}`);
+    const response: { results?: PluggyInvestment[] } = await pluggyRequest(`/investments?itemId=${encodeURIComponent(itemId)}&pageSize=500&page=${page}`, undefined, credentialProfile);
     const rows = response.results ?? [];
     if (rows.length) {
       const payload = rows.map((investment) => ({
@@ -272,7 +275,7 @@ async function syncInvestments(supabase: SupabaseClient, itemId: string, connect
 export async function syncPluggyConnection(supabase: SupabaseClient, connection: PluggyConnection, options: { includeTransactions?: boolean } = {}) {
   const includeTransactions = options.includeTransactions ?? true;
   const categorization = await loadCategorization(supabase, connection.household_id);
-  const response = await pluggyRequest<{ results?: PluggyAccount[] }>(`/accounts?itemId=${encodeURIComponent(connection.pluggy_item_id)}`);
+  const response = await pluggyRequest<{ results?: PluggyAccount[] }>(`/accounts?itemId=${encodeURIComponent(connection.pluggy_item_id)}`, undefined, connection.credential_profile);
   const remoteAccounts = response.results ?? [];
   if (!remoteAccounts.length) throw new Error("A instituição ainda não disponibilizou contas para esta conexão. Aguarde a atualização bancária terminar e tente novamente.");
   let bankCount = 0;
@@ -317,10 +320,10 @@ export async function syncPluggyConnection(supabase: SupabaseClient, connection:
     const { data: currentMapping, error: mappingReadError } = await supabase.from("pluggy_accounts").select("id, account_id, credit_card_id").eq("pluggy_account_id", remote.id).single();
     if (mappingReadError || !currentMapping) throw mappingReadError ?? new Error("Mapeamento da conta não encontrado.");
     if (includeTransactions) {
-      transactionCount += await syncTransactions(supabase, remote, currentMapping, connection.household_id, connection.connected_by, categorization);
+      transactionCount += await syncTransactions(supabase, remote, currentMapping, connection.household_id, connection.connected_by, categorization, connection.credential_profile);
     }
   }
-  const investmentCount = await syncInvestments(supabase, connection.pluggy_item_id, connection.id, connection.household_id);
+  const investmentCount = await syncInvestments(supabase, connection.pluggy_item_id, connection.id, connection.household_id, connection.credential_profile);
   await supabase.from("pluggy_items").update({ last_synced_at: new Date().toISOString(), status: "UPDATED", error_code: null }).eq("id", connection.id);
   if (includeTransactions) {
     const { data, error } = await supabase.rpc("auto_mark_internal_transfers", { target_household_id: connection.household_id });

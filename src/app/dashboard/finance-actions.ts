@@ -751,6 +751,39 @@ export async function bulkCategorizeTransactions(formData: FormData) {
   redirect(`/dashboard/transacoes?success=${encodeURIComponent(`${transactionIds.length} lançamentos atualizados.`)}`);
 }
 
+export async function updateSelectedTransactionNickname(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const transactionIds = [...new Set(formData.getAll("transaction_ids").map(String).filter(Boolean))];
+  const nickname = optionalText(formData, "nickname");
+  if (!transactionIds.length || transactionIds.length > 100 || (nickname && nickname.length > 120)) {
+    redirect("/dashboard/transacoes?error=Selecione%20at%C3%A9%20100%20lan%C3%A7amentos%20e%20informe%20um%20apelido%20v%C3%A1lido.");
+  }
+
+  const { data: selected, error: selectionError } = await supabase.from("transactions")
+    .select("id, type, transfer_group_id")
+    .eq("household_id", membership.household_id)
+    .in("id", transactionIds);
+  if (selectionError || !selected || selected.length !== transactionIds.length) {
+    redirect("/dashboard/transacoes?error=Os%20lan%C3%A7amentos%20selecionados%20n%C3%A3o%20foram%20encontrados.");
+  }
+
+  const groupIds = selected.filter((item) => item.type === "transfer" && item.transfer_group_id).map((item) => item.transfer_group_id as string);
+  let relatedIds: string[] = [];
+  if (groupIds.length) {
+    const { data: related, error } = await supabase.from("transactions").select("id")
+      .eq("household_id", membership.household_id).in("transfer_group_id", groupIds);
+    if (error) redirect("/dashboard/transacoes?error=N%C3%A3o%20foi%20poss%C3%ADvel%20localizar%20a%20outra%20ponta%20da%20transfer%C3%AAncia.");
+    relatedIds = (related ?? []).map((item) => item.id);
+  }
+  const idsToUpdate = [...new Set([...transactionIds, ...relatedIds])];
+  const { error } = await supabase.from("transactions").update({ nickname }).eq("household_id", membership.household_id).in("id", idsToUpdate);
+  if (error) redirect("/dashboard/transacoes?error=N%C3%A3o%20foi%20poss%C3%ADvel%20salvar%20o%20apelido.%20A%20migration%20042%20foi%20aplicada%3F");
+  revalidatePath("/dashboard/transacoes");
+  revalidatePath("/dashboard");
+  redirect(`/dashboard/transacoes?success=${encodeURIComponent(`${transactionIds.length} lançamento${transactionIds.length === 1 ? "" : "s"} atualizado${transactionIds.length === 1 ? "" : "s"}.`)}`);
+}
+
 export async function markSelectedTransactionsAsTransfer(formData: FormData) {
   const { supabase, membership } = await getAuthenticatedContext();
   if (!membership) redirect("/dashboard");

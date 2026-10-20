@@ -43,7 +43,7 @@ export async function POST(request: Request) {
 
   const admin = createAdminClient();
   const { data: connection } = await admin.from("pluggy_items")
-    .select("id, household_id, pluggy_item_id, connector_name, connected_by")
+    .select("id, household_id, pluggy_item_id, connector_name, connected_by, credential_profile")
     .eq("pluggy_item_id", itemId)
     .eq("is_active", true)
     .maybeSingle();
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
   after(async () => {
     try {
       if (event.startsWith("item/")) {
-        const item = await pluggyRequest<PluggyItem>(`/items/${encodeURIComponent(itemId)}`);
+        const item = await pluggyRequest<PluggyItem>(`/items/${encodeURIComponent(itemId)}`, undefined, connection.credential_profile);
         const providerError = payload.error?.code || item.error?.code || null;
         await admin.from("pluggy_items").update({
           status: item.status ?? (event === "item/error" ? "OUTDATED" : "UPDATED"),

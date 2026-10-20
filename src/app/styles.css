@@ -1118,6 +1118,8 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .transaction-filters > a { align-self: center; color: var(--primary-dark); font-size: 11px; font-weight: 800; text-decoration: none; }
 .bulk-form { display: grid; gap: 9px; }
 .results-heading { padding: 8px 10px 0; color: var(--muted); font-size: 11px; }
+.selection-summary { display: flex; align-items: center; gap: 8px; width: fit-content; min-height: 32px; margin: 0 10px; padding: 7px 11px; border: 1px solid var(--hairline); border-radius: 999px; background: rgba(159, 232, 112, .14); color: var(--primary-dark); font-size: 11px; }
+.selection-summary span { color: var(--body); }
 .transaction-totals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 14px 0 8px; }
 .transaction-totals article { display: grid; gap: 5px; padding: 16px 18px; border: 1px solid var(--hairline); border-radius: 18px; background: rgba(255, 255, 255, .62); }
 .transaction-totals small { color: var(--body); font-size: 10px; font-weight: 700; }
@@ -1129,6 +1131,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .bulk-toolbar > .checkbox-label { display: flex; grid-template-columns: none; align-items: center; margin-left: 0; white-space: nowrap; }
 .checkbox-label input { width: 17px; height: 17px; margin: 0; padding: 0; accent-color: var(--primary-dark); }
 .bulk-toolbar select { height: 40px; border-radius: 12px; font-size: 11px; }
+.bulk-toolbar input { height: 40px; border-radius: 12px; font-size: 11px; }
 .bulk-toolbar button { min-height: 40px; padding: 8px 13px; font-size: 11px; }
 .bulk-toolbar .transfer-hint { max-width: 220px; color: var(--muted); font-size: 10px; line-height: 1.35; }
 .filter-row { grid-template-columns: 24px 44px minmax(150px, 1fr) auto auto; }
@@ -1216,6 +1219,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
   .bulk-toolbar { align-items: stretch; flex-direction: column; padding: 0 14px 14px; border-top: 1px solid var(--hairline); }
   .bulk-toolbar > label { grid-template-columns: 1fr; width: 100%; margin: 0; padding-top: 12px; }
   .bulk-toolbar > .checkbox-label { flex-direction: row; padding-top: 0; }
+  .selection-summary { margin: 0 4px; }
   .bulk-toolbar button { width: 100%; }
   .transaction-create > summary { padding: 16px 18px; font-size: 12px; }
   .form-dialog { width: 100%; max-width: none; max-height: calc(100dvh - 24px); margin: auto 0 0; padding: 22px 18px 24px; border-radius: 26px 26px 0 0; }

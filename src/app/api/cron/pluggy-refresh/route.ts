@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
   if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
   const supabase = createAdminClient();
-  const { data: connections, error } = await supabase.from("pluggy_items").select("id, pluggy_item_id").eq("is_active", true);
+  const { data: connections, error } = await supabase.from("pluggy_items").select("id, pluggy_item_id, credential_profile").eq("is_active", true);
   if (error) return NextResponse.json({ error: "Não foi possível carregar as conexões." }, { status: 500 });
   await ensurePluggyWebhooks().catch(() => undefined);
   const window = brazilTime();
@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     const { data: run, error: claimError } = await supabase.from("pluggy_refresh_runs").insert({ pluggy_item_id: connection.id, reference_date: window.date, slot: window.slot, status: "processing" }).select("id").maybeSingle();
     if (claimError || !run) { skipped += 1; continue; }
     try {
-      await pluggyRequest(`/items/${connection.pluggy_item_id}`, { method: "PATCH", body: "{}" });
+      await pluggyRequest(`/items/${connection.pluggy_item_id}`, { method: "PATCH", body: "{}" }, connection.credential_profile);
       await supabase.from("pluggy_refresh_runs").update({ status: "triggered", finished_at: new Date().toISOString() }).eq("id", run.id);
       triggered += 1;
     } catch (refreshError) {

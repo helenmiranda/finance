@@ -44,4 +44,17 @@ describe("estado das conexões Pluggy", () => {
     expect(action).toContain("update({ is_active: nextState })");
     expect(action).not.toContain(".delete()");
   });
+
+  it("mantém a conta Pluggy usada em cada conexão", () => {
+    expect(source("supabase/migrations/202607200041_pluggy_credential_profiles.sql")).toContain("credential_profile");
+    expect(source("src/app/api/pluggy/items/route.ts")).toContain("credentialProfileForUser(user.email)");
+    expect(source("src/app/api/pluggy/items/route.ts")).toContain("credential_profile: credentialProfile");
+    expect(source("src/lib/pluggy-sync.ts")).toContain("connection.credential_profile");
+  });
+
+  it("configura webhooks para as duas contas Pluggy", () => {
+    const pluggy = source("src/lib/pluggy.ts");
+    expect(pluggy).toContain("PLUGGY_HELEN_CLIENT_ID");
+    expect(pluggy).toContain("configuredProfiles()");
+  });
 });
