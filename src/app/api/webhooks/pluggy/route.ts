@@ -75,6 +75,9 @@ export async function POST(request: Request) {
         if (event === "item/updated") await syncPluggyConnection(admin, connection as PluggyConnection, { includeTransactions: false });
       } else {
         await reconcilePluggyTransactions(admin, connection as PluggyConnection, payload as PluggyTransactionEvent);
+        if (event === "transactions/created") {
+          await admin.rpc("auto_mark_internal_transfers", { target_household_id: connection.household_id });
+        }
         await evaluateAndDispatchFinancialAlerts(connection.household_id);
       }
       await admin.from("pluggy_webhook_events").update({ status: "completed", finished_at: new Date().toISOString() }).eq("event_id", eventId);

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { getAuthenticatedContext } from "@/lib/household";
-import { addTransaction, addTransfer, bulkCategorizeTransactions } from "../finance-actions";
+import { addTransaction, addTransfer, bulkCategorizeTransactions, markSelectedTransactionsAsTransfer } from "../finance-actions";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const date = new Intl.DateTimeFormat("pt-BR");
@@ -52,8 +52,8 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
     if (kind === "card" && id) totalsQuery = totalsQuery.eq("credit_card_id", id);
   }
   const [{ data: transactions }, { data: totalRows, count: filteredCount }] = await Promise.all([transactionQuery, totalsQuery]);
-  const filteredIncome = (totalRows ?? []).reduce((sum, item) => sum + (item.type === "income" || (item.type === "transfer" && item.transfer_direction === "in") ? item.amount_cents : 0), 0);
-  const filteredExpense = (totalRows ?? []).reduce((sum, item) => sum + (item.type === "expense" || item.type === "card_payment" || (item.type === "transfer" && item.transfer_direction === "out") ? item.amount_cents : 0), 0);
+  const filteredIncome = (totalRows ?? []).reduce((sum, item) => sum + (item.type === "income" ? item.amount_cents : 0), 0);
+  const filteredExpense = (totalRows ?? []).reduce((sum, item) => sum + (item.type === "expense" || item.type === "card_payment" ? item.amount_cents : 0), 0);
   const hasFilters = Boolean(params.q || params.type || params.category || params.source || params.from || params.to || params.review);
 
   return (
@@ -76,7 +76,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
         </section>
 
         <form action={bulkCategorizeTransactions} className="bulk-form">
-          <div className="results-heading"><strong>{filteredCount ?? transactions?.length ?? 0}</strong><span> resultados{(filteredCount ?? 0) > 100 ? " · mostrando os 100 mais recentes" : ""}</span></div><details className="bulk-disclosure"><summary>Organizar selecionados</summary><div className="bulk-toolbar"><label>Alterar categoria<select name="category_id" defaultValue="" required><option value="" disabled>Selecione</option>{categories?.map((category) => <option value={category.id} key={category.id}>{category.name} · {category.kind === "income" ? "Receita" : "Despesa"}</option>)}</select></label><label className="checkbox-label"><input name="remember_rule" type="checkbox" defaultChecked /> Lembrar descrições</label><button type="submit">Aplicar</button></div></details>
+          <div className="results-heading"><strong>{filteredCount ?? transactions?.length ?? 0}</strong><span> resultados{(filteredCount ?? 0) > 100 ? " · mostrando os 100 mais recentes" : ""}</span></div><details className="bulk-disclosure"><summary>Organizar selecionados</summary><div className="bulk-toolbar"><label>Alterar categoria<select name="category_id" defaultValue="" required><option value="" disabled>Selecione</option>{categories?.map((category) => <option value={category.id} key={category.id}>{category.name} · {category.kind === "income" ? "Receita" : "Despesa"}</option>)}</select></label><label className="checkbox-label"><input name="remember_rule" type="checkbox" defaultChecked /> Lembrar descrições</label><button type="submit">Aplicar</button><button type="submit" formAction={markSelectedTransactionsAsTransfer} className="secondary-button">Marcar como transferência</button><small className="transfer-hint">Selecione uma saída e uma entrada de mesmo valor, em contas diferentes.</small></div></details>
           {!transactions?.length && <article className="card empty-state"><span>⌕</span><h2>Nenhum lançamento encontrado</h2><p className="muted">Tente remover alguns filtros.</p></article>}
           {!!transactions?.length && <article className="card transaction-table filtered-table">{transactions.map((transaction) => {
             const incoming = transaction.type === "income" || transaction.transfer_direction === "in";

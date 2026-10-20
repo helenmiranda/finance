@@ -278,6 +278,7 @@ export async function syncPluggyConnection(supabase: SupabaseClient, connection:
   let bankCount = 0;
   let cardCount = 0;
   let transactionCount = 0;
+  let transferCount = 0;
 
   for (const remote of remoteAccounts) {
     const { data: mapping } = await supabase.from("pluggy_accounts").select("id, account_id, credit_card_id").eq("pluggy_account_id", remote.id).maybeSingle();
@@ -321,7 +322,12 @@ export async function syncPluggyConnection(supabase: SupabaseClient, connection:
   }
   const investmentCount = await syncInvestments(supabase, connection.pluggy_item_id, connection.id, connection.household_id);
   await supabase.from("pluggy_items").update({ last_synced_at: new Date().toISOString(), status: "UPDATED", error_code: null }).eq("id", connection.id);
+  if (includeTransactions) {
+    const { data, error } = await supabase.rpc("auto_mark_internal_transfers", { target_household_id: connection.household_id });
+    if (error) throw error;
+    transferCount = Number(data ?? 0);
+  }
   await supabase.rpc("suggest_payable_reconciliations", { target_household_id: connection.household_id });
   await evaluateAndDispatchFinancialAlerts(connection.household_id);
-  return { success: true, bankCount, cardCount, transactionCount, investmentCount };
+  return { success: true, bankCount, cardCount, transactionCount, transferCount, investmentCount };
 }

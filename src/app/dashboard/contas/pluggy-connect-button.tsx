@@ -21,7 +21,7 @@ export function PluggyConnectButton() {
       if (!data.connectionId) throw new Error("A conexão foi vinculada, mas não pôde iniciar a importação.");
       setMessage("Conexão vinculada. Importando os dados…");
       let syncResponse: Response | null = null;
-      let syncData: { bankCount?: number; cardCount?: number; transactionCount?: number; investmentCount?: number; pending?: boolean; error?: string } = {};
+      let syncData: { bankCount?: number; cardCount?: number; transactionCount?: number; transferCount?: number; investmentCount?: number; pending?: boolean; error?: string } = {};
       for (let attempt = 0; attempt < 12; attempt += 1) {
         syncResponse = await fetch("/api/pluggy/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ connectionId: data.connectionId }) });
         const syncBody = await syncResponse.text();
@@ -32,7 +32,7 @@ export function PluggyConnectButton() {
       }
       if (!syncResponse) throw new Error("Não foi possível iniciar a importação.");
       if (!syncResponse.ok) throw new Error(`Conexão vinculada, mas a primeira importação falhou: ${syncData.error || "tente importar novamente."}`);
-      setStatus("success"); setMessage(`${syncData.bankCount ?? 0} contas, ${syncData.cardCount ?? 0} cartões, ${syncData.transactionCount ?? 0} transações e ${syncData.investmentCount ?? 0} ativos importados.`); router.refresh();
+      setStatus("success"); setMessage(`${syncData.bankCount ?? 0} contas, ${syncData.cardCount ?? 0} cartões, ${syncData.transactionCount ?? 0} transações, ${syncData.transferCount ?? 0} transferências e ${syncData.investmentCount ?? 0} ativos importados.`); router.refresh();
     } catch (error) { setStatus("error"); setMessage(error instanceof Error ? error.message : "Não foi possível vincular a conexão."); }
   }
   return <form className="pluggy-connect-action" action={connect}><label>Item ID do Meu Pluggy<input name="item_id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autoCapitalize="none" autoCorrect="off" spellCheck={false} required /></label><button type="submit" disabled={status === "loading"}>{status === "loading" ? "Validando…" : "Vincular conexão"}</button>{message && <small className={status === "error" ? "negative" : "positive"}>{message}</small>}</form>;
@@ -46,9 +46,9 @@ export function PluggySyncButton({ connectionId }: { connectionId: string }) {
     setLoading(true); setMessage("");
     try {
       const response = await fetch("/api/pluggy/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ connectionId }) });
-      const data = await response.json() as { bankCount?: number; cardCount?: number; transactionCount?: number; investmentCount?: number; error?: string };
+      const data = await response.json() as { bankCount?: number; cardCount?: number; transactionCount?: number; transferCount?: number; investmentCount?: number; error?: string };
       if (!response.ok) throw new Error(data.error || "Não foi possível sincronizar.");
-      setMessage(`${data.bankCount ?? 0} contas, ${data.cardCount ?? 0} cartões, ${data.transactionCount ?? 0} novas transações e ${data.investmentCount ?? 0} ativos.`); router.refresh();
+      setMessage(`${data.bankCount ?? 0} contas, ${data.cardCount ?? 0} cartões, ${data.transactionCount ?? 0} novas transações, ${data.transferCount ?? 0} transferências e ${data.investmentCount ?? 0} ativos.`); router.refresh();
     } catch (error) { setMessage(error instanceof Error ? error.message : "Não foi possível sincronizar."); }
     finally { setLoading(false); }
   }

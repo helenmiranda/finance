@@ -750,3 +750,32 @@ export async function bulkCategorizeTransactions(formData: FormData) {
   revalidatePath("/dashboard");
   redirect(`/dashboard/transacoes?success=${encodeURIComponent(`${transactionIds.length} lançamentos atualizados.`)}`);
 }
+
+export async function markSelectedTransactionsAsTransfer(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const transactionIds = [...new Set(formData.getAll("transaction_ids").map(String).filter(Boolean))];
+  if (transactionIds.length !== 2) {
+    redirect("/dashboard/transacoes?error=Selecione%20exatamente%20uma%20saída%20e%20uma%20entrada%20para%20marcar%20a%20transferência.");
+  }
+
+  const { data: selected } = await supabase.from("transactions")
+    .select("id, type")
+    .eq("household_id", membership.household_id)
+    .in("id", transactionIds);
+  const source = selected?.find((transaction) => transaction.type === "expense");
+  const destination = selected?.find((transaction) => transaction.type === "income");
+  if (!source || !destination || selected?.length !== 2) {
+    redirect("/dashboard/transacoes?error=Selecione%20uma%20saída%20e%20uma%20entrada.");
+  }
+
+  const { error } = await supabase.rpc("mark_transactions_as_transfer", {
+    source_transaction_id: source.id,
+    destination_transaction_id: destination.id,
+  });
+  if (error) redirect(`/dashboard/transacoes?error=${encodeURIComponent(error.message)}`);
+  await evaluateAndDispatchFinancialAlerts(membership.household_id);
+  revalidatePath("/dashboard/transacoes");
+  revalidatePath("/dashboard");
+  redirect("/dashboard/transacoes?success=Movimentação%20marcada%20como%20transferência%20entre%20contas.");
+}

@@ -1130,6 +1130,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .checkbox-label input { width: 17px; height: 17px; margin: 0; padding: 0; accent-color: var(--primary-dark); }
 .bulk-toolbar select { height: 40px; border-radius: 12px; font-size: 11px; }
 .bulk-toolbar button { min-height: 40px; padding: 8px 13px; font-size: 11px; }
+.bulk-toolbar .transfer-hint { max-width: 220px; color: var(--muted); font-size: 10px; line-height: 1.35; }
 .filter-row { grid-template-columns: 24px 44px minmax(150px, 1fr) auto auto; }
 .row-checkbox { width: 17px; height: 17px; padding: 0; accent-color: var(--primary-dark); }
 .checkbox-placeholder { width: 17px; }
