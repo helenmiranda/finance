@@ -4,23 +4,21 @@ import { useEffect, useRef, useState } from "react";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
-export function TransactionSelectionSummary() {
+export function TransactionSelectionSummary({ formId }: { formId: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const [selection, setSelection] = useState({ count: 0, cents: 0 });
 
   useEffect(() => {
-    const form = ref.current?.closest("form");
-    if (!form) return;
     const update = () => {
-      const selected = [...form.querySelectorAll<HTMLInputElement>('input[name="transaction_ids"]:checked')];
+      const selected = [...document.querySelectorAll<HTMLInputElement>(`input[name="transaction_ids"][form="${formId}"]:checked`)];
       setSelection({
         count: selected.length,
-        cents: selected.reduce((sum, input) => sum + Number(input.dataset.amountCents ?? 0), 0),
+        cents: selected.reduce((sum, input) => sum + Number(input.dataset.signedCents ?? 0), 0),
       });
     };
-    form.addEventListener("change", update);
-    return () => form.removeEventListener("change", update);
-  }, []);
+    document.addEventListener("change", update);
+    return () => document.removeEventListener("change", update);
+  }, [formId]);
 
-  return <div className="selection-summary" ref={ref} aria-live="polite"><strong>{selection.count} selecionada{selection.count === 1 ? "" : "s"}</strong><span>Soma: {money.format(selection.cents / 100)}</span></div>;
+  return <div className="selection-summary" ref={ref} aria-live="polite"><strong>{selection.count} selecionada{selection.count === 1 ? "" : "s"}</strong><span>Saldo: {money.format(selection.cents / 100)}</span></div>;
 }

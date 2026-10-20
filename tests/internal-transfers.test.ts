@@ -30,13 +30,13 @@ describe("conciliação de transferências internas", () => {
     expect(page).not.toContain('item.type === "transfer" && item.transfer_direction === "in"');
   });
 
-  it("permite apelidar transferências selecionadas e mantém as duas pontas alinhadas", () => {
+  it("permite apelidar uma transferência e mantém as duas pontas alinhadas", () => {
     const page = source("src/app/dashboard/transacoes/page.tsx");
     const actions = source("src/app/dashboard/finance-actions.ts");
     expect(source("supabase/migrations/202607200042_transaction_nicknames.sql")).toContain("add column nickname");
     expect(page).toContain("TransactionSelectionSummary");
     expect(page).toContain('transaction.type === "transfer"');
-    expect(actions).toContain("updateSelectedTransactionNickname");
-    expect(actions).toContain('in("transfer_group_id", groupIds)');
+    expect(actions).toContain("updateTransactionDetails");
+    expect(actions).toContain('eq("transfer_group_id", groupId)');
   });
 });
