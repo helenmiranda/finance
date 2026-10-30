@@ -367,8 +367,13 @@ export async function addCategorizationRule(formData: FormData) {
   });
 
   if (error) redirect(`/dashboard/regras?error=${encodeURIComponent("Não foi possível criar a regra. A nova migration foi aplicada?")}`);
+  // Reaplica ao histórico sem categoria; se a migration 046 ainda não existir, a regra segue valendo para as próximas.
+  const { data: applied } = await supabase.rpc("apply_household_categorization_rules", { target_household_id: membership.household_id });
+  const appliedCount = Number(applied ?? 0);
   revalidatePath("/dashboard/regras");
-  redirect("/dashboard/regras?success=Regra%20adicionada.");
+  revalidatePath("/dashboard/transacoes");
+  revalidatePath("/dashboard");
+  redirect(`/dashboard/regras?success=${encodeURIComponent(appliedCount ? `Regra adicionada. ${appliedCount} lançamento${appliedCount === 1 ? "" : "s"} sem categoria atualizado${appliedCount === 1 ? "" : "s"}.` : "Regra adicionada.")}`);
 }
 
 export async function deleteCategorizationRule(formData: FormData) {
@@ -744,6 +749,7 @@ export async function bulkCategorizeTransactions(formData: FormData) {
         });
       }
     }
+    await supabase.rpc("apply_household_categorization_rules", { target_household_id: membership.household_id });
   }
   await evaluateAndDispatchFinancialAlerts(membership.household_id);
   revalidatePath("/dashboard/transacoes");
