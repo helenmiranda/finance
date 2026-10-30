@@ -79,6 +79,7 @@ export async function POST(request: Request) {
           await admin.rpc("auto_mark_internal_transfers", { target_household_id: connection.household_id });
           await admin.rpc("mark_investment_movements", { target_household_id: connection.household_id });
           await admin.rpc("apply_account_inflow_rule", { target_household_id: connection.household_id });
+          await admin.rpc("mark_internal_counterparty_movements", { target_household_id: connection.household_id });
         }
         await evaluateAndDispatchFinancialAlerts(connection.household_id);
       }

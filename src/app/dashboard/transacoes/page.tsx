@@ -2,8 +2,9 @@ import Link from "next/link";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { TransactionSelectionSummary } from "@/components/transaction-selection-summary";
 import { TransactionCategorySelect } from "@/components/transaction-category-select";
+import { TransactionMovementButton } from "@/components/transaction-movement-button";
 import { getAuthenticatedContext } from "@/lib/household";
-import { addTransaction, addTransfer, bulkCategorizeTransactions, markSelectedTransactionsAsTransfer, updateTransactionDetails } from "../finance-actions";
+import { addTransaction, addTransfer, bulkCategorizeTransactions, markSelectedTransactionsAsTransfer, unmarkSelectedMovements, updateTransactionDetails } from "../finance-actions";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const date = new Intl.DateTimeFormat("pt-BR");
@@ -95,24 +96,26 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
         </section>
 
         <form id="bulk-transaction-actions" action={bulkCategorizeTransactions} className="bulk-form"><input type="hidden" name="return_to" value={returnTo} />
-          <div className="results-heading"><strong>{filteredCount}</strong><span> resultados{filteredCount > 100 ? " · mostrando os 100 mais recentes" : ""}</span></div><TransactionSelectionSummary formId="bulk-transaction-actions" /><details className="bulk-disclosure"><summary>Organizar selecionados</summary><div className="bulk-toolbar"><label>Alterar categoria<select name="category_id" defaultValue=""><option value="" disabled>Selecione</option>{categories?.map((category) => <option value={category.id} key={category.id}>{category.name} · {category.kind === "income" ? "Receita" : "Despesa"}</option>)}</select></label><label className="checkbox-label"><input name="remember_rule" type="checkbox" defaultChecked /> Lembrar descrições</label><button type="submit">Aplicar categoria</button><button type="submit" formAction={markSelectedTransactionsAsTransfer} className="secondary-button">Marcar como transferência</button><small className="transfer-hint">Use categoria em lote para receitas e despesas. Transferências podem receber apelido individual.</small></div></details>
+          <div className="results-heading"><strong>{filteredCount}</strong><span> resultados{filteredCount > 100 ? " · mostrando os 100 mais recentes" : ""}</span></div><TransactionSelectionSummary formId="bulk-transaction-actions" /><details className="bulk-disclosure"><summary>Organizar selecionados</summary><div className="bulk-toolbar"><label>Alterar categoria<select name="category_id" defaultValue=""><option value="" disabled>Selecione</option>{categories?.map((category) => <option value={category.id} key={category.id}>{category.name} · {category.kind === "income" ? "Receita" : "Despesa"}</option>)}</select></label><label className="checkbox-label"><input name="remember_rule" type="checkbox" defaultChecked /> Lembrar descrições</label><button type="submit">Aplicar categoria</button><button type="submit" formAction={markSelectedTransactionsAsTransfer} className="secondary-button">Marcar como movimentação</button><button type="submit" formAction={unmarkSelectedMovements} className="secondary-button">Desfazer movimentação</button><small className="transfer-hint">Uma saída e uma entrada viram transferência entre contas. Qualquer outra seleção vira movimentação sem a outra ponta, para quando a outra conta não está conectada.</small></div></details>
         </form>
         {!transactions?.length && <article className="card empty-state"><span>⌕</span><h2>Nenhum lançamento encontrado</h2><p className="muted">Tente remover alguns filtros.</p></article>}
         {!!transactions?.length && <article className="card transaction-table filtered-table">{transactions.map((transaction) => {
             const incoming = transaction.type === "income" || transaction.transfer_direction === "in";
             const installment = transaction.installment_count > 1 ? ` · ${transaction.installment_number}/${transaction.installment_count}` : "";
-            const transferLabel = transaction.transfer_kind === "investment" ? (incoming ? "Resgate de investimento" : "Aplicação em investimento") : transaction.transfer_kind === "account_inflow" ? "Movimentação interna" : "Transferência";
+            const transferLabel = transaction.transfer_kind === "investment" ? (incoming ? "Resgate de investimento" : "Aplicação em investimento") : (transaction.transfer_kind === "account_inflow" || transaction.transfer_kind === "counterparty" || transaction.transfer_kind === "manual") ? "Movimentação interna" : "Transferência";
             const kindLabel = transaction.type === "transfer" ? transferLabel : transaction.type === "card_payment" ? "Pagamento de fatura" : transaction.categories?.name || "Sem categoria";
             const canSelect = transaction.type === "income" || transaction.type === "expense" || transaction.type === "transfer";
             const sourceName = transaction.accounts?.nickname || transaction.accounts?.name || transaction.credit_cards?.nickname || transaction.credit_cards?.name;
             const label = transaction.nickname || transaction.description;
             const categoryEditable = transaction.type === "income" || transaction.type === "expense";
+            const canMarkMovement = categoryEditable && Boolean(transaction.account_id);
+            const canUndoMovement = transaction.type === "transfer" && transaction.transfer_kind === "manual" && !transaction.transfer_group_id;
             return <div className="transaction-row filter-row" key={transaction.id}>
               {canSelect ? <input className="row-checkbox" type="checkbox" form="bulk-transaction-actions" name="transaction_ids" value={transaction.id} data-signed-cents={incoming ? transaction.amount_cents : -transaction.amount_cents} aria-label={`Selecionar ${label}`} /> : <span className="checkbox-placeholder" />}
               <span className={`movement-icon ${transaction.type}`}>{transaction.type === "transfer" ? "⇄" : incoming ? "↗" : "↘"}</span>
               <div className="transaction-copy"><strong>{label}{installment}</strong><small>{categoryEditable
                 ? <TransactionCategorySelect transactionId={transaction.id} value={transaction.category_id} leaveListWhenSet={params.review === "uncategorized"} options={(categories ?? []).filter((category) => category.kind === transaction.type).map((category) => ({ id: category.id, name: category.name, color: category.color }))} />
-                : <span>{kindLabel}</span>}{transaction.nickname && <><span aria-hidden="true">·</span><span>{transaction.description}</span></>}{sourceName && <><span aria-hidden="true">·</span><span>{sourceName}</span></>}</small>
+                : <span>{kindLabel}</span>}{(canMarkMovement || canUndoMovement) && <TransactionMovementButton transactionId={transaction.id} marked={canUndoMovement} />}{transaction.nickname && <><span aria-hidden="true">·</span><span>{transaction.description}</span></>}{sourceName && <><span aria-hidden="true">·</span><span>{sourceName}</span></>}</small>
                 <details className="transaction-editor"><summary>Ajustar</summary><form action={updateTransactionDetails}><input type="hidden" name="return_to" value={returnTo} /><input type="hidden" name="transaction_id" value={transaction.id} /><label>Apelido<input name="nickname" defaultValue={transaction.nickname ?? ""} maxLength={120} placeholder="Opcional" /></label><button type="submit">Salvar</button></form></details>
               </div>
               <div className="transaction-date">{date.format(new Date(`${transaction.occurred_on}T12:00:00`))}</div><strong className={incoming ? "positive" : "negative"}>{incoming ? "+ " : "− "}{money.format(transaction.amount_cents / 100)}</strong>

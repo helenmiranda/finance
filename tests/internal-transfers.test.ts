@@ -26,7 +26,8 @@ describe("conciliação de transferências internas", () => {
   it("oferece a marcação manual e exclui transferências dos totais de receita e despesa", () => {
     const page = source("src/app/dashboard/transacoes/page.tsx");
     expect(page).toContain("markSelectedTransactionsAsTransfer");
-    expect(page).toContain("Marcar como transferência");
+    expect(page).toContain("Marcar como movimentação");
+    expect(page).toContain("unmarkSelectedMovements");
     expect(page).not.toContain('item.type === "transfer" && item.transfer_direction === "in"');
   });
 
@@ -38,5 +39,15 @@ describe("conciliação de transferências internas", () => {
     expect(page).toContain('transaction.type === "transfer"');
     expect(actions).toContain("updateTransactionDetails");
     expect(actions).toContain('eq("transfer_group_id", groupId)');
+  });
+
+  it("permite marcar movimentação sem a outra ponta quando a outra conta não está conectada", () => {
+    const actions = source("src/app/dashboard/finance-actions.ts");
+    const migration = source("supabase/migrations/202607200050_manual_movements.sql");
+    expect(actions).toContain('rpc("mark_transactions_as_movement"');
+    expect(actions).toContain('rpc("unmark_manual_movements"');
+    expect(migration).toContain("transfer_kind = 'manual'");
+    expect(migration).toContain("transfer_group_id is null");
+    expect(migration).toContain("public.is_household_member(household_id)");
   });
 });

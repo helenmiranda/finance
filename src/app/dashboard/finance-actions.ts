@@ -414,6 +414,40 @@ export async function deleteCategorizationRule(formData: FormData) {
   redirect("/dashboard/regras?success=Regra%20removida.");
 }
 
+export async function addInternalCounterparty(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const name = text(formData, "name");
+  const pattern = text(formData, "pattern");
+  const appliesTo = text(formData, "applies_to");
+  if (!name || name.length > 120 || pattern.length < 2 || pattern.length > 120 || !["in", "out", "both"].includes(appliesTo)) {
+    redirect("/dashboard/regras?error=Confira%20o%20nome%20e%20o%20texto%20do%20extrato.");
+  }
+  const { error } = await supabase.from("internal_counterparties").insert({ household_id: membership.household_id, name, pattern, applies_to: appliesTo });
+  if (error) {
+    redirect(`/dashboard/regras?error=${encodeURIComponent(error.code === "23505" ? "Esse texto já está na lista." : "Não foi possível salvar. A migration 049 foi aplicada?")}`);
+  }
+  const { data: changed } = await supabase.rpc("mark_internal_counterparty_movements", { target_household_id: membership.household_id });
+  const count = Number(changed ?? 0);
+  revalidatePath("/dashboard/regras");
+  revalidatePath("/dashboard/transacoes");
+  revalidatePath("/dashboard");
+  redirect(`/dashboard/regras?success=${encodeURIComponent(count ? `Pessoa adicionada. ${count} lançamento${count === 1 ? "" : "s"} virou movimentação.` : "Pessoa adicionada. Os próximos lançamentos serão marcados automaticamente.")}`);
+}
+
+export async function deleteInternalCounterparty(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const id = text(formData, "id");
+  const { error } = await supabase.from("internal_counterparties").delete().eq("id", id).eq("household_id", membership.household_id);
+  if (error) redirect("/dashboard/regras?error=Não%20foi%20possível%20remover.");
+  await supabase.rpc("mark_internal_counterparty_movements", { target_household_id: membership.household_id });
+  revalidatePath("/dashboard/regras");
+  revalidatePath("/dashboard/transacoes");
+  revalidatePath("/dashboard");
+  redirect("/dashboard/regras?success=Pessoa%20removida.%20Os%20lançamentos%20voltam%20a%20contar%20como%20receita%20ou%20despesa.");
+}
+
 export async function saveBudget(formData: FormData) {
   const { supabase, membership } = await getAuthenticatedContext();
   if (!membership) redirect("/dashboard");
@@ -856,9 +890,8 @@ export async function markSelectedTransactionsAsTransfer(formData: FormData) {
   const { supabase, membership } = await getAuthenticatedContext();
   if (!membership) redirect("/dashboard");
   const transactionIds = [...new Set(formData.getAll("transaction_ids").map(String).filter(Boolean))];
-  if (transactionIds.length !== 2) {
-    redirect(backToTransactions(formData, "error", decodeURIComponent("Selecione%20exatamente%20uma%20saída%20e%20uma%20entrada%20para%20marcar%20a%20transferência.")));
-  }
+  if (!transactionIds.length) redirect(backToTransactions(formData, "error", "Selecione pelo menos um lançamento."));
+  if (transactionIds.length > 100) redirect(backToTransactions(formData, "error", "Marque no máximo 100 lançamentos por vez."));
 
   const { data: selected } = await supabase.from("transactions")
     .select("id, type")
@@ -866,17 +899,52 @@ export async function markSelectedTransactionsAsTransfer(formData: FormData) {
     .in("id", transactionIds);
   const source = selected?.find((transaction) => transaction.type === "expense");
   const destination = selected?.find((transaction) => transaction.type === "income");
-  if (!source || !destination || selected?.length !== 2) {
-    redirect(backToTransactions(formData, "error", decodeURIComponent("Selecione%20uma%20saída%20e%20uma%20entrada.")));
+
+  // Uma saída e uma entrada: são as duas pontas da mesma transferência entre contas conectadas.
+  if (selected?.length === 2 && source && destination) {
+    const { error } = await supabase.rpc("mark_transactions_as_transfer", {
+      source_transaction_id: source.id,
+      destination_transaction_id: destination.id,
+    });
+    if (error) redirect(backToTransactions(formData, "error", error.message));
+    await evaluateAndDispatchFinancialAlerts(membership.household_id);
+    revalidatePath("/dashboard/transacoes");
+    revalidatePath("/dashboard");
+    redirect(backToTransactions(formData, "success", "Movimentação marcada como transferência entre contas."));
   }
 
-  const { error } = await supabase.rpc("mark_transactions_as_transfer", {
-    source_transaction_id: source.id,
-    destination_transaction_id: destination.id,
-  });
-  if (error) redirect(backToTransactions(formData, "error", error.message));
+  // Qualquer outra seleção: movimentação sem a outra ponta (a outra conta não está conectada ao app).
+  const { data: marked, error } = await supabase.rpc("mark_transactions_as_movement", { target_transaction_ids: transactionIds });
+  if (error) redirect(backToTransactions(formData, "error", "Não foi possível marcar. A migration 050 foi aplicada?"));
+  const count = Number(marked ?? 0);
+  if (!count) redirect(backToTransactions(formData, "error", "Só receitas e despesas de contas podem virar movimentação."));
   await evaluateAndDispatchFinancialAlerts(membership.household_id);
   revalidatePath("/dashboard/transacoes");
   revalidatePath("/dashboard");
-  redirect(backToTransactions(formData, "success", decodeURIComponent("Movimentação%20marcada%20como%20transferência%20entre%20contas.")));
+  redirect(backToTransactions(formData, "success", `${count} lançamento${count === 1 ? "" : "s"} marcado${count === 1 ? "" : "s"} como movimentação, sem a outra ponta.`));
+}
+
+// Marcação rápida de uma operação, direto na linha da lista: sem redirect, para a tela não voltar ao topo.
+export async function setTransactionMovement(transactionId: string, enabled: boolean): Promise<{ ok: boolean; error?: string }> {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) return { ok: false, error: "Sessão expirada." };
+  const { data, error } = await supabase.rpc(enabled ? "mark_transactions_as_movement" : "unmark_manual_movements", { target_transaction_ids: [transactionId] });
+  if (error) return { ok: false, error: "Não foi possível salvar. A migration 050 foi aplicada?" };
+  if (!Number(data ?? 0)) return { ok: false, error: enabled ? "Só receitas e despesas de contas podem virar movimentação." : "Só marcações manuais podem ser desfeitas aqui." };
+  revalidatePath("/dashboard");
+  return { ok: true };
+}
+
+export async function unmarkSelectedMovements(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const transactionIds = [...new Set(formData.getAll("transaction_ids").map(String).filter(Boolean))];
+  if (!transactionIds.length || transactionIds.length > 100) redirect(backToTransactions(formData, "error", "Selecione de 1 a 100 lançamentos."));
+  const { data: unmarked, error } = await supabase.rpc("unmark_manual_movements", { target_transaction_ids: transactionIds });
+  if (error) redirect(backToTransactions(formData, "error", "Não foi possível desfazer. A migration 050 foi aplicada?"));
+  const count = Number(unmarked ?? 0);
+  if (!count) redirect(backToTransactions(formData, "error", "Só movimentações marcadas manualmente, sem a outra ponta, podem ser desfeitas aqui."));
+  revalidatePath("/dashboard/transacoes");
+  revalidatePath("/dashboard");
+  redirect(backToTransactions(formData, "success", `${count} lançamento${count === 1 ? "" : "s"} voltou${count === 1 ? "" : "aram"} a contar como receita ou despesa.`));
 }

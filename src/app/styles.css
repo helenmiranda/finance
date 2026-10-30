@@ -628,16 +628,16 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .transaction-row.row-leaving { animation: row-leave .35s ease .5s forwards; pointer-events: none; }
 @keyframes row-leave { to { opacity: 0; max-height: 0; padding-block: 0; border-bottom-width: 0; overflow: hidden; } }
 .inline-category { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; }
-.category-chip { position: relative; display: inline-flex; align-items: center; min-width: 0; max-width: 100%; border: 1px solid rgba(22, 51, 0, .14); border-radius: 999px; background: rgba(159, 232, 112, .22); color: var(--primary-dark); transition: background .15s ease, box-shadow .15s ease, opacity .15s ease; }
+.category-chip { position: relative; display: inline-flex; align-items: center; gap: 7px; min-width: 0; max-width: min(100%, 240px); min-height: 30px; padding: 0 12px; border: 1px solid rgba(22, 51, 0, .14); border-radius: 999px; background: rgba(159, 232, 112, .22); color: var(--primary-dark); transition: background .15s ease, box-shadow .15s ease, opacity .15s ease; }
 .category-chip:hover { background: rgba(159, 232, 112, .36); }
 .category-chip:focus-within { box-shadow: 0 0 0 3px rgba(159, 232, 112, .35); }
 .category-chip[data-empty="true"] { border-style: dashed; border-color: var(--hairline); background: rgba(255, 255, 255, .6); color: var(--muted); }
 .category-chip[data-status="saving"] { opacity: .65; }
 .category-chip[data-status="error"] { border-color: var(--danger); }
-.category-chip::after { content: ""; position: absolute; right: 12px; width: 5px; height: 5px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-1px) rotate(45deg); pointer-events: none; }
-.category-chip-dot { position: absolute; left: 11px; width: 8px; height: 8px; border-radius: 50%; pointer-events: none; }
-.category-chip select { width: auto; max-width: 100%; height: 30px; padding: 0 28px 0 26px; border: 0; border-radius: 999px; outline: none; background: transparent; box-shadow: none; backdrop-filter: none; color: inherit; font-size: 12px; font-weight: 750; text-overflow: ellipsis; cursor: pointer; -webkit-appearance: none; appearance: none; }
-.category-chip select:focus { border: 0; box-shadow: none; }
+.category-chip-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; }
+.category-chip-label { min-width: 0; overflow: hidden; font-size: 12px; font-weight: 750; line-height: 1; text-overflow: ellipsis; white-space: nowrap; }
+.category-chip-chevron { flex: none; width: 5px; height: 5px; margin: -2px 0 0 1px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); }
+.category-chip select { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; border-radius: 999px; opacity: 0; font-size: 16px; cursor: pointer; }
 .inline-category-status { min-width: 52px; color: var(--muted); font-size: 11px; }
 .transaction-editor { margin-top: 5px; }
 .transaction-editor > summary { width: fit-content; color: var(--primary-dark); cursor: pointer; font-size: 11px; font-weight: 800; }
@@ -1459,3 +1459,10 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
   .dashboard-widget.size-third, .dashboard-widget.size-half, .dashboard-widget.size-twothirds { grid-column: span 12; }
   .widget-tools button { min-width: 36px; min-height: 36px; }
 }
+.rules-subheader { margin-top: 38px; }
+.rules-subheader h2 { margin: 4px 0 6px; font-size: 22px; }
+.movement-action { display: inline-flex; align-items: center; gap: 6px; }
+.movement-chip { min-height: 28px; padding: 0 11px; border: 1px dashed var(--hairline); background: rgba(255, 255, 255, .6); color: var(--muted); font-size: 11px; font-weight: 800; transform: none; }
+.movement-chip:hover:not(:disabled) { border-color: rgba(22, 51, 0, .3); background: rgba(56, 200, 255, .14); color: #12627e; transform: none; }
+.movement-chip[data-marked="true"] { border-style: solid; background: rgba(56, 200, 255, .14); color: #12627e; }
+.movement-error { color: var(--danger); font-size: 11px; }

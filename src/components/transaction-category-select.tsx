@@ -33,7 +33,9 @@ export function TransactionCategorySelect({ transactionId, value, options, leave
 
   return <span className="inline-category" ref={ref}>
     <span className="category-chip" data-empty={current ? "false" : "true"} data-status={status}>
-      <i className="category-chip-dot" style={{ background: selected?.color ?? "#b7bdb4" }} />
+      <i className="category-chip-dot" style={{ background: selected?.color ?? "#b7bdb4" }} aria-hidden="true" />
+      <span className="category-chip-label">{selected?.name ?? "Sem categoria"}</span>
+      <i className="category-chip-chevron" aria-hidden="true" />
       <select value={current} onChange={(event) => change(event.target.value)} aria-label="Categoria">
         <option value="">Sem categoria</option>
         {options.map((option) => <option value={option.id} key={option.id}>{option.name}</option>)}
