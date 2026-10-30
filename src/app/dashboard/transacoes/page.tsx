@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { TransactionSelectionSummary } from "@/components/transaction-selection-summary";
+import { TransactionCategorySelect } from "@/components/transaction-category-select";
 import { getAuthenticatedContext } from "@/lib/household";
 import { addTransaction, addTransfer, bulkCategorizeTransactions, markSelectedTransactionsAsTransfer, updateTransactionDetails } from "../finance-actions";
 
@@ -69,6 +70,8 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
   const filteredIncome = Number(totals?.income_cents ?? 0);
   const filteredExpense = Number(totals?.expense_cents ?? 0);
   const filteredCount = Number(totals?.transaction_count ?? 0);
+  const returnQuery = new URLSearchParams(Object.entries({ q: params.q, type: params.type, category: params.category, source: params.source, from: params.from, to: params.to, review: params.review }).filter((entry): entry is [string, string] => Boolean(entry[1]))).toString();
+  const returnTo = `/dashboard/transacoes${returnQuery ? `?${returnQuery}` : ""}`;
   const hasFilters = Boolean(params.q || params.type || params.category || params.source || params.from || params.to || params.review);
   const periodLabel = `${date.format(new Date(`${fromDate}T12:00:00`))} até ${date.format(new Date(`${toDate}T12:00:00`))}`;
 
@@ -91,7 +94,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
           <article><small>Saldo líquido</small><strong className={filteredIncome - filteredExpense >= 0 ? "positive" : "negative"}>{money.format((filteredIncome - filteredExpense) / 100)}</strong></article>
         </section>
 
-        <form id="bulk-transaction-actions" action={bulkCategorizeTransactions} className="bulk-form">
+        <form id="bulk-transaction-actions" action={bulkCategorizeTransactions} className="bulk-form"><input type="hidden" name="return_to" value={returnTo} />
           <div className="results-heading"><strong>{filteredCount}</strong><span> resultados{filteredCount > 100 ? " · mostrando os 100 mais recentes" : ""}</span></div><TransactionSelectionSummary formId="bulk-transaction-actions" /><details className="bulk-disclosure"><summary>Organizar selecionados</summary><div className="bulk-toolbar"><label>Alterar categoria<select name="category_id" defaultValue=""><option value="" disabled>Selecione</option>{categories?.map((category) => <option value={category.id} key={category.id}>{category.name} · {category.kind === "income" ? "Receita" : "Despesa"}</option>)}</select></label><label className="checkbox-label"><input name="remember_rule" type="checkbox" defaultChecked /> Lembrar descrições</label><button type="submit">Aplicar categoria</button><button type="submit" formAction={markSelectedTransactionsAsTransfer} className="secondary-button">Marcar como transferência</button><small className="transfer-hint">Use categoria em lote para receitas e despesas. Transferências podem receber apelido individual.</small></div></details>
         </form>
         {!transactions?.length && <article className="card empty-state"><span>⌕</span><h2>Nenhum lançamento encontrado</h2><p className="muted">Tente remover alguns filtros.</p></article>}
@@ -107,8 +110,10 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
             return <div className="transaction-row filter-row" key={transaction.id}>
               {canSelect ? <input className="row-checkbox" type="checkbox" form="bulk-transaction-actions" name="transaction_ids" value={transaction.id} data-signed-cents={incoming ? transaction.amount_cents : -transaction.amount_cents} aria-label={`Selecionar ${label}`} /> : <span className="checkbox-placeholder" />}
               <span className={`movement-icon ${transaction.type}`}>{transaction.type === "transfer" ? "⇄" : incoming ? "↗" : "↘"}</span>
-              <div className="transaction-copy"><strong>{label}{installment}</strong><small><span>{kindLabel}</span>{transaction.nickname && <><span aria-hidden="true">·</span><span>{transaction.description}</span></>}{sourceName && <><span aria-hidden="true">·</span><span>{sourceName}</span></>}</small>
-                <details className="transaction-editor"><summary>Ajustar</summary><form action={updateTransactionDetails}><input type="hidden" name="transaction_id" value={transaction.id} />{categoryEditable && <label>Categoria<select name="category_id" defaultValue={transaction.category_id ?? ""}><option value="">Sem categoria</option>{categories?.filter((category) => category.kind === transaction.type).map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}</select></label>}<label>Apelido<input name="nickname" defaultValue={transaction.nickname ?? ""} maxLength={120} placeholder="Opcional" /></label><button type="submit">Salvar</button></form></details>
+              <div className="transaction-copy"><strong>{label}{installment}</strong><small>{categoryEditable
+                ? <TransactionCategorySelect transactionId={transaction.id} value={transaction.category_id} leaveListWhenSet={params.review === "uncategorized"} options={(categories ?? []).filter((category) => category.kind === transaction.type).map((category) => ({ id: category.id, name: category.name }))} />
+                : <span>{kindLabel}</span>}{transaction.nickname && <><span aria-hidden="true">·</span><span>{transaction.description}</span></>}{sourceName && <><span aria-hidden="true">·</span><span>{sourceName}</span></>}</small>
+                <details className="transaction-editor"><summary>Ajustar</summary><form action={updateTransactionDetails}><input type="hidden" name="return_to" value={returnTo} /><input type="hidden" name="transaction_id" value={transaction.id} /><label>Apelido<input name="nickname" defaultValue={transaction.nickname ?? ""} maxLength={120} placeholder="Opcional" /></label><button type="submit">Salvar</button></form></details>
               </div>
               <div className="transaction-date">{date.format(new Date(`${transaction.occurred_on}T12:00:00`))}</div><strong className={incoming ? "positive" : "negative"}>{incoming ? "+ " : "− "}{money.format(transaction.amount_cents / 100)}</strong>
             </div>;

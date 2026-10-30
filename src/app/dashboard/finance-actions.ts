@@ -10,6 +10,17 @@ function text(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
 }
 
+// Mantém os filtros da tela de transações (como "sem categoria") depois de uma ação com redirect.
+function backToTransactions(formData: FormData, key: "error" | "success", message: string) {
+  const raw = String(formData.get("return_to") ?? "");
+  const base = raw.startsWith("/dashboard/transacoes") ? raw : "/dashboard/transacoes";
+  const url = new URL(base, "http://local");
+  url.searchParams.delete("error");
+  url.searchParams.delete("success");
+  url.searchParams.set(key, message);
+  return `${url.pathname}${url.search}`;
+}
+
 function optionalText(formData: FormData, key: string) {
   return text(formData, key) || null;
 }
@@ -690,22 +701,22 @@ export async function bulkCategorizeTransactions(formData: FormData) {
   if (!membership) redirect("/dashboard");
   const transactionIds = formData.getAll("transaction_ids").map(String).filter(Boolean);
   const categoryId = text(formData, "category_id");
-  if (!transactionIds.length || !categoryId) redirect("/dashboard/transacoes?error=Selecione%20lançamentos%20e%20uma%20categoria.");
-  if (transactionIds.length > 100) redirect("/dashboard/transacoes?error=Atualize%20no%20máximo%20100%20lançamentos%20por%20vez.");
+  if (!transactionIds.length || !categoryId) redirect(backToTransactions(formData, "error", decodeURIComponent("Selecione%20lançamentos%20e%20uma%20categoria.")));
+  if (transactionIds.length > 100) redirect(backToTransactions(formData, "error", decodeURIComponent("Atualize%20no%20máximo%20100%20lançamentos%20por%20vez.")));
 
   const { data: category } = await supabase.from("categories").select("id, kind")
     .eq("id", categoryId).eq("household_id", membership.household_id).eq("is_active", true).maybeSingle();
-  if (!category) redirect("/dashboard/transacoes?error=Categoria%20inválida.");
+  if (!category) redirect(backToTransactions(formData, "error", decodeURIComponent("Categoria%20inválida.")));
 
   const { data: selected } = await supabase.from("transactions").select("id, type, description")
     .eq("household_id", membership.household_id).in("id", transactionIds);
   if (!selected || selected.length !== transactionIds.length || selected.some((item) => item.type !== category.kind)) {
-    redirect("/dashboard/transacoes?error=A%20categoria%20deve%20ter%20o%20mesmo%20tipo%20de%20todos%20os%20lançamentos.");
+    redirect(backToTransactions(formData, "error", decodeURIComponent("A%20categoria%20deve%20ter%20o%20mesmo%20tipo%20de%20todos%20os%20lançamentos.")));
   }
 
   const { error } = await supabase.from("transactions").update({ category_id: categoryId })
     .eq("household_id", membership.household_id).in("id", transactionIds);
-  if (error) redirect("/dashboard/transacoes?error=Não%20foi%20possível%20alterar%20as%20categorias.");
+  if (error) redirect(backToTransactions(formData, "error", decodeURIComponent("Não%20foi%20possível%20alterar%20as%20categorias.")));
   if (formData.get("remember_rule") === "on") {
     const { data: existingRules } = await supabase.from("categorization_rules").select("id, pattern, match_type")
       .eq("household_id", membership.household_id);
@@ -754,7 +765,27 @@ export async function bulkCategorizeTransactions(formData: FormData) {
   await evaluateAndDispatchFinancialAlerts(membership.household_id);
   revalidatePath("/dashboard/transacoes");
   revalidatePath("/dashboard");
-  redirect(`/dashboard/transacoes?success=${encodeURIComponent(`${transactionIds.length} lançamentos atualizados.`)}`);
+  redirect(backToTransactions(formData, "success", `${transactionIds.length} lançamentos atualizados.`));
+}
+
+// Ajuste rápido de categoria: não redireciona nem reprocessa a página, para a lista não voltar ao topo.
+export async function setTransactionCategory(transactionId: string, categoryId: string | null): Promise<{ ok: boolean; error?: string }> {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) return { ok: false, error: "Sessão expirada." };
+  const householdId = membership.household_id;
+  const [{ data: transaction }, { data: category }] = await Promise.all([
+    supabase.from("transactions").select("id, type").eq("household_id", householdId).eq("id", transactionId).maybeSingle(),
+    categoryId
+      ? supabase.from("categories").select("id, kind").eq("household_id", householdId).eq("id", categoryId).eq("is_active", true).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+  if (!transaction || (transaction.type !== "income" && transaction.type !== "expense")) return { ok: false, error: "Lançamento não encontrado." };
+  if (categoryId && (!category || category.kind !== transaction.type)) return { ok: false, error: "Categoria incompatível." };
+  const { error } = await supabase.from("transactions").update({ category_id: categoryId }).eq("household_id", householdId).eq("id", transactionId);
+  if (error) return { ok: false, error: "Não foi possível salvar." };
+  // Só o dashboard é invalidado: a lista atual já mostra o valor otimista e não precisa ser recarregada.
+  revalidatePath("/dashboard");
+  return { ok: true };
 }
 
 export async function updateTransactionDetails(formData: FormData) {
@@ -763,7 +794,7 @@ export async function updateTransactionDetails(formData: FormData) {
   const transactionId = text(formData, "transaction_id");
   const nickname = optionalText(formData, "nickname");
   if (!transactionId || (nickname && nickname.length > 120)) {
-    redirect("/dashboard/transacoes?error=Confira%20os%20dados%20do%20lan%C3%A7amento.");
+    redirect(backToTransactions(formData, "error", decodeURIComponent("Confira%20os%20dados%20do%20lan%C3%A7amento.")));
   }
 
   const { data: transaction, error: selectionError } = await supabase.from("transactions")
@@ -772,36 +803,37 @@ export async function updateTransactionDetails(formData: FormData) {
     .eq("id", transactionId)
     .maybeSingle();
   if (selectionError || !transaction) {
-    redirect("/dashboard/transacoes?error=Lançamento%20não%20encontrado.");
+    redirect(backToTransactions(formData, "error", decodeURIComponent("Lançamento%20não%20encontrado.")));
   }
 
   const categoryId = optionalText(formData, "category_id");
   if (categoryId) {
     if (transaction.type !== "income" && transaction.type !== "expense") {
-      redirect("/dashboard/transacoes?error=Transferências%20não%20recebem%20categoria.");
+      redirect(backToTransactions(formData, "error", decodeURIComponent("Transferências%20não%20recebem%20categoria.")));
     }
     const { data: category } = await supabase.from("categories").select("id, kind")
       .eq("id", categoryId).eq("household_id", membership.household_id).eq("is_active", true).maybeSingle();
-    if (!category || category.kind !== transaction.type) redirect("/dashboard/transacoes?error=Categoria%20incompatível%20com%20o%20lançamento.");
+    if (!category || category.kind !== transaction.type) redirect(backToTransactions(formData, "error", decodeURIComponent("Categoria%20incompatível%20com%20o%20lançamento.")));
   }
 
-  const values = transaction.type === "income" || transaction.type === "expense"
+  // A categoria é alterada por setTransactionCategory; este formulário só ajusta o apelido.
+  const values = categoryId && (transaction.type === "income" || transaction.type === "expense")
     ? { nickname, category_id: categoryId }
     : { nickname };
   const groupId = transaction.type === "transfer" ? transaction.transfer_group_id : null;
   if (groupId) {
     const { data: related, error } = await supabase.from("transactions").select("id")
       .eq("household_id", membership.household_id).eq("transfer_group_id", groupId);
-    if (error || !related?.length) redirect("/dashboard/transacoes?error=Não%20foi%20possível%20localizar%20a%20outra%20ponta%20da%20transferência.");
+    if (error || !related?.length) redirect(backToTransactions(formData, "error", decodeURIComponent("Não%20foi%20possível%20localizar%20a%20outra%20ponta%20da%20transferência.")));
     const { error: updateError } = await supabase.from("transactions").update(values).eq("household_id", membership.household_id).in("id", related.map((item) => item.id));
-    if (updateError) redirect("/dashboard/transacoes?error=Não%20foi%20possível%20salvar%20o%20ajuste.");
+    if (updateError) redirect(backToTransactions(formData, "error", decodeURIComponent("Não%20foi%20possível%20salvar%20o%20ajuste.")));
   } else {
     const { error } = await supabase.from("transactions").update(values).eq("household_id", membership.household_id).eq("id", transaction.id);
-    if (error) redirect("/dashboard/transacoes?error=Não%20foi%20possível%20salvar%20o%20ajuste.");
+    if (error) redirect(backToTransactions(formData, "error", decodeURIComponent("Não%20foi%20possível%20salvar%20o%20ajuste.")));
   }
   revalidatePath("/dashboard/transacoes");
   revalidatePath("/dashboard");
-  redirect("/dashboard/transacoes?success=Lançamento%20atualizado.");
+  redirect(backToTransactions(formData, "success", decodeURIComponent("Lançamento%20atualizado.")));
 }
 
 export async function markSelectedTransactionsAsTransfer(formData: FormData) {
@@ -809,7 +841,7 @@ export async function markSelectedTransactionsAsTransfer(formData: FormData) {
   if (!membership) redirect("/dashboard");
   const transactionIds = [...new Set(formData.getAll("transaction_ids").map(String).filter(Boolean))];
   if (transactionIds.length !== 2) {
-    redirect("/dashboard/transacoes?error=Selecione%20exatamente%20uma%20saída%20e%20uma%20entrada%20para%20marcar%20a%20transferência.");
+    redirect(backToTransactions(formData, "error", decodeURIComponent("Selecione%20exatamente%20uma%20saída%20e%20uma%20entrada%20para%20marcar%20a%20transferência.")));
   }
 
   const { data: selected } = await supabase.from("transactions")
@@ -819,16 +851,16 @@ export async function markSelectedTransactionsAsTransfer(formData: FormData) {
   const source = selected?.find((transaction) => transaction.type === "expense");
   const destination = selected?.find((transaction) => transaction.type === "income");
   if (!source || !destination || selected?.length !== 2) {
-    redirect("/dashboard/transacoes?error=Selecione%20uma%20saída%20e%20uma%20entrada.");
+    redirect(backToTransactions(formData, "error", decodeURIComponent("Selecione%20uma%20saída%20e%20uma%20entrada.")));
   }
 
   const { error } = await supabase.rpc("mark_transactions_as_transfer", {
     source_transaction_id: source.id,
     destination_transaction_id: destination.id,
   });
-  if (error) redirect(`/dashboard/transacoes?error=${encodeURIComponent(error.message)}`);
+  if (error) redirect(backToTransactions(formData, "error", error.message));
   await evaluateAndDispatchFinancialAlerts(membership.household_id);
   revalidatePath("/dashboard/transacoes");
   revalidatePath("/dashboard");
-  redirect("/dashboard/transacoes?success=Movimentação%20marcada%20como%20transferência%20entre%20contas.");
+  redirect(backToTransactions(formData, "success", decodeURIComponent("Movimentação%20marcada%20como%20transferência%20entre%20contas.")));
 }
