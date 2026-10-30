@@ -329,6 +329,8 @@ export async function syncPluggyConnection(supabase: SupabaseClient, connection:
     const { data, error } = await supabase.rpc("auto_mark_internal_transfers", { target_household_id: connection.household_id });
     if (error) throw error;
     transferCount = Number(data ?? 0);
+    // Não bloqueia a importação se a migration 044 ainda não foi aplicada.
+    await supabase.rpc("mark_investment_movements", { target_household_id: connection.household_id });
   }
   await supabase.rpc("suggest_payable_reconciliations", { target_household_id: connection.household_id });
   await evaluateAndDispatchFinancialAlerts(connection.household_id);

@@ -6,8 +6,9 @@ export type PluggyCredentialProfile = "default" | "helen";
 const cachedKeys = new Map<PluggyCredentialProfile, { value: string; expiresAt: number }>();
 
 export function credentialProfileForUser(email?: string | null): PluggyCredentialProfile {
-  const helenEmail = (process.env.PLUGGY_HELEN_EMAIL ?? "helensmiranda92@gmail.com").trim().toLowerCase();
-  return email?.trim().toLowerCase() === helenEmail ? "helen" : "default";
+  // A segunda conta só é usada quando PLUGGY_HELEN_EMAIL está definido; sem ele, todos usam a conta principal.
+  const helenEmail = process.env.PLUGGY_HELEN_EMAIL?.trim().toLowerCase();
+  return helenEmail && email?.trim().toLowerCase() === helenEmail ? "helen" : "default";
 }
 
 function credentialsFor(profile: PluggyCredentialProfile) {
@@ -24,6 +25,30 @@ function configuredProfiles(): PluggyCredentialProfile[] {
   return profiles;
 }
 
+const REQUEST_TIMEOUT_MS = 15_000;
+const MAX_ATTEMPTS = 3;
+const isTransient = (status: number) => status === 429 || status >= 500;
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Timeout por tentativa e novas tentativas com espera crescente em falhas transitórias (rede, 429, 5xx).
+async function fetchWithRetry(url: string, init: RequestInit): Promise<Response> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+    try {
+      const response = await fetch(url, { ...init, cache: "no-store", signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+      if (!isTransient(response.status) || attempt === MAX_ATTEMPTS) return response;
+      const retryAfter = Number(response.headers.get("retry-after"));
+      await sleep(Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(retryAfter * 1000, 5_000) : 500 * 2 ** (attempt - 1));
+    } catch (error) {
+      lastError = error;
+      if (attempt === MAX_ATTEMPTS) break;
+      await sleep(500 * 2 ** (attempt - 1));
+    }
+  }
+  const timedOut = lastError instanceof Error && (lastError.name === "TimeoutError" || lastError.name === "AbortError");
+  throw new Error(timedOut ? "A Pluggy não respondeu a tempo." : "Não foi possível conectar à Pluggy.");
+}
+
 export async function getPluggyApiKey(profile: PluggyCredentialProfile = "default") {
   const cachedKey = cachedKeys.get(profile);
   if (cachedKey && cachedKey.expiresAt > Date.now() + 60_000) return cachedKey.value;
@@ -31,8 +56,14 @@ export async function getPluggyApiKey(profile: PluggyCredentialProfile = "defaul
   if (!clientId || !clientSecret) throw new Error(profile === "helen"
     ? "As credenciais da segunda conta Pluggy da Helen não estão configuradas."
     : "As credenciais da Pluggy não estão configuradas.");
-  const response = await fetch(`${PLUGGY_API_URL}/auth`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ clientId, clientSecret }), cache: "no-store" });
-  if (!response.ok) throw new Error("Não foi possível autenticar com a Pluggy.");
+  const response = await fetchWithRetry(`${PLUGGY_API_URL}/auth`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ clientId, clientSecret }) });
+  if (!response.ok) {
+    throw new Error(response.status === 401 || response.status === 403
+      ? "A Pluggy recusou as credenciais configuradas."
+      : isTransient(response.status)
+        ? `A Pluggy está instável no momento (código ${response.status}).`
+        : `Não foi possível autenticar com a Pluggy (código ${response.status}).`);
+  }
   const data = await response.json() as { apiKey?: string };
   if (!data.apiKey) throw new Error("A Pluggy não retornou uma API Key válida.");
   cachedKeys.set(profile, { value: data.apiKey, expiresAt: Date.now() + 110 * 60_000 });
@@ -40,8 +71,16 @@ export async function getPluggyApiKey(profile: PluggyCredentialProfile = "defaul
 }
 
 export async function pluggyRequest<T>(path: string, init?: RequestInit, profile: PluggyCredentialProfile = "default"): Promise<T> {
-  const apiKey = await getPluggyApiKey(profile);
-  const response = await fetch(`${PLUGGY_API_URL}${path}`, { ...init, headers: { "Content-Type": "application/json", "X-API-KEY": apiKey, ...init?.headers }, cache: "no-store" });
+  const send = async () => {
+    const apiKey = await getPluggyApiKey(profile);
+    return fetchWithRetry(`${PLUGGY_API_URL}${path}`, { ...init, headers: { "Content-Type": "application/json", "X-API-KEY": apiKey, ...init?.headers } });
+  };
+  let response = await send();
+  if (response.status === 401 || response.status === 403) {
+    // A chave em cache pode ter sido invalidada antes de expirar: renova e tenta uma vez.
+    cachedKeys.delete(profile);
+    response = await send();
+  }
   if (!response.ok) {
     const body = await response.json().catch(() => null) as { message?: string; codeDescription?: string } | null;
     const detail = body?.message || body?.codeDescription;

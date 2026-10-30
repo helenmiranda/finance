@@ -10,6 +10,7 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   const { data: connections } = await supabase.from("pluggy_items").select("id, pluggy_item_id, credential_profile, last_synced_at").eq("connected_by", user.id).eq("is_active", true);
   const pending: string[] = [];
+  let failed = 0;
   for (const connection of connections ?? []) {
     try {
       const item = await pluggyRequest<ItemStatus>(`/items/${connection.pluggy_item_id}`, undefined, connection.credential_profile);
@@ -17,7 +18,11 @@ export async function GET() {
       const providerTime = item.lastUpdatedAt ? new Date(item.lastUpdatedAt).getTime() : 0;
       const importedTime = connection.last_synced_at ? new Date(connection.last_synced_at).getTime() : 0;
       if (item.status === "UPDATED" && providerTime > importedTime) pending.push(connection.id);
-    } catch { /* Uma conexão indisponível não impede a abertura do app. */ }
+    } catch (error) {
+      // Uma conexão indisponível não impede a abertura do app, mas a falha fica visível.
+      failed += 1;
+      console.error(`Falha ao consultar a conexão Pluggy ${connection.id}:`, error instanceof Error ? error.message : error);
+    }
   }
-  return NextResponse.json({ pending });
+  return NextResponse.json({ pending, failed });
 }
