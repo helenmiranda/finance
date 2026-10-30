@@ -5,15 +5,10 @@ type DailyDatum = { day: number; income: number; expense: number };
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 
-export function DashboardCharts({ categories, days, monthLabel, periodFrom, periodTo }: { categories: CategoryDatum[]; days: DailyDatum[]; monthLabel: string; periodFrom: string; periodTo: string }) {
+export function CategoryChart({ categories, monthLabel, periodFrom, periodTo }: { categories: CategoryDatum[]; monthLabel: string; periodFrom: string; periodTo: string }) {
   const categoryMax = Math.max(...categories.map((item) => item.amount), 1);
-  const dailyMax = Math.max(...days.flatMap((item) => [item.income, item.expense]), 1);
-  const baseline = 186;
-  const usableHeight = 150;
-  const groupWidth = 720 / Math.max(days.length, 1);
-  const barWidth = Math.max(3, Math.min(8, groupWidth * 0.28));
 
-  return <section className="finance-charts" aria-label={`Gráficos financeiros de ${monthLabel}`}>
+  return <section className="finance-charts single-chart" aria-label={`Gastos por categoria em ${monthLabel}`}>
     <article className="clean-panel category-chart-card">
       <div className="card-title"><div><h2>Gastos por categoria</h2><p className="muted">Onde o dinheiro saiu neste mês</p></div></div>
       {!categories.length ? <p className="chart-empty">Ainda não há despesas categorizadas neste mês.</p> : <div className="category-bars">
@@ -26,7 +21,17 @@ export function DashboardCharts({ categories, days, monthLabel, periodFrom, peri
         })}
       </div>}
     </article>
+  </section>;
+}
 
+export function DailyChart({ days, monthLabel }: { days: DailyDatum[]; monthLabel: string }) {
+  const dailyMax = Math.max(...days.flatMap((item) => [item.income, item.expense]), 1);
+  const baseline = 186;
+  const usableHeight = 150;
+  const groupWidth = 720 / Math.max(days.length, 1);
+  const barWidth = Math.max(3, Math.min(8, groupWidth * 0.28));
+
+  return <section className="finance-charts single-chart" aria-label={`Entradas e saídas por dia em ${monthLabel}`}>
     <article className="clean-panel daily-chart-card">
       <div className="card-title"><div><h2>Entradas e saídas por dia</h2><p className="muted">Movimento diário em {monthLabel}</p></div><div className="chart-legend"><span className="income">Entradas</span><span className="expense">Saídas</span></div></div>
       {!days.some((item) => item.income || item.expense) ? <p className="chart-empty">Ainda não há movimentações neste mês.</p> : <div className="daily-chart-scroll">

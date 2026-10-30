@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { setTransactionCategory } from "@/app/dashboard/finance-actions";
 
-type Option = { id: string; name: string };
+type Option = { id: string; name: string; color?: string | null };
 
 export function TransactionCategorySelect({ transactionId, value, options, leaveListWhenSet = false }: { transactionId: string; value: string | null; options: Option[]; leaveListWhenSet?: boolean }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -29,11 +29,16 @@ export function TransactionCategorySelect({ transactionId, value, options, leave
     });
   }
 
+  const selected = options.find((option) => option.id === current);
+
   return <span className="inline-category" ref={ref}>
-    <select value={current} onChange={(event) => change(event.target.value)} aria-label="Categoria" data-status={status}>
-      <option value="">Sem categoria</option>
-      {options.map((option) => <option value={option.id} key={option.id}>{option.name}</option>)}
-    </select>
+    <span className="category-chip" data-empty={current ? "false" : "true"} data-status={status}>
+      <i className="category-chip-dot" style={{ background: selected?.color ?? "#b7bdb4" }} />
+      <select value={current} onChange={(event) => change(event.target.value)} aria-label="Categoria">
+        <option value="">Sem categoria</option>
+        {options.map((option) => <option value={option.id} key={option.id}>{option.name}</option>)}
+      </select>
+    </span>
     <span className="inline-category-status" role="status" aria-live="polite">{status === "saving" ? "Salvando…" : status === "saved" ? "Salvo ✓" : status === "error" ? "Não salvou" : ""}</span>
   </span>;
 }

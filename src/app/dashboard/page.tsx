@@ -3,7 +3,9 @@ import { DashboardShell } from "@/components/dashboard-shell";
 import { getAuthenticatedContext } from "@/lib/household";
 import { createHousehold } from "./actions";
 import { calculateAccountBalances, calculateAvailableBalance } from "@/lib/account-balances";
-import { DashboardCharts } from "@/components/dashboard-charts";
+import { CategoryChart, DailyChart } from "@/components/dashboard-charts";
+import { DashboardWidgets } from "@/components/dashboard-widgets";
+import { resolveLayout } from "@/lib/dashboard-layout";
 import { AccountBalancesChart } from "@/components/account-balances-chart";
 import { addDreamContribution } from "./finance-actions";
 
@@ -49,7 +51,7 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
   const weekEnd = weekEndDate.toISOString().slice(0, 10);
   const monthLabel = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(today);
 
-  const [accountsResult, connectedAccountsResult, balanceTransactionsResult, monthTransactionsResult, latestAccountsResult, latestCardsResult, statementsResult, dreamsResult, missionsResult, payableOccurrencesResult, upcomingCardResult] = await Promise.all([
+  const [accountsResult, connectedAccountsResult, balanceTransactionsResult, monthTransactionsResult, latestAccountsResult, latestCardsResult, statementsResult, dreamsResult, missionsResult, payableOccurrencesResult, upcomingCardResult, layoutResult] = await Promise.all([
     supabase.from("accounts").select("id, name, nickname, institution_name, color, initial_balance_cents, current_balance_cents").eq("household_id", householdId).eq("is_active", true),
     supabase.from("pluggy_accounts").select("account_id").eq("household_id", householdId).not("account_id", "is", null),
     supabase.from("transactions").select("type, amount_cents, transfer_direction, account_id").eq("household_id", householdId).eq("status", "confirmed").not("account_id", "is", null),
@@ -61,6 +63,7 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
     supabase.from("dream_missions").select("title, ends_on, current_cents, target_cents, dream_id").eq("household_id", householdId).eq("status", "active").gte("ends_on", today.toISOString().slice(0, 10)).order("ends_on").limit(1),
     supabase.from("payable_occurrences").select("id, due_on, amount_cents, payables(title)").eq("household_id", householdId).eq("status", "pending").lte("due_on", monthEnd).order("due_on").limit(300),
     supabase.from("transactions").select("id, occurred_on, amount_cents, description").eq("household_id", householdId).eq("type", "expense").eq("status", "confirmed").not("credit_card_id", "is", null).gt("installment_count", 1).gte("occurred_on", today.toISOString().slice(0, 10)).lte("occurred_on", weekEnd).order("occurred_on").limit(20),
+    supabase.from("dashboard_layouts").select("layout").eq("user_id", user.id).maybeSingle(),
   ]);
 
   const connectedAccountIds = (connectedAccountsResult.data ?? []).flatMap((mapping) => mapping.account_id ? [mapping.account_id] : []);
@@ -101,33 +104,19 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
   const monthPayablesTotal = pendingPayables.filter((item) => item.due_on >= today.toISOString().slice(0, 10)).reduce((sum, item) => sum + item.amount_cents, 0);
   const projectedAvailable = availableBalance - monthPayablesTotal - monthStatements;
 
-  return (
-    <DashboardShell active="overview">
-      <section className="content dashboard-content" id="visao-geral">
-        <header className="dashboard-header">
-          <div><p className="eyebrow">{monthLabel.toUpperCase()}</p><h1>Olá, {firstName}.</h1><p className="muted">Um resumo simples das finanças da família.</p></div>
-          <Link className="primary-link" href="/dashboard/transacoes">+ Novo lançamento</Link>
-        </header>
-
-        <section className="overview-grid" aria-label="Resumo financeiro">
-          <article className="balance-card">
+  const widgetItems = [
+    { id: "balance", node: <article className="balance-card">
             <div><span>Saldo disponível</span><strong>{money.format(availableBalance / 100)}</strong></div>
             <div className="balance-meta"><span>Entradas no mês</span><strong>+ {money.format(monthIncome / 100)}</strong></div>
-          </article>
-          <article className="compact-metric"><span>Gastos no mês</span><strong>{money.format(monthExpense / 100)}</strong><small>Inclui contas e cartões</small></article>
-          <article className="compact-metric"><span>Faturas em aberto</span><strong>{money.format(openStatements / 100)}</strong><Link href="/dashboard/cartoes">Ver cartões →</Link></article>
-        </section>
-
-        <DashboardCharts categories={categoryChart} days={dailyChart} monthLabel={monthLabel} periodFrom={monthStart} periodTo={monthEnd} />
-
-        <AccountBalancesChart accounts={accountChart} />
-
-        {(upcomingPayables.length > 0 || upcomingCardResult.data?.length || monthPayablesTotal > 0 || monthStatements > 0) && <section className="clean-panel dashboard-payables"><div><p className="eyebrow">PRÓXIMOS 7 DIAS</p><h2>{money.format(upcomingCommitmentTotal / 100)} comprometidos</h2><p className="muted">{upcomingPayables.length} contas agendadas · {upcomingCardResult.data?.length ?? 0} parcelas no cartão</p><strong className={projectedAvailable < 0 ? "negative" : ""}>Após contas e faturas do mês: {money.format(projectedAvailable / 100)}</strong></div><div>{upcomingPayables.slice(0, 3).map((item) => <span key={item.id}><strong>{relatedTitle(item.payables)}</strong><small>{shortDate.format(new Date(`${item.due_on}T12:00:00`))} · {money.format(item.amount_cents / 100)}</small></span>)}</div><Link href="/dashboard/contas-a-pagar">Abrir agenda →</Link></section>}
-
-        {featuredDream && <section className="clean-panel dashboard-dream" style={{ "--dream-color": featuredDream.color } as React.CSSProperties}><div className="dashboard-dream-main"><span>{featuredDream.emoji}</span><div><p className="eyebrow">SONHO EM MOVIMENTO</p><h2>{featuredDream.title}</h2><p>{money.format(featuredDream.saved_cents / 100)} de {money.format(featuredDream.target_cents / 100)} · {Math.min(Math.round((featuredDream.saved_cents / featuredDream.target_cents) * 100), 100)}%</p></div></div><div className="dashboard-dream-progress"><span style={{ width: `${Math.min((featuredDream.saved_cents / featuredDream.target_cents) * 100, 100)}%` }} /></div>{featuredMission && featuredMission.dream_id === featuredDream.id && <div className="dashboard-mission"><span>⚡ {featuredMission.title}</span><strong>{money.format(featuredMission.current_cents / 100)} de {money.format(featuredMission.target_cents / 100)}</strong></div>}<form action={addDreamContribution}><input type="hidden" name="dream_id" value={featuredDream.id} /><input type="hidden" name="contributed_on" value={today.toISOString().slice(0, 10)} /><input type="hidden" name="return_to" value="/dashboard" /><label><span>Guardar agora</span><input name="amount" inputMode="decimal" placeholder="100,00" required /></label><button type="submit">Aportar</button></form><Link href="/dashboard/sonhos">Ver todos os sonhos →</Link></section>}
-
-        <section className="dashboard-lower-grid">
-          <article className="clean-panel recent-panel">
+          </article> },
+    { id: "month-expense", node: <article className="compact-metric"><span>Gastos no mês</span><strong>{money.format(monthExpense / 100)}</strong><small>Inclui contas e cartões</small></article> },
+    { id: "open-statements", node: <article className="compact-metric"><span>Faturas em aberto</span><strong>{money.format(openStatements / 100)}</strong><Link href="/dashboard/cartoes">Ver cartões →</Link></article> },
+    { id: "category-chart", node: <CategoryChart categories={categoryChart} monthLabel={monthLabel} periodFrom={monthStart} periodTo={monthEnd} /> },
+    { id: "daily-chart", node: <DailyChart days={dailyChart} monthLabel={monthLabel} /> },
+    { id: "account-balances", node: <AccountBalancesChart accounts={accountChart} /> },
+    ...((upcomingPayables.length > 0 || upcomingCardResult.data?.length || monthPayablesTotal > 0 || monthStatements > 0) ? [{ id: "payables", node: <section className="clean-panel dashboard-payables"><div><p className="eyebrow">PRÓXIMOS 7 DIAS</p><h2>{money.format(upcomingCommitmentTotal / 100)} comprometidos</h2><p className="muted">{upcomingPayables.length} contas agendadas · {upcomingCardResult.data?.length ?? 0} parcelas no cartão</p><strong className={projectedAvailable < 0 ? "negative" : ""}>Após contas e faturas do mês: {money.format(projectedAvailable / 100)}</strong></div><div>{upcomingPayables.slice(0, 3).map((item) => <span key={item.id}><strong>{relatedTitle(item.payables)}</strong><small>{shortDate.format(new Date(`${item.due_on}T12:00:00`))} · {money.format(item.amount_cents / 100)}</small></span>)}</div><Link href="/dashboard/contas-a-pagar">Abrir agenda →</Link></section> }] : []),
+    ...(featuredDream ? [{ id: "dream", node: <section className="clean-panel dashboard-dream" style={{ "--dream-color": featuredDream.color } as React.CSSProperties}><div className="dashboard-dream-main"><span>{featuredDream.emoji}</span><div><p className="eyebrow">SONHO EM MOVIMENTO</p><h2>{featuredDream.title}</h2><p>{money.format(featuredDream.saved_cents / 100)} de {money.format(featuredDream.target_cents / 100)} · {Math.min(Math.round((featuredDream.saved_cents / featuredDream.target_cents) * 100), 100)}%</p></div></div><div className="dashboard-dream-progress"><span style={{ width: `${Math.min((featuredDream.saved_cents / featuredDream.target_cents) * 100, 100)}%` }} /></div>{featuredMission && featuredMission.dream_id === featuredDream.id && <div className="dashboard-mission"><span>⚡ {featuredMission.title}</span><strong>{money.format(featuredMission.current_cents / 100)} de {money.format(featuredMission.target_cents / 100)}</strong></div>}<form action={addDreamContribution}><input type="hidden" name="dream_id" value={featuredDream.id} /><input type="hidden" name="contributed_on" value={today.toISOString().slice(0, 10)} /><input type="hidden" name="return_to" value="/dashboard" /><label><span>Guardar agora</span><input name="amount" inputMode="decimal" placeholder="100,00" required /></label><button type="submit">Aportar</button></form><Link href="/dashboard/sonhos">Ver todos os sonhos →</Link></section> }] : []),
+    { id: "recent", node: <article className="clean-panel recent-panel">
             <div className="card-title"><div><h2>Últimas movimentações</h2><p className="muted">Separadas pela origem</p></div><Link href="/dashboard/transacoes">Ver todas</Link></div>
             {!latestAccounts.length && !latestCards.length && <div className="simple-empty"><p>Nenhuma movimentação registrada.</p><Link href="/dashboard/transacoes">Adicionar a primeira</Link></div>}
             <div className="recent-source-grid"><section><h3>Contas</h3><div className="compact-transactions">
@@ -149,15 +138,25 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
               })}
               {!latestCards.length && <p className="muted recent-empty">Nenhuma compra no cartão.</p>}
             </div></section></div>
-          </article>
-
-          <aside className="clean-panel insight-panel" id="assistente">
+          </article> },
+    { id: "assistant", node: <aside className="clean-panel insight-panel" id="assistente">
             <div className="insight-title"><span className="assistant-icon">✦</span><small>Assistente financeiro</small></div>
             <h2>{monthExpense > monthIncome && monthIncome > 0 ? "Os gastos passaram das entradas." : "Seu mês está organizado."}</h2>
             <p className="muted">{monthExpense > 0 ? `Até agora, a família gastou ${money.format(monthExpense / 100)} neste mês.` : "Adicione movimentações para receber análises personalizadas."}</p>
             <Link href="/dashboard/assistente">Conversar com o assistente →</Link>
-          </aside>
-        </section>
+          </aside> },
+  ];
+  const layout = resolveLayout(layoutResult.data?.layout, widgetItems.map((item) => item.id));
+
+  return (
+    <DashboardShell active="overview">
+      <section className="content dashboard-content" id="visao-geral">
+        <header className="dashboard-header">
+          <div><p className="eyebrow">{monthLabel.toUpperCase()}</p><h1>Olá, {firstName}.</h1><p className="muted">Um resumo simples das finanças da família.</p></div>
+          <Link className="primary-link" href="/dashboard/transacoes">+ Novo lançamento</Link>
+        </header>
+
+        <DashboardWidgets items={widgetItems} initialLayout={layout} />
       </section>
     </DashboardShell>
   );

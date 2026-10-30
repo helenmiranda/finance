@@ -30,7 +30,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
   const toDate = params.to || currentMonth.to;
   const [{ data: categories }, { data: accounts }, { data: cards }, { count: uncategorizedCount }] = householdId
     ? await Promise.all([
-        supabase.from("categories").select("id, name, kind").eq("household_id", householdId).eq("is_active", true).order("name"),
+        supabase.from("categories").select("id, name, kind, color").eq("household_id", householdId).eq("is_active", true).order("name"),
         supabase.from("accounts").select("id, name, nickname").eq("household_id", householdId).eq("is_active", true).order("name"),
         supabase.from("credit_cards").select("id, name, nickname").eq("household_id", householdId).eq("is_active", true).order("name"),
         supabase.from("transactions").select("id", { count: "exact", head: true }).eq("household_id", householdId).in("type", ["income", "expense"]).is("category_id", null),
@@ -111,7 +111,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
               {canSelect ? <input className="row-checkbox" type="checkbox" form="bulk-transaction-actions" name="transaction_ids" value={transaction.id} data-signed-cents={incoming ? transaction.amount_cents : -transaction.amount_cents} aria-label={`Selecionar ${label}`} /> : <span className="checkbox-placeholder" />}
               <span className={`movement-icon ${transaction.type}`}>{transaction.type === "transfer" ? "⇄" : incoming ? "↗" : "↘"}</span>
               <div className="transaction-copy"><strong>{label}{installment}</strong><small>{categoryEditable
-                ? <TransactionCategorySelect transactionId={transaction.id} value={transaction.category_id} leaveListWhenSet={params.review === "uncategorized"} options={(categories ?? []).filter((category) => category.kind === transaction.type).map((category) => ({ id: category.id, name: category.name }))} />
+                ? <TransactionCategorySelect transactionId={transaction.id} value={transaction.category_id} leaveListWhenSet={params.review === "uncategorized"} options={(categories ?? []).filter((category) => category.kind === transaction.type).map((category) => ({ id: category.id, name: category.name, color: category.color }))} />
                 : <span>{kindLabel}</span>}{transaction.nickname && <><span aria-hidden="true">·</span><span>{transaction.description}</span></>}{sourceName && <><span aria-hidden="true">·</span><span>{sourceName}</span></>}</small>
                 <details className="transaction-editor"><summary>Ajustar</summary><form action={updateTransactionDetails}><input type="hidden" name="return_to" value={returnTo} /><input type="hidden" name="transaction_id" value={transaction.id} /><label>Apelido<input name="nickname" defaultValue={transaction.nickname ?? ""} maxLength={120} placeholder="Opcional" /></label><button type="submit">Salvar</button></form></details>
               </div>

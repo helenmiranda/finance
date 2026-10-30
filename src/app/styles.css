@@ -623,10 +623,17 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .transaction-copy > small span { display: inline-block; }
 .transaction-row.row-leaving { animation: row-leave .35s ease .5s forwards; pointer-events: none; }
 @keyframes row-leave { to { opacity: 0; max-height: 0; padding-block: 0; border-bottom-width: 0; overflow: hidden; } }
-.inline-category { display: inline-flex; align-items: center; gap: 6px; }
-.inline-category select { height: 28px; max-width: 100%; padding: 0 8px; border-radius: 8px; font-size: 12px; }
-.inline-category select[data-status="saving"] { opacity: .6; }
-.inline-category select[data-status="error"] { border-color: var(--danger); }
+.inline-category { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; }
+.category-chip { position: relative; display: inline-flex; align-items: center; min-width: 0; max-width: 100%; border: 1px solid rgba(22, 51, 0, .14); border-radius: 999px; background: rgba(159, 232, 112, .22); color: var(--primary-dark); transition: background .15s ease, box-shadow .15s ease, opacity .15s ease; }
+.category-chip:hover { background: rgba(159, 232, 112, .36); }
+.category-chip:focus-within { box-shadow: 0 0 0 3px rgba(159, 232, 112, .35); }
+.category-chip[data-empty="true"] { border-style: dashed; border-color: var(--hairline); background: rgba(255, 255, 255, .6); color: var(--muted); }
+.category-chip[data-status="saving"] { opacity: .65; }
+.category-chip[data-status="error"] { border-color: var(--danger); }
+.category-chip::after { content: ""; position: absolute; right: 12px; width: 5px; height: 5px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-1px) rotate(45deg); pointer-events: none; }
+.category-chip-dot { position: absolute; left: 11px; width: 8px; height: 8px; border-radius: 50%; pointer-events: none; }
+.category-chip select { width: auto; max-width: 100%; height: 30px; padding: 0 28px 0 26px; border: 0; border-radius: 999px; outline: none; background: transparent; box-shadow: none; backdrop-filter: none; color: inherit; font-size: 12px; font-weight: 750; text-overflow: ellipsis; cursor: pointer; -webkit-appearance: none; appearance: none; }
+.category-chip select:focus { border: 0; box-shadow: none; }
 .inline-category-status { min-width: 52px; color: var(--muted); font-size: 11px; }
 .transaction-editor { margin-top: 5px; }
 .transaction-editor > summary { width: fit-content; color: var(--primary-dark); cursor: pointer; font-size: 11px; font-weight: 800; }
@@ -1408,4 +1415,43 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
   .splash-coins { display: none; }
   .splash-brand { animation: none; }
   .button-spinner { animation-duration: 1.4s; }
+}
+
+/* Visão geral em widgets: ordem, tamanho e blocos ocultos escolhidos por cada pessoa. */
+.dashboard-widgets-wrap { display: grid; gap: 14px; margin-top: 26px; }
+.widgets-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; }
+.widgets-status { flex: 1; min-width: 160px; color: var(--muted); font-size: 12px; }
+.widgets-bar button { min-height: 38px; padding: 0 16px; font-size: 13px; font-weight: 800; }
+.widgets-bar button.secondary-link { border: 1px solid var(--hairline); background: rgba(255, 255, 255, .6); }
+.widgets-bar button.secondary-link:hover { background: rgba(255, 255, 255, .92); }
+.dashboard-widgets { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 12px; }
+.dashboard-widget { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.dashboard-widget.size-quarter { grid-column: span 3; }
+.dashboard-widget.size-third { grid-column: span 4; }
+.dashboard-widget.size-half { grid-column: span 6; }
+.dashboard-widget.size-twothirds { grid-column: span 8; }
+.dashboard-widget.size-full { grid-column: span 12; }
+.widget-body { display: flex; flex: 1; min-width: 0; }
+.widget-body > * { flex: 1 1 auto; min-width: 0; margin: 0; }
+.dashboard-widget[data-editing="true"] { padding: 8px; border: 1.5px dashed rgba(22, 51, 0, .28); border-radius: 28px; background: rgba(255, 255, 255, .35); }
+.dashboard-widget[data-editing="true"] .widget-body { opacity: .55; }
+.widget-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; padding: 2px 4px; }
+.widget-toolbar > strong { color: var(--primary-dark); font-size: 12px; }
+.widget-tools { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.widget-sizes { display: inline-flex; padding: 2px; border: 1px solid var(--hairline); border-radius: 999px; background: rgba(255, 255, 255, .8); }
+.widget-tools button { min-width: 32px; min-height: 32px; padding: 0 9px; border: 1px solid var(--hairline); background: rgba(255, 255, 255, .8); font-size: 12px; font-weight: 800; transform: none; }
+.widget-sizes button { min-width: 30px; border: 0; background: transparent; }
+.widget-tools button:hover:not(:disabled) { background: var(--primary-active); transform: none; }
+.widget-tools button[aria-pressed="true"] { background: var(--primary); }
+.widget-tools button:disabled { opacity: .4; background: rgba(255, 255, 255, .5); }
+.widgets-hidden { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 14px 16px; border: 1.5px dashed var(--hairline); border-radius: 20px; }
+.widgets-hidden > span { color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.widgets-hidden button { min-height: 34px; padding: 0 13px; border: 1px solid var(--hairline); background: rgba(255, 255, 255, .8); font-size: 12px; font-weight: 800; }
+@media (max-width: 1000px) {
+  .dashboard-widget.size-quarter, .dashboard-widget.size-third, .dashboard-widget.size-half { grid-column: span 6; }
+  .dashboard-widget.size-twothirds { grid-column: span 12; }
+}
+@media (max-width: 760px) {
+  .dashboard-widget.size-third, .dashboard-widget.size-half, .dashboard-widget.size-twothirds { grid-column: span 12; }
+  .widget-tools button { min-width: 36px; min-height: 36px; }
 }
