@@ -7,15 +7,23 @@ function transactionEffect(transaction: CashTransaction) {
   return transaction.transfer_direction === "in" ? transaction.amount_cents : -transaction.amount_cents;
 }
 
-export function calculateAvailableBalance(accounts: AccountBalance[], transactions: CashTransaction[], connectedAccountIds: string[]) {
+export function calculateAccountBalances(accounts: AccountBalance[], transactions: CashTransaction[], connectedAccountIds: string[]) {
   const connected = new Set(connectedAccountIds);
   const movements = new Map<string, number>();
   for (const transaction of transactions) {
     if (!transaction.account_id || connected.has(transaction.account_id)) continue;
     movements.set(transaction.account_id, (movements.get(transaction.account_id) ?? 0) + transactionEffect(transaction));
   }
-  return accounts.reduce((total, account) => {
-    if (connected.has(account.id)) return total + (account.current_balance_cents ?? account.initial_balance_cents);
-    return total + account.initial_balance_cents + (movements.get(account.id) ?? 0);
-  }, 0);
+  return new Map(accounts.map((account) => [
+    account.id,
+    connected.has(account.id)
+      ? account.current_balance_cents ?? account.initial_balance_cents
+      : account.initial_balance_cents + (movements.get(account.id) ?? 0),
+  ]));
+}
+
+export function calculateAvailableBalance(accounts: AccountBalance[], transactions: CashTransaction[], connectedAccountIds: string[]) {
+  let total = 0;
+  for (const balance of calculateAccountBalances(accounts, transactions, connectedAccountIds).values()) total += balance;
+  return total;
 }

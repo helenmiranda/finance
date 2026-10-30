@@ -2,8 +2,9 @@ import Link from "next/link";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { getAuthenticatedContext } from "@/lib/household";
 import { createHousehold } from "./actions";
-import { calculateAvailableBalance } from "@/lib/account-balances";
+import { calculateAccountBalances, calculateAvailableBalance } from "@/lib/account-balances";
 import { DashboardCharts } from "@/components/dashboard-charts";
+import { AccountBalancesChart } from "@/components/account-balances-chart";
 import { addDreamContribution } from "./finance-actions";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -49,7 +50,7 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
   const monthLabel = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(today);
 
   const [accountsResult, connectedAccountsResult, balanceTransactionsResult, monthTransactionsResult, latestAccountsResult, latestCardsResult, statementsResult, dreamsResult, missionsResult, payableOccurrencesResult, upcomingCardResult] = await Promise.all([
-    supabase.from("accounts").select("id, initial_balance_cents, current_balance_cents").eq("household_id", householdId).eq("is_active", true),
+    supabase.from("accounts").select("id, name, nickname, institution_name, color, initial_balance_cents, current_balance_cents").eq("household_id", householdId).eq("is_active", true),
     supabase.from("pluggy_accounts").select("account_id").eq("household_id", householdId).not("account_id", "is", null),
     supabase.from("transactions").select("type, amount_cents, transfer_direction, account_id").eq("household_id", householdId).eq("status", "confirmed").not("account_id", "is", null),
     supabase.from("transactions").select("occurred_on, type, amount_cents, category_id, categories(name, color)").eq("household_id", householdId).eq("status", "confirmed").gte("occurred_on", monthStart).lt("occurred_on", nextMonth),
@@ -62,7 +63,12 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
     supabase.from("transactions").select("id, occurred_on, amount_cents, description").eq("household_id", householdId).eq("type", "expense").eq("status", "confirmed").not("credit_card_id", "is", null).gt("installment_count", 1).gte("occurred_on", today.toISOString().slice(0, 10)).lte("occurred_on", weekEnd).order("occurred_on").limit(20),
   ]);
 
-  const availableBalance = calculateAvailableBalance(accountsResult.data ?? [], balanceTransactionsResult.data ?? [], (connectedAccountsResult.data ?? []).flatMap((mapping) => mapping.account_id ? [mapping.account_id] : []));
+  const connectedAccountIds = (connectedAccountsResult.data ?? []).flatMap((mapping) => mapping.account_id ? [mapping.account_id] : []);
+  const availableBalance = calculateAvailableBalance(accountsResult.data ?? [], balanceTransactionsResult.data ?? [], connectedAccountIds);
+  const accountBalances = calculateAccountBalances(accountsResult.data ?? [], balanceTransactionsResult.data ?? [], connectedAccountIds);
+  const accountChart = (accountsResult.data ?? [])
+    .map((account) => ({ id: account.id, name: account.nickname || (account.institution_name ? `${account.institution_name} · ${account.name}` : account.name), color: account.color || "#9fe870", balance: accountBalances.get(account.id) ?? 0 }))
+    .sort((a, b) => b.balance - a.balance);
   const monthIncome = monthTransactionsResult.data?.filter((item) => item.type === "income").reduce((sum, item) => sum + item.amount_cents, 0) ?? 0;
   const monthExpense = monthTransactionsResult.data?.filter((item) => item.type === "expense").reduce((sum, item) => sum + item.amount_cents, 0) ?? 0;
   const openStatements = statementsResult.data?.reduce((sum, statement) => sum + statement.total_cents, 0) ?? 0;
@@ -113,6 +119,8 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
         </section>
 
         <DashboardCharts categories={categoryChart} days={dailyChart} monthLabel={monthLabel} periodFrom={monthStart} periodTo={monthEnd} />
+
+        <AccountBalancesChart accounts={accountChart} />
 
         {(upcomingPayables.length > 0 || upcomingCardResult.data?.length || monthPayablesTotal > 0 || monthStatements > 0) && <section className="clean-panel dashboard-payables"><div><p className="eyebrow">PRÓXIMOS 7 DIAS</p><h2>{money.format(upcomingCommitmentTotal / 100)} comprometidos</h2><p className="muted">{upcomingPayables.length} contas agendadas · {upcomingCardResult.data?.length ?? 0} parcelas no cartão</p><strong className={projectedAvailable < 0 ? "negative" : ""}>Após contas e faturas do mês: {money.format(projectedAvailable / 100)}</strong></div><div>{upcomingPayables.slice(0, 3).map((item) => <span key={item.id}><strong>{relatedTitle(item.payables)}</strong><small>{shortDate.format(new Date(`${item.due_on}T12:00:00`))} · {money.format(item.amount_cents / 100)}</small></span>)}</div><Link href="/dashboard/contas-a-pagar">Abrir agenda →</Link></section>}
 

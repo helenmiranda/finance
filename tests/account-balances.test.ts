@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculateAvailableBalance } from "../src/lib/account-balances";
+import { calculateAccountBalances, calculateAvailableBalance } from "../src/lib/account-balances";
 
 describe("calculateAvailableBalance", () => {
   it("usa o saldo atual da Pluggy sem somar novamente as transações importadas", () => {
@@ -28,5 +28,22 @@ describe("calculateAvailableBalance", () => {
 
   it("ignora movimentos sem conta", () => {
     expect(calculateAvailableBalance([{ id: "cash", initial_balance_cents: 50_00, current_balance_cents: null }], [{ account_id: null, type: "income", amount_cents: 999_00 }], [])).toBe(50_00);
+  });
+});
+
+describe("calculateAccountBalances", () => {
+  it("devolve o saldo de cada conta, conectada ou manual, e soma igual ao saldo disponível", () => {
+    const accounts = [
+      { id: "pluggy", initial_balance_cents: 100_00, current_balance_cents: 850_00 },
+      { id: "manual", initial_balance_cents: 1_000_00, current_balance_cents: null },
+    ];
+    const transactions = [
+      { account_id: "pluggy", type: "expense", amount_cents: 200_00 },
+      { account_id: "manual", type: "income", amount_cents: 500_00 },
+    ];
+    const balances = calculateAccountBalances(accounts, transactions, ["pluggy"]);
+    expect(balances.get("pluggy")).toBe(850_00);
+    expect(balances.get("manual")).toBe(1_500_00);
+    expect([...balances.values()].reduce((sum, value) => sum + value, 0)).toBe(calculateAvailableBalance(accounts, transactions, ["pluggy"]));
   });
 });
