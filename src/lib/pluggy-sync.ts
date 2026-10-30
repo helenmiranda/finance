@@ -331,6 +331,7 @@ export async function syncPluggyConnection(supabase: SupabaseClient, connection:
     transferCount = Number(data ?? 0);
     // Não bloqueia a importação se a migration 044 ainda não foi aplicada.
     await supabase.rpc("mark_investment_movements", { target_household_id: connection.household_id });
+    await supabase.rpc("apply_account_inflow_rule", { target_household_id: connection.household_id });
   }
   await supabase.rpc("suggest_payable_reconciliations", { target_household_id: connection.household_id });
   await evaluateAndDispatchFinancialAlerts(connection.household_id);

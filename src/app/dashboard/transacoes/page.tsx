@@ -101,7 +101,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
         {!!transactions?.length && <article className="card transaction-table filtered-table">{transactions.map((transaction) => {
             const incoming = transaction.type === "income" || transaction.transfer_direction === "in";
             const installment = transaction.installment_count > 1 ? ` · ${transaction.installment_number}/${transaction.installment_count}` : "";
-            const transferLabel = transaction.transfer_kind === "investment" ? (incoming ? "Resgate de investimento" : "Aplicação em investimento") : "Transferência";
+            const transferLabel = transaction.transfer_kind === "investment" ? (incoming ? "Resgate de investimento" : "Aplicação em investimento") : transaction.transfer_kind === "account_inflow" ? "Movimentação interna" : "Transferência";
             const kindLabel = transaction.type === "transfer" ? transferLabel : transaction.type === "card_payment" ? "Pagamento de fatura" : transaction.categories?.name || "Sem categoria";
             const canSelect = transaction.type === "income" || transaction.type === "expense" || transaction.type === "transfer";
             const sourceName = transaction.accounts?.nickname || transaction.accounts?.name || transaction.credit_cards?.nickname || transaction.credit_cards?.name;

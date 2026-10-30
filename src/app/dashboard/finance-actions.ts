@@ -80,6 +80,22 @@ export async function updateFinancialNickname(formData: FormData) {
   redirect(`${destination}?success=Apelido%20salvo.`);
 }
 
+export async function setAccountIncomingAsMovement(formData: FormData) {
+  const { supabase, membership } = await getAuthenticatedContext();
+  if (!membership) redirect("/dashboard");
+  const id = text(formData, "id");
+  const enabled = text(formData, "enabled") === "on";
+  if (!id) redirect("/dashboard/contas?error=Conta%20inválida.");
+  const { error } = await supabase.from("accounts").update({ incoming_as_movement: enabled }).eq("id", id).eq("household_id", membership.household_id);
+  if (error) redirect(`/dashboard/contas?error=${encodeURIComponent("Não foi possível salvar a regra. A migration 049 foi aplicada?")}`);
+  const { data: changed } = await supabase.rpc("apply_account_inflow_rule", { target_household_id: membership.household_id });
+  revalidatePath("/dashboard/contas");
+  revalidatePath("/dashboard/transacoes");
+  revalidatePath("/dashboard");
+  const count = Number(changed ?? 0);
+  redirect(`/dashboard/contas?success=${encodeURIComponent(enabled ? `Entradas desta conta agora são movimentação${count ? ` (${count} lançamento${count === 1 ? "" : "s"} ajustado${count === 1 ? "" : "s"})` : ""}.` : "Entradas desta conta voltam a contar como receita.")}`);
+}
+
 export async function addCreditCard(formData: FormData) {
   const { supabase, membership } = await getAuthenticatedContext();
   if (!membership) redirect("/dashboard");

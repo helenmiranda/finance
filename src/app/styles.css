@@ -502,6 +502,10 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-dark); b
 .recent-source-grid .compact-transaction > strong:last-child { grid-column: 2 / -1; justify-self: end; font-size: 10px; }
 .recent-empty { font-size: 10px; }
 .nickname-editor { grid-column: 2 / -1; }
+.account-rule { grid-column: 2 / -1; }
+.account-rule button { min-height: 30px; padding: 0 12px; border: 1px solid rgba(22, 51, 0, .14); background: rgba(255, 255, 255, .6); color: var(--muted); font-size: 11px; font-weight: 800; transform: none; }
+.account-rule button[aria-pressed="true"] { background: rgba(159, 232, 112, .3); color: var(--primary-dark); }
+.account-rule button:hover { background: var(--primary-active); transform: none; }
 .nickname-editor summary { width: max-content; color: var(--muted); cursor: pointer; font-size: 9px; }
 .nickname-editor summary:hover { color: var(--primary-dark); }
 .nickname-editor form { display: grid; grid-template-columns: 1fr auto; gap: 6px; margin-top: 7px; }
